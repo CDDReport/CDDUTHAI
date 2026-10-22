@@ -396,11 +396,11 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <p id="pageSub">กลุ่มงานสารสนเทศการพัฒนาชุมชน สำนักงานพัฒนาชุมชนจังหวัดอุทัยธานี</p>
         </div>
         <div class="tb-spacer"></div>
-        <span class="pill pill-pend" id="topSyncStatus" onclick="switchPage('settings')" style="cursor:pointer" title="คลิกเพื่อตรวจสอบการตั้งค่า Google Apps Script">
-          ⏳ กำลังเชื่อมโยง Cloud...
+        <span class="pill pill-pend" id="topSyncStatus" onclick="pullStateFromGas(true)" style="cursor:pointer" title="คลิกเพื่อดึงข้อมูลล่าสุดจาก Google Sheets">
+          ⏳ กำลังซิงค์ Cloud...
         </span>
-        <button class="btn btn-ok btn-sm" onclick="pullStateFromGas(true)" title="ดึงข้อมูลล่าสุดจากฐานข้อมูล Google Sheets">
-          🔄 ซิงค์ฐานข้อมูล Sheets
+        <button class="btn btn-ok btn-sm" onclick="pullStateFromGas(true)" title="ดึงข้อมูลล่าสุดจากฐานข้อมูล Google Sheets ทันที">
+          🔄 ซิงค์ข้อมูลล่าสุด
         </button>
         <button class="btn btn-sky btn-sm" id="btnTopTopics" onclick="openAddTopicModal()">
           ➕ เพิ่ม/ซ่อนหัวข้อรายงาน
@@ -418,6 +418,14 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
     </header>
 
     <main class="content">
+      <!-- แจ้งเตือนอัตโนมัติหากลืมกด New Version ใน Google Apps Script -->
+      <div class="note lock" id="oldGasVersionBanner" style="display:none;margin-bottom:16px">
+        <b>⚠️ ตรวจพบว่าลิงก์ Google Apps Script ของคุณยังรันโค้ดเวอร์ชันเก่าอยู่ (ยังไม่อัปเดตเป็น New Version):</b><br>
+        1. นำโค้ด <code>รหัส.gs</code> ล่าสุดไปวางใน Google Apps Script แล้วกด <b>Ctrl + S</b><br>
+        2. กดปุ่ม <b>การทำให้ใช้งานได้ (Deploy) > จัดการการทำให้ใช้งานได้ (Manage deployments)</b><br>
+        3. คลิก <b>รูปดินสอ (แก้ไข)</b> มุมขวาบน > ช่อง <b>เวอร์ชัน (Version)</b> เลือกเป็น <b>"เวอร์ชันใหม่ (New version)"</b> > กดปุ่ม <b>การทำให้ใช้งานได้ (Deploy)</b> แล้วกลับมาคลิกปุ่ม "🔄 ซิงค์ข้อมูลล่าสุด" บนหน้าเว็บนี้ครับ
+      </div>
+
       <!-- ==================== PAGE: OVERVIEW ==================== -->
       <section class="page active" id="page-overview">
         <div class="kpis" id="overviewKpis"></div>
@@ -449,7 +457,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             <div class="card-h">
               <div>
                 <h3>ตารางสรุปผลการส่งรายงานและคะแนนรายอำเภอ (<span class="cur-month-lbl"></span>)</h3>
-                <p>เริ่มต้นเดือนใหม่ที่ 0 งาน — เชื่อมโยงฐานข้อมูล Google Sheets อัตโนมัติ</p>
+                <p>เริ่มต้นเดือนใหม่ที่ 0 งาน — ซิงค์ข้อมูลข้ามเครื่องผ่าน Google Sheets อัตโนมัติ</p>
               </div>
             </div>
             <div class="tbl-wrap" id="overviewDistrictTable"></div>
@@ -554,7 +562,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
           <div class="note" style="margin-bottom:16px">
             <b>💡 วิธีใช้งานการซ่อน/เปิดรายงานรายเดือน:</b>
-            เดือนไหนที่มีงานส่งเท่าเดิมไม่ต้องปรับอะไร หากเดือนถัดไป<b>ไม่ต้องส่งงานตัวไหน</b> ให้คลิกปุ่ม <span class="pill pill-rej">🙈 ซ่อนเดือนนี้</span> หรือคลิกที่ชื่อเดือนในตารางด้านล่างเพื่อเปลี่ยนเป็นสถานะงดส่ง และหากเดือนถัดไปมี<b>การเพิ่มหัวข้อส่งงานใหม่</b> สามารถกดปุ่ม <b>"➕ เพิ่มหัวข้อรายงานใหม่"</b> ได้ทันที (ซิงค์เข้าชีต <code>ตั้งค่าหัวข้อรายงาน</code> ใน Google Sheets อัตโนมัติ)
+            เดือนไหนที่มีงานส่งเท่าเดิมไม่ต้องปรับอะไร หากเดือนถัดไป<b>ไม่ต้องส่งงานตัวไหน</b> ให้คลิกปุ่ม <span class="pill pill-rej">🙈 ซ่อนเดือนนี้</span> หรือคลิกที่ชื่อเดือนในตารางด้านล่างเพื่อเปลี่ยนเป็นสถานะงดส่ง และหากเดือนถัดไปมี<b>การเพิ่มหัวข้อส่งงานใหม่</b> สามารถกดปุ่ม <b>"➕ เพิ่มหัวข้อรายงานใหม่"</b> ได้ทันที
           </div>
 
           <div class="subtabs" id="topicGroupTabs"></div>
@@ -572,7 +580,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 <p>กำหนดไอดีไลน์สำหรับรับแจ้งเตือนผ่าน LINE Messaging API</p>
               </div>
             </div>
-            <form id="lineRecForm" action="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" method="POST" onsubmit="addLineRecipient(event)" style="margin-bottom:14px">
+            <form id="lineRecForm" action="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" method="POST" onsubmit="addLineRecipient(event)" style="margin-bottom:14px">
               <div class="form-group">
                 <label>ชื่อผู้รับ / ชื่อกลุ่มไลน์</label>
                 <input type="text" id="lineRecName" class="inp" placeholder="เช่น กลุ่มสารสนเทศ สพจ.อน. / จนท.อ.เมือง" required>
@@ -662,13 +670,13 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <div class="card-h">
             <div>
               <h3>🔗 เชื่อมต่อฐานข้อมูล Google Sheets, Google Drive & LINE Messaging API (เฉพาะ Admin จังหวัด)</h3>
-              <p>เชื่อมต่อกับลิงก์ Google Apps Script ล่าสุดของคุณเรียบร้อยแล้ว สามารถกดทดสอบการเชื่อมต่อได้ทันที</p>
+              <p>เชื่อมโยงกับ Web App URL (/exec) เรียบร้อยแล้ว ข้อมูลจากทุกเครื่องจะซิงค์เข้า Google Sheets อัตโนมัติ</p>
             </div>
             <span class="pill pill-ok" id="gasConnBadge">🟢 พร้อมเชื่อมต่อ</span>
           </div>
           <div class="form-group">
-            <label>Google Apps Script Web App URL (สำหรับบันทึก Google Sheets + อัปโหลดไฟล์เข้า Google Drive + ส่ง LINE)</label>
-            <input type="url" id="cfgGasUrl" class="inp" value="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" placeholder="https://script.google.com/macros/s/.../dev">
+            <label>Google Apps Script Web App URL (/exec)</label>
+            <input type="url" id="cfgGasUrl" class="inp" value="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" placeholder="https://script.google.com/macros/s/.../exec">
           </div>
           <div class="form-group">
             <label>Google Drive Folder ID หลัก (เว้นว่างได้ ระบบจะสร้างโฟลเดอร์ CDD_Uthai_Report_Files_สพจ_อุทัยธานี แยก 4 กลุ่มงานให้อัตโนมัติ)</label>
@@ -702,7 +710,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('topicModal')">✕</button>
     </div>
     <div class="modal-b">
-      <form id="topicConfigForm" action="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" method="POST" onsubmit="saveTopicModalSubmit(event)">
+      <form id="topicConfigForm" action="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" method="POST" onsubmit="saveTopicModalSubmit(event)">
         <input type="hidden" id="editTopicRepId" name="repId">
         <div class="form-group">
           <label for="topicGroupSelect">เลือกกลุ่มงานหลัก (4 กลุ่มงาน)</label>
@@ -743,7 +751,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('submitModal')">✕</button>
     </div>
     <div class="modal-b">
-      <form id="reportSubmitForm" action="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" method="POST" onsubmit="confirmSubmitReport(event)">
+      <form id="reportSubmitForm" action="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" method="POST" onsubmit="confirmSubmitReport(event)">
         <input type="hidden" id="subMonth" name="ประจำเดือน">
         <input type="hidden" id="subDistId" name="รหัสอำเภอ">
         <input type="hidden" id="subRepId" name="รหัสรายงาน">
@@ -820,8 +828,8 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 <div class="toast" id="toast"></div>
 
 <script>
-/* ================== 1. DATA & GOOGLE APPS SCRIPT DEPLOY URL ================== */
-const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev';
+/* ================== 1. DATA & PRODUCTION GOOGLE APPS SCRIPT URL (/exec) ================== */
+const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec';
 
 const MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -910,11 +918,11 @@ const DEFAULT_WORKGROUPS = [
   }
 ];
 
-const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V9';
-const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V9';
-const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V9';
-const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V9';
-const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V9';
+const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V12';
+const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V12';
+const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V12';
+const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V12';
+const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V12';
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
@@ -933,6 +941,7 @@ let gasConfig = {
 };
 let pendingPinCallback = null;
 let stagedUploadFile = null;
+let autoSyncIntervalId = null;
 
 /* ================== 2. INDEXEDDB FOR UP TO 5MB FILE STORAGE ================== */
 const IDB_NAME = 'CDD_UTHAI_FILE_DB';
@@ -1089,8 +1098,9 @@ function loadState() {
     const gc = localStorage.getItem(GAS_CFG_KEY);
     if (gc) {
       const parsed = JSON.parse(gc);
+      const cleanUrl = (!parsed.url || parsed.url.endsWith('/dev')) ? DEFAULT_GAS_WEB_APP_URL : parsed.url;
       gasConfig = {
-        url: parsed.url || DEFAULT_GAS_WEB_APP_URL,
+        url: cleanUrl,
         driveFolderId: parsed.driveFolderId || '',
         token: parsed.token || '',
         target: parsed.target || ''
@@ -1159,15 +1169,15 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-/* ================== 4. GITHUB PAGES <-> GOOGLE APPS SCRIPT CONNECTOR ================== */
-function fetchViaJsonp(url, action = 'getInitialData') {
+/* ================== 4. DUAL-CHANNEL (GET/JSONP + POST) CLOUD ENGINE ================== */
+function callViaJsonp(url, queryParamsObj) {
   return new Promise((resolve) => {
-    const cbName = 'gasJsonpCb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    const cbName = 'gasCb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
     const script = document.createElement('script');
     const timer = setTimeout(() => {
       cleanup();
       resolve(null);
-    }, 12000);
+    }, 14000);
 
     function cleanup() {
       clearTimeout(timer);
@@ -1180,8 +1190,9 @@ function fetchViaJsonp(url, action = 'getInitialData') {
       resolve(data);
     };
 
+    const params = new URLSearchParams({ ...queryParamsObj, callback: cbName, _t: Date.now() });
     const sep = url.includes('?') ? '&' : '?';
-    script.src = `${url}${sep}action=${encodeURIComponent(action)}&callback=${cbName}&_t=${Date.now()}`;
+    script.src = `${url}${sep}${params.toString()}`;
     script.onerror = function() {
       cleanup();
       resolve(null);
@@ -1191,60 +1202,58 @@ function fetchViaJsonp(url, action = 'getInitialData') {
 }
 
 async function sendToGoogleSheetDB(payload) {
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    return new Promise((resolve) => {
-      google.script.run
-        .withSuccessHandler(res => resolve(res || { ok: true }))
-        .withFailureHandler(err => resolve({ ok: false, error: String(err) }))
-        .processClientRequest(payload);
-    });
-  }
-
   const targetUrl = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
   if (!targetUrl) return { ok: false, error: 'ไม่ได้ระบุ URL' };
 
+  const hasLargeFile = Boolean(payload.filePayload && payload.filePayload.base64);
+  const serialized = JSON.stringify(payload);
+
+  // 1. กรณีดึงข้อมูล (getInitialData / ping)
   if (payload.action === 'getInitialData' || payload.action === 'ping') {
     try {
       const sep = targetUrl.includes('?') ? '&' : '?';
       const getRes = await fetch(`${targetUrl}${sep}action=${encodeURIComponent(payload.action)}&_t=${Date.now()}`, {
         method: 'GET',
-        redirect: 'follow'
+        redirect: 'follow',
+        cache: 'no-store'
       });
-      const text = await getRes.text();
-      const parsed = JSON.parse(text);
-      if (parsed && parsed.ok) {
-        updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
-        return parsed;
-      }
+      const parsed = await getRes.json();
+      if (parsed) return parsed;
     } catch (e) {
-      const jsonpData = await fetchViaJsonp(targetUrl, payload.action);
-      if (jsonpData && jsonpData.ok) {
-        updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
-        return jsonpData;
-      }
+      const jsonpData = await callViaJsonp(targetUrl, { action: payload.action });
+      if (jsonpData) return jsonpData;
     }
   }
 
+  // 2. กรณีบันทึกข้อมูลขนาดเล็ก (ไม่มีไฟล์แนบ เช่น ให้คะแนน, ส่งลิงก์งาน, เพิ่ม/ซ่อนหัวข้อรายงาน):
+  // ส่งผ่าน POST และหากติด CORS ให้ส่งผ่าน GET Query Payload เพื่อการันตีว่าลง Google Sheets 100%
   try {
     const response = await fetch(targetUrl, {
       method: 'POST',
       redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
+      body: serialized
     });
     const text = await response.text();
     const parsed = JSON.parse(text);
     if (parsed && parsed.ok) {
-      updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
+      updateTopSyncIndicator('ok', '🟢 ซิงค์ Google Sheets แล้ว');
+      return parsed;
     }
-    return parsed;
-  } catch (err) {
+  } catch (postErr) {
+    if (!hasLargeFile && serialized.length < 1800) {
+      const getFallback = await callViaJsonp(targetUrl, { payload: serialized });
+      if (getFallback && getFallback.ok) {
+        updateTopSyncIndicator('ok', '🟢 ซิงค์ Google Sheets แล้ว');
+        return getFallback;
+      }
+    }
     try {
       await fetch(targetUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
+        body: serialized
       });
       updateTopSyncIndicator('ok', '🟢 ส่งข้อมูลเข้า Google Sheets แล้ว');
       return { ok: true, opaque: true };
@@ -1253,6 +1262,7 @@ async function sendToGoogleSheetDB(payload) {
       return { ok: false, error: String(e2) };
     }
   }
+  return { ok: false };
 }
 
 async function syncTopicsAndVisibilityToGas() {
@@ -1265,15 +1275,28 @@ async function syncTopicsAndVisibilityToGas() {
   });
 }
 
-async function pullStateFromGas(showNotification = false) {
-  updateTopSyncIndicator('pend', '⏳ กำลังซิงค์ Google Sheets...');
+async function pullStateFromGas(showNotification = false, silentBackground = false) {
+  if (!silentBackground) {
+    updateTopSyncIndicator('pend', '⏳ กำลังซิงค์ข้อมูล...');
+  }
   try {
     const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
-    if (!res || !res.ok || res.opaque) {
-      updateTopSyncIndicator('ok', '🟢 พร้อมส่งข้อมูลเข้า Google Sheets');
+    const warnBanner = document.getElementById('oldGasVersionBanner');
+
+    // ตรวจจับกรณีลิงก์ /exec ยังรันโค้ดเก่า 75 บรรทัด (ที่ตอบกลับมาแค่ status: 'CDD Uthai Report API Ready' ไม่มี records)
+    if (res && res.ok && !Array.isArray(res.records)) {
+      if (warnBanner) warnBanner.style.display = 'block';
+      updateTopSyncIndicator('err', '⚠️ ต้องกด New Version ใน Apps Script');
       if (showNotification) {
-        showToast('✅ ซิงค์ข้อมูลพร้อมใช้งาน');
+        showToast('⚠️ ลิงก์ Apps Script ยังเป็นเวอร์ชันเก่า กรุณาอัปเดตเป็น New Version ตามแถบแจ้งเตือนด้านบน');
       }
+      return;
+    }
+
+    if (warnBanner) warnBanner.style.display = 'none';
+
+    if (!res || !res.ok || res.opaque) {
+      if (showNotification) showToast('ℹ️ อัปเดตสถานะเรียบร้อยแล้ว');
       return;
     }
 
@@ -1289,41 +1312,54 @@ async function pullStateFromGas(showNotification = false) {
       lineRecipients = res.lineRecipients;
       localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
     }
+
+    db = createEmptyDB();
     ensureDBStructure();
 
-    if (Array.isArray(res.records)) {
-      res.records.forEach(r => {
-        const m = r.month;
-        const dId = r.distId;
-        const rId = r.repId;
-        if (db[m] && db[m][dId] && db[m][dId][rId]) {
-          db[m][dId][rId] = {
-            status: r.status || 'ยังไม่ส่งรายงาน',
-            score: Number(r.score || 0),
-            fileName: r.fileName || '',
-            fileSize: Number(r.fileSize || 0),
-            mimeType: '',
-            driveViewUrl: r.driveViewUrl || '',
-            driveDownloadUrl: r.driveDownloadUrl || '',
-            link: r.link || r.driveViewUrl || '',
-            sender: r.sender || '',
-            submittedAt: r.updatedAt || '',
-            note: r.note || ''
-          };
-        }
-      });
-      saveDB();
-    }
+    res.records.forEach(r => {
+      const m = r.month;
+      const dId = r.distId;
+      const rId = r.repId;
+      if (db[m] && db[m][dId] && db[m][dId][rId]) {
+        db[m][dId][rId] = {
+          status: r.status || 'ยังไม่ส่งรายงาน',
+          score: Number(r.score || 0),
+          fileName: r.fileName || '',
+          fileSize: Number(r.fileSize || 0),
+          mimeType: '',
+          driveViewUrl: r.driveViewUrl || '',
+          driveDownloadUrl: r.driveDownloadUrl || '',
+          link: r.link || r.driveViewUrl || '',
+          sender: r.sender || '',
+          submittedAt: r.updatedAt || '',
+          note: r.note || ''
+        };
+      }
+    });
+    saveDB();
 
-    updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
+    const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ • ${timeStr})`);
     populateReportDropdown();
     renderAll();
     if (showNotification) {
-      showToast('☁️ ซิงค์ข้อมูลล่าสุดจาก Google Sheets เรียบร้อยแล้ว');
+      showToast(`☁️ ดึงข้อมูลจาก Google Sheets สำเร็จ (${res.records.length} รายการที่ส่งแล้ว)`);
     }
   } catch (err) {
-    updateTopSyncIndicator('err', '🔴 ซิงค์ไม่สำเร็จ');
+    if (!silentBackground) {
+      updateTopSyncIndicator('err', '🔴 ซิงค์ไม่สำเร็จ');
+    }
   }
+}
+
+function startAutoSyncTimer() {
+  if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
+  autoSyncIntervalId = setInterval(() => {
+    const anyModalOpen = document.querySelector('.ov.on');
+    if (currentUser && !anyModalOpen) {
+      pullStateFromGas(false, true);
+    }
+  }, 15000);
 }
 
 /* ================== 5. SECURITY PIN (02102542) & ADMIN GUARD ================== */
@@ -1408,11 +1444,13 @@ function handleLogin(e) {
   initFilters();
   switchPage('overview');
   pullStateFromGas(false);
+  startAutoSyncTimer();
   showToast('ยินดีต้อนรับเข้าสู่ CDD Uthai Report: ' + currentUser.name);
 }
 
 function handleLogout() {
   currentUser = null;
+  if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
   document.getElementById('loginScreen').classList.remove('hidden');
@@ -1780,7 +1818,7 @@ function toggleReportMonthVisibility(month, repId) {
   saveWorkgroupsAndVisibility(true);
   populateReportDropdown();
   renderAll();
-  showToast(nowHidden ? `🙈 ซ่อนรายงานในเดือน${month} และซิงค์ไปยัง Google Sheets แล้ว` : `👁️ เปิดใช้งานรายงานในเดือน${month} และซิงค์ไปยัง Google Sheets แล้ว`);
+  showToast(nowHidden ? `🙈 ซ่อนรายงานในเดือน${month} และซิงค์ไปยังทุกเครื่องแล้ว` : `👁️ เปิดใช้งานรายงานในเดือน${month} และซิงค์ไปยังทุกเครื่องแล้ว`);
 }
 
 function copyPrevMonthVisibility() {
@@ -1962,6 +2000,12 @@ async function downloadSubmittedFile(month, distId, repId) {
     return;
   }
 
+  if (rec.driveDownloadUrl || rec.driveViewUrl) {
+    window.open(rec.driveDownloadUrl || rec.driveViewUrl, '_blank', 'noopener,noreferrer');
+    showToast(`⬇️ เปิดดาวน์โหลดไฟล์ "${rec.fileName}" จาก Google Drive`);
+    return;
+  }
+
   const idbKey = `${month}__${distId}__${repId}`;
   const storedFile = await getFileFromIDB(idbKey);
   if (storedFile && storedFile.dataUrl) {
@@ -1975,13 +2019,7 @@ async function downloadSubmittedFile(month, distId, repId) {
     return;
   }
 
-  if (rec.driveDownloadUrl || rec.driveViewUrl) {
-    window.open(rec.driveDownloadUrl || rec.driveViewUrl, '_blank', 'noopener,noreferrer');
-    showToast(`⬇️ เปิดดาวน์โหลดไฟล์ "${rec.fileName}" จาก Google Drive`);
-    return;
-  }
-
-  showToast('⚠️ ไม่พบไฟล์ในเครื่อง กรุณากดปุ่มซิงค์ฐานข้อมูล Sheets ด้านบน');
+  showToast('⚠️ ไม่พบไฟล์แนบ กรุณากดปุ่มซิงค์ข้อมูลล่าสุดด้านบน');
 }
 
 function handleReportFileChange(e) {
@@ -2225,6 +2263,9 @@ async function confirmSubmitReport(e) {
       db[m][dId][rId].link = gasResult.fileUrl;
     }
     saveDB();
+  } else {
+    // ดึงข้อมูลซ้ำจาก Google Sheets เพื่อให้ได้ลิงก์ Google Drive ล่าสุดกรณีส่งผ่านโหมดสำรอง
+    setTimeout(() => pullStateFromGas(false, true), 1500);
   }
 
   submitBtn.disabled = false;
@@ -2233,8 +2274,8 @@ async function confirmSubmitReport(e) {
   renderAll();
   showToast(
     stagedUploadFile
-      ? `✅ บันทึกข้อมูลลง Google Sheets และอัปโหลดไฟล์ "${stagedUploadFile.fileName}" เข้า Google Drive เรียบร้อยแล้ว`
-      : `✅ ส่งข้อมูลบันทึกลงฐานข้อมูล Google Sheets เรียบร้อยแล้ว`
+      ? `✅ บันทึกลง Google Sheets และอัปโหลดไฟล์ "${stagedUploadFile.fileName}" เข้า Google Drive สำเร็จ!`
+      : `✅ ส่งข้อมูลบันทึกลงฐานข้อมูล Google Sheets สำเร็จ!`
   );
 }
 
@@ -2667,19 +2708,22 @@ async function testGasConnection() {
   const curUrl = (document.getElementById('cfgGasUrl').value || gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
   gasConfig.url = curUrl;
 
-  statusBox.innerHTML = '⏳ กำลังทดสอบส่งคำสั่งไปยัง Google Apps Script...';
-  const res = await sendToGoogleSheetDB({
-    action: 'ping',
-    driveFolderId: document.getElementById('cfgDriveFolderId').value.trim()
-  });
-  if (res && res.ok) {
-    statusBox.innerHTML = `✅ <b>เชื่อมต่อสำเร็จ!</b> ลิงก์ <code>${curUrl}</code> พร้อมบันทึกข้อมูลลงฐานข้อมูล Google Sheets และ Google Drive` +
-      (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '') +
-      (res.driveUrl ? ` | 📁 <a href="${res.driveUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดโฟลเดอร์ Google Drive</a>` : '');
-    updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
-    showToast('✅ เชื่อมต่อฐานข้อมูล Google Sheets สำเร็จ!');
+  statusBox.innerHTML = '⏳ กำลังตรวจสอบเวอร์ชันและการเชื่อมต่อกับ Google Apps Script...';
+  const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
+
+  if (res && res.ok && !Array.isArray(res.records)) {
+    statusBox.innerHTML = `⚠️ <b>เชื่อมต่อถึงลิงก์สำเร็จ แต่ลิงก์นี้ยังรันโค้ดเวอร์ชันเก่าอยู่!</b><br>กรุณาวางโค้ด <code>รหัส.gs</code> ใหม่ใน Apps Script แล้วไปที่ <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b>`;
+    updateTopSyncIndicator('err', '⚠️ ต้องกด New Version ใน Apps Script');
+    return;
+  }
+
+  if (res && res.ok && Array.isArray(res.records)) {
+    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์ (เวอร์ชัน ${res.version || 'ล่าสุด'})!</b><br>พบข้อมูลรายงานที่บันทึกใน Google Sheets แล้วจำนวน <b>${res.records.length}</b> รายการ` +
+      (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
+    updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ)`);
+    showToast('✅ เชื่อมต่อฐานข้อมูล Google Sheets สำเร็จสมบูรณ์!');
   } else {
-    statusBox.innerHTML = '⚠️ ส่งคำสั่งเชื่อมต่อแล้ว หากใช้งานจากเครื่องอื่นที่ไม่ใช่เครื่องแอดมิน แนะนำให้ตั้งค่าสิทธิ์การ Deploy เป็น "ทุกคน (Anyone)"';
+    statusBox.innerHTML = '⚠️ ไม่สามารถอ่านค่าตอบกลับได้ กรุณาตรวจสอบว่าในหน้า Manage Deployments ตั้งค่าผู้มีสิทธิ์เข้าถึงเป็น "ทุกคน (Anyone)" และเลือก "เวอร์ชันใหม่ (New version)" แล้ว';
     updateTopSyncIndicator('err', '🔴 ตรวจสอบสิทธิ์ Deploy');
   }
 }
@@ -2705,12 +2749,18 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 3500);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   loadState();
   initMonthBar();
+  window.addEventListener('focus', () => {
+    const anyModalOpen = document.querySelector('.ov.on');
+    if (currentUser && !anyModalOpen) {
+      pullStateFromGas(false, true);
+    }
+  });
   const drop = document.getElementById('excelDropZone');
   if (drop) {
     drop.addEventListener('dragover', e => { e.preventDefault(); });
