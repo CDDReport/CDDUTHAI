@@ -396,6 +396,9 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <p id="pageSub">กลุ่มงานสารสนเทศการพัฒนาชุมชน สำนักงานพัฒนาชุมชนจังหวัดอุทัยธานี</p>
         </div>
         <div class="tb-spacer"></div>
+        <span class="pill pill-pend" id="topSyncStatus" onclick="switchPage('settings')" style="cursor:pointer" title="คลิกเพื่อตรวจสอบการตั้งค่า Google Apps Script">
+          ⏳ กำลังเชื่อมโยง Cloud...
+        </span>
         <button class="btn btn-ok btn-sm" onclick="pullStateFromGas(true)" title="ดึงข้อมูลล่าสุดจากฐานข้อมูล Google Sheets">
           🔄 ซิงค์ฐานข้อมูล Sheets
         </button>
@@ -551,7 +554,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
           <div class="note" style="margin-bottom:16px">
             <b>💡 วิธีใช้งานการซ่อน/เปิดรายงานรายเดือน:</b>
-            เดือนไหนที่มีงานส่งเท่าเดิมไม่ต้องปรับอะไร หากเดือนถัดไป<b>ไม่ต้องส่งงานตัวไหน</b> ให้คลิกปุ่ม <span class="pill pill-rej">🙈 ซ่อนเดือนนี้</span> หรือคลิกที่ชื่อเดือนในตารางด้านล่างเพื่อเปลี่ยนเป็นสถานะงดส่ง และหากเดือนถัดไปมี<b>การเพิ่มหัวข้อส่งงานใหม่</b> สามารถกดปุ่ม <b>"➕ เพิ่มหัวข้อรายงานใหม่"</b> ได้ทันที (ระบบจะซิงค์เข้าชีต <code>ตั้งค่าหัวข้อรายงาน</code> ใน Google Sheets อัตโนมัติ)
+            เดือนไหนที่มีงานส่งเท่าเดิมไม่ต้องปรับอะไร หากเดือนถัดไป<b>ไม่ต้องส่งงานตัวไหน</b> ให้คลิกปุ่ม <span class="pill pill-rej">🙈 ซ่อนเดือนนี้</span> หรือคลิกที่ชื่อเดือนในตารางด้านล่างเพื่อเปลี่ยนเป็นสถานะงดส่ง และหากเดือนถัดไปมี<b>การเพิ่มหัวข้อส่งงานใหม่</b> สามารถกดปุ่ม <b>"➕ เพิ่มหัวข้อรายงานใหม่"</b> ได้ทันที (ซิงค์เข้าชีต <code>ตั้งค่าหัวข้อรายงาน</code> ใน Google Sheets อัตโนมัติ)
           </div>
 
           <div class="subtabs" id="topicGroupTabs"></div>
@@ -569,18 +572,18 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 <p>กำหนดไอดีไลน์สำหรับรับแจ้งเตือนผ่าน LINE Messaging API</p>
               </div>
             </div>
-            <form id="lineRecForm" action="https://script.google.com/macros/s/AKfycbx3yKC8UopjggcL1P-Ziw_fzWGWJbxLDXkEji79T1AU/dev" method="POST" onsubmit="addLineRecipient(event)" style="margin-bottom:14px">
+            <form id="lineRecForm" action="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" method="POST" onsubmit="addLineRecipient(event)" style="margin-bottom:14px">
               <div class="form-group">
                 <label>ชื่อผู้รับ / ชื่อกลุ่มไลน์</label>
-                <input type="text" id="lineRecName" name="recipientName" class="inp" placeholder="เช่น กลุ่มสารสนเทศ สพจ.อน. / จนท.อ.เมือง" required>
+                <input type="text" id="lineRecName" class="inp" placeholder="เช่น กลุ่มสารสนเทศ สพจ.อน. / จนท.อ.เมือง" required>
               </div>
               <div class="form-group">
                 <label>LINE User ID (U...) หรือ Group ID (C...)</label>
-                <input type="text" id="lineRecId" name="recipientLineId" class="inp" placeholder="ระบุรหัส User ID หรือ Group ID" required>
+                <input type="text" id="lineRecId" class="inp" placeholder="ระบุรหัส User ID หรือ Group ID" required>
               </div>
               <div class="form-group">
                 <label>ผูกกับอำเภอ</label>
-                <select id="lineRecDist" name="recipientDistId" class="inp"></select>
+                <select id="lineRecDist" class="inp"></select>
               </div>
               <button type="submit" class="btn btn-line" style="width:100%">+ บันทึกไอดีไลน์</button>
             </form>
@@ -640,7 +643,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <div class="drop" id="excelDropZone" onclick="triggerProtectedExcelPick()">
             <div style="font-size:38px;margin-bottom:8px">📊</div>
             <h4 style="font-size:16px;font-weight:800;margin-bottom:4px">คลิกเพื่อเลือกไฟล์ Excel (.xlsx, .csv) หรือลากไฟล์มาวางที่นี่</h4>
-            <p style="font-size:13px;color:var(--muted)">ระบบจะขอรหัสยืนยันความปลอดภัยก่อนนำเข้าข้อมูลการส่งรายงานประจำเดือน</p>
+            <p style="font-size:13px;color:var(--muted)">ระบบจะขอรหัสยืนยันความปลอดภัยก่อนนำเข้าข้อมูลและซิงค์ขึ้น Google Sheets อัตโนมัติ</p>
             <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" hidden onchange="handleExcelFileSelected(event)">
           </div>
 
@@ -659,16 +662,16 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <div class="card-h">
             <div>
               <h3>🔗 เชื่อมต่อฐานข้อมูล Google Sheets, Google Drive & LINE Messaging API (เฉพาะ Admin จังหวัด)</h3>
-              <p>ผูก Deploy URL ของ Google Apps Script เรียบร้อยแล้ว ข้อมูลทุกแถวจะถูกบันทึกลง Google Sheets อัตโนมัติผ่าน doPost(e)</p>
+              <p>เชื่อมต่อกับลิงก์ Google Apps Script ล่าสุดของคุณเรียบร้อยแล้ว สามารถกดทดสอบการเชื่อมต่อได้ทันที</p>
             </div>
-            <span class="pill pill-ok" id="gasConnBadge">🟢 เชื่อมต่อ Web App พร้อมใช้งาน</span>
+            <span class="pill pill-ok" id="gasConnBadge">🟢 พร้อมเชื่อมต่อ</span>
           </div>
           <div class="form-group">
-            <label>Google Apps Script Deploy URL (สำหรับรับค่า doPost(e) บันทึกลง Google Sheets + Google Drive + ส่ง LINE)</label>
-            <input type="url" id="cfgGasUrl" class="inp" value="https://script.google.com/macros/s/AKfycbx3yKC8UopjggcL1P-Ziw_fzWGWJbxLDXkEji79T1AU/dev" placeholder="https://script.google.com/macros/s/.../exec">
+            <label>Google Apps Script Web App URL (สำหรับบันทึก Google Sheets + อัปโหลดไฟล์เข้า Google Drive + ส่ง LINE)</label>
+            <input type="url" id="cfgGasUrl" class="inp" value="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" placeholder="https://script.google.com/macros/s/.../dev">
           </div>
           <div class="form-group">
-            <label>Google Drive Folder ID หลัก (เว้นว่างได้ ระบบจะสร้างโฟลเดอร์ CDD_Uthai_Report_Files แยก 4 กลุ่มงานให้อัตโนมัติ)</label>
+            <label>Google Drive Folder ID หลัก (เว้นว่างได้ ระบบจะสร้างโฟลเดอร์ CDD_Uthai_Report_Files_สพจ_อุทัยธานี แยก 4 กลุ่มงานให้อัตโนมัติ)</label>
             <input type="text" id="cfgDriveFolderId" class="inp" placeholder="ระบุ Folder ID ของ Google Drive (ถ้ามี)">
           </div>
           <div class="form-group">
@@ -699,7 +702,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('topicModal')">✕</button>
     </div>
     <div class="modal-b">
-      <form id="topicConfigForm" action="https://script.google.com/macros/s/AKfycbx3yKC8UopjggcL1P-Ziw_fzWGWJbxLDXkEji79T1AU/dev" method="POST" onsubmit="saveTopicModalSubmit(event)">
+      <form id="topicConfigForm" action="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" method="POST" onsubmit="saveTopicModalSubmit(event)">
         <input type="hidden" id="editTopicRepId" name="repId">
         <div class="form-group">
           <label for="topicGroupSelect">เลือกกลุ่มงานหลัก (4 กลุ่มงาน)</label>
@@ -740,8 +743,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('submitModal')">✕</button>
     </div>
     <div class="modal-b">
-      <!-- แท็ก <form> ระบุ action เป็น Deploy URL ของ Google Apps Script และเรียกฟังก์ชันส่งข้อมูล -->
-      <form id="reportSubmitForm" action="https://script.google.com/macros/s/AKfycbx3yKC8UopjggcL1P-Ziw_fzWGWJbxLDXkEji79T1AU/dev" method="POST" onsubmit="confirmSubmitReport(event)">
+      <form id="reportSubmitForm" action="https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev" method="POST" onsubmit="confirmSubmitReport(event)">
         <input type="hidden" id="subMonth" name="ประจำเดือน">
         <input type="hidden" id="subDistId" name="รหัสอำเภอ">
         <input type="hidden" id="subRepId" name="รหัสรายงาน">
@@ -819,7 +821,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
 <script>
 /* ================== 1. DATA & GOOGLE APPS SCRIPT DEPLOY URL ================== */
-const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx3yKC8UopjggcL1P-Ziw_fzWGWJbxLDXkEji79T1AU/dev';
+const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbws57S3ULn_tL1wvkevAqMZAKk7Ctim3MsShrlx4CRX/dev';
 
 const MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -908,11 +910,11 @@ const DEFAULT_WORKGROUPS = [
   }
 ];
 
-const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V7';
-const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V7';
-const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V7';
-const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V7';
-const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V7';
+const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V9';
+const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V9';
+const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V9';
+const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V9';
+const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V9';
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
@@ -1044,6 +1046,18 @@ function syncFormActionUrls() {
   });
 }
 
+function updateTopSyncIndicator(state, text) {
+  const badge = document.getElementById('topSyncStatus');
+  const cfgBadge = document.getElementById('gasConnBadge');
+  if (!badge) return;
+  badge.className = 'pill ' + (state === 'ok' ? 'pill-ok' : state === 'err' ? 'pill-rej' : 'pill-pend');
+  badge.textContent = text;
+  if (cfgBadge) {
+    cfgBadge.className = badge.className;
+    cfgBadge.textContent = text;
+  }
+}
+
 function loadState() {
   try {
     const wgRaw = localStorage.getItem(WORKGROUPS_CFG_KEY);
@@ -1145,9 +1159,38 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-/* ================== 4. ฟังก์ชันเชื่อมต่อฐานข้อมูล Google Sheets (fetch & google.script.run) ================== */
-async function sendToGoogleSheetDB(payload, formElement = null) {
-  // กรณีที่ 1: รันอยู่บน HtmlService ของ Google Apps Script โดยตรง ใช้ google.script.run
+/* ================== 4. GITHUB PAGES <-> GOOGLE APPS SCRIPT CONNECTOR ================== */
+function fetchViaJsonp(url, action = 'getInitialData') {
+  return new Promise((resolve) => {
+    const cbName = 'gasJsonpCb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve(null);
+    }, 12000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+
+    const sep = url.includes('?') ? '&' : '?';
+    script.src = `${url}${sep}action=${encodeURIComponent(action)}&callback=${cbName}&_t=${Date.now()}`;
+    script.onerror = function() {
+      cleanup();
+      resolve(null);
+    };
+    document.body.appendChild(script);
+  });
+}
+
+async function sendToGoogleSheetDB(payload) {
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     return new Promise((resolve) => {
       google.script.run
@@ -1157,9 +1200,30 @@ async function sendToGoogleSheetDB(payload, formElement = null) {
     });
   }
 
-  // กรณีที่ 2: รันผ่านหน้าเว็บ HTML ทั่วไป ใช้คำสั่ง fetch() ส่งไปยัง Deploy URL (doPost)
-  const targetUrl = (formElement && formElement.getAttribute('action')) || (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
-  if (!targetUrl) return null;
+  const targetUrl = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
+  if (!targetUrl) return { ok: false, error: 'ไม่ได้ระบุ URL' };
+
+  if (payload.action === 'getInitialData' || payload.action === 'ping') {
+    try {
+      const sep = targetUrl.includes('?') ? '&' : '?';
+      const getRes = await fetch(`${targetUrl}${sep}action=${encodeURIComponent(payload.action)}&_t=${Date.now()}`, {
+        method: 'GET',
+        redirect: 'follow'
+      });
+      const text = await getRes.text();
+      const parsed = JSON.parse(text);
+      if (parsed && parsed.ok) {
+        updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
+        return parsed;
+      }
+    } catch (e) {
+      const jsonpData = await fetchViaJsonp(targetUrl, payload.action);
+      if (jsonpData && jsonpData.ok) {
+        updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
+        return jsonpData;
+      }
+    }
+  }
 
   try {
     const response = await fetch(targetUrl, {
@@ -1169,13 +1233,12 @@ async function sendToGoogleSheetDB(payload, formElement = null) {
       body: JSON.stringify(payload)
     });
     const text = await response.text();
-    try {
-      return JSON.parse(text);
-    } catch (parseErr) {
-      return { ok: true, rawText: text };
+    const parsed = JSON.parse(text);
+    if (parsed && parsed.ok) {
+      updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
     }
+    return parsed;
   } catch (err) {
-    // Fallback โหมด no-cors เพื่อให้ข้อมูลถูกส่งเข้า doPost(e) ใน Google Sheets ได้เสมอแม้ติด CORS ของเบราว์เซอร์
     try {
       await fetch(targetUrl, {
         method: 'POST',
@@ -1183,8 +1246,10 @@ async function sendToGoogleSheetDB(payload, formElement = null) {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
+      updateTopSyncIndicator('ok', '🟢 ส่งข้อมูลเข้า Google Sheets แล้ว');
       return { ok: true, opaque: true };
     } catch (e2) {
+      updateTopSyncIndicator('err', '🔴 เชื่อมต่อไม่ได้');
       return { ok: false, error: String(e2) };
     }
   }
@@ -1192,20 +1257,23 @@ async function sendToGoogleSheetDB(payload, formElement = null) {
 
 async function syncTopicsAndVisibilityToGas() {
   if (!isAdmin()) return;
-  const formEl = document.getElementById('topicConfigForm');
   await sendToGoogleSheetDB({
     action: 'saveTopicsConfig',
     workgroups: WORKGROUPS,
     hiddenReportsByMonth: hiddenReportsByMonth,
     lineRecipients: lineRecipients
-  }, formEl);
+  });
 }
 
 async function pullStateFromGas(showNotification = false) {
+  updateTopSyncIndicator('pend', '⏳ กำลังซิงค์ Google Sheets...');
   try {
     const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
-    if (!res || !res.ok) {
-      if (showNotification) showToast('ℹ️ อัปเดตข้อมูลล่าสุดเรียบร้อยแล้ว');
+    if (!res || !res.ok || res.opaque) {
+      updateTopSyncIndicator('ok', '🟢 พร้อมส่งข้อมูลเข้า Google Sheets');
+      if (showNotification) {
+        showToast('✅ ซิงค์ข้อมูลพร้อมใช้งาน');
+      }
       return;
     }
 
@@ -1247,15 +1315,14 @@ async function pullStateFromGas(showNotification = false) {
       saveDB();
     }
 
+    updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
     populateReportDropdown();
     renderAll();
     if (showNotification) {
-      showToast('☁️ ดึงข้อมูลล่าสุดจากฐานข้อมูล Google Sheets เรียบร้อยแล้ว');
+      showToast('☁️ ซิงค์ข้อมูลล่าสุดจาก Google Sheets เรียบร้อยแล้ว');
     }
   } catch (err) {
-    if (showNotification) {
-      showToast('⚠️ ใช้ฐานข้อมูลสำรองในเครื่องเรียบร้อยแล้ว');
-    }
+    updateTopSyncIndicator('err', '🔴 ซิงค์ไม่สำเร็จ');
   }
 }
 
@@ -1713,7 +1780,7 @@ function toggleReportMonthVisibility(month, repId) {
   saveWorkgroupsAndVisibility(true);
   populateReportDropdown();
   renderAll();
-  showToast(nowHidden ? `🙈 ซ่อนรายงานในเดือน${month} และบันทึกลง Google Sheets แล้ว` : `👁️ เปิดใช้งานรายงานในเดือน${month} และบันทึกลง Google Sheets แล้ว`);
+  showToast(nowHidden ? `🙈 ซ่อนรายงานในเดือน${month} และซิงค์ไปยัง Google Sheets แล้ว` : `👁️ เปิดใช้งานรายงานในเดือน${month} และซิงค์ไปยัง Google Sheets แล้ว`);
 }
 
 function copyPrevMonthVisibility() {
@@ -1914,7 +1981,7 @@ async function downloadSubmittedFile(month, distId, repId) {
     return;
   }
 
-  showToast('⚠️ ไม่พบข้อมูลไฟล์ในเครื่อง กรุณากดปุ่มซิงค์ฐานข้อมูล Sheets ด้านบน');
+  showToast('⚠️ ไม่พบไฟล์ในเครื่อง กรุณากดปุ่มซิงค์ฐานข้อมูล Sheets ด้านบน');
 }
 
 function handleReportFileChange(e) {
@@ -2069,7 +2136,7 @@ function openSubmitModal(month, distId, repId) {
   document.getElementById('submitModal').classList.add('on');
 }
 
-async function syncRecordToGas(actionType, month, distId, repId, filePayload = null, formElement = null) {
+async function syncRecordToGas(actionType, month, distId, repId, filePayload = null) {
   const dist = DISTRICTS.find(d => d.id === distId);
   const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
   const rec = db[month][distId][repId];
@@ -2096,12 +2163,11 @@ async function syncRecordToGas(actionType, month, distId, repId, filePayload = n
     filePayload: filePayload
   };
 
-  return await sendToGoogleSheetDB(payload, formElement);
+  return await sendToGoogleSheetDB(payload);
 }
 
 async function confirmSubmitReport(e) {
   e.preventDefault();
-  const formEl = e.target;
   const m = document.getElementById('subMonth').value;
   const dId = document.getElementById('subDistId').value;
   const rId = document.getElementById('subRepId').value;
@@ -2110,7 +2176,7 @@ async function confirmSubmitReport(e) {
   const submitBtn = document.getElementById('btnConfirmSubmit');
 
   submitBtn.disabled = true;
-  submitBtn.textContent = '⏳ กำลังบันทึกลง Google Sheets & Google Drive...';
+  submitBtn.textContent = '⏳ กำลังส่งข้อมูลเข้า Google Sheets & Google Drive...';
 
   const newRec = {
     status: isAdmin() ? 'อนุมัติแล้ว' : 'รอตรวจสอบ',
@@ -2149,8 +2215,7 @@ async function confirmSubmitReport(e) {
       fileSize: stagedUploadFile.fileSize,
       mimeType: stagedUploadFile.mimeType,
       base64: stagedUploadFile.base64
-    } : null,
-    formEl
+    } : null
   );
 
   if (gasResult && gasResult.ok && gasResult.fileUrl) {
@@ -2169,7 +2234,7 @@ async function confirmSubmitReport(e) {
   showToast(
     stagedUploadFile
       ? `✅ บันทึกข้อมูลลง Google Sheets และอัปโหลดไฟล์ "${stagedUploadFile.fileName}" เข้า Google Drive เรียบร้อยแล้ว`
-      : `✅ บันทึกแถวข้อมูลลงฐานข้อมูล Google Sheets เรียบร้อยแล้ว`
+      : `✅ ส่งข้อมูลบันทึกลงฐานข้อมูล Google Sheets เรียบร้อยแล้ว`
   );
 }
 
@@ -2464,7 +2529,6 @@ function buildTemplateRows(useCurrentData = false) {
       const rec = useCurrentData ? db[currentMonth][d.id][r.id] : {
         status: 'ยังไม่ส่งรายงาน', score: 0, fileName: '', driveViewUrl: '', driveDownloadUrl: '', link: '', sender: '', submittedAt: '', note: ''
       };
-      // กำหนดหัวตารางให้ตรงกับคอลัมน์ใน Google Sheets ทุกประการ
       rows.push({
         'ประจำเดือน': currentMonth,
         'รหัสอำเภอ': d.id,
@@ -2513,7 +2577,7 @@ function handleExcelFileSelected(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(evt) {
+  reader.onload = async function(evt) {
     try {
       const data = new Uint8Array(evt.target.result);
       const wb = XLSX.read(data, { type: 'array' });
@@ -2521,6 +2585,7 @@ function handleExcelFileSelected(e) {
       const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
       let importedCount = 0;
       const allReps = getAllReportsFlat(null, true);
+      const batchForGas = [];
 
       rows.forEach(row => {
         const m = (row['ประจำเดือน'] || currentMonth).toString().trim();
@@ -2541,7 +2606,7 @@ function handleExcelFileSelected(e) {
 
         const viewUrl = (row['ลิงก์เปิดดูใน Google Drive'] || row['ลิงก์เอกสารแนบ'] || '').toString().trim();
         const dlUrl = (row['ลิงก์ดาวน์โหลดไฟล์'] || row['ลิงก์ดาวน์โหลด Google Drive'] || viewUrl).toString().trim();
-        db[m][dist.id][rep.id] = {
+        const recObj = {
           status: st,
           score: sc,
           fileName: (row['ชื่อไฟล์แนบ'] || '').toString().trim(),
@@ -2554,12 +2619,26 @@ function handleExcelFileSelected(e) {
           submittedAt: (row['อัปเดตล่าสุด'] || row['วันที่ส่ง'] || '').toString().trim(),
           note: (row['หมายเหตุ'] || '').toString().trim()
         };
+        db[m][dist.id][rep.id] = recObj;
+        batchForGas.push({
+          month: m,
+          distId: dist.id,
+          distName: dist.name,
+          groupId: rep.groupId,
+          groupName: rep.groupName,
+          repId: rep.id,
+          repName: rep.name,
+          ...recObj
+        });
         importedCount++;
       });
 
       saveDB();
       renderAll();
-      showToast(`✅ นำเข้าข้อมูลจากไฟล์ Excel สำเร็จจำนวน ${importedCount} รายการ`);
+      if (batchForGas.length > 0) {
+        await sendToGoogleSheetDB({ action: 'batchImport', records: batchForGas });
+      }
+      showToast(`✅ นำเข้าข้อมูลจากไฟล์ Excel และซิงค์ขึ้น Google Sheets สำเร็จ ${importedCount} รายการ`);
     } catch (err) {
       showToast('❌ รูปแบบไฟล์ไม่ถูกต้อง กรุณาใช้ไฟล์แม่แบบของระบบ');
     }
@@ -2579,25 +2658,29 @@ async function saveGasSettings() {
   localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
   syncFormActionUrls();
   await syncTopicsAndVisibilityToGas();
-  showToast('💾 บันทึก Deploy URL และซิงค์ข้อมูลกับ Google Sheets เรียบร้อยแล้ว');
+  await testGasConnection();
 }
 
 async function testGasConnection() {
   const statusBox = document.getElementById('gasStatusBox');
   statusBox.style.display = 'block';
-  statusBox.innerHTML = '⏳ กำลังทดสอบส่งคำสั่งไปยัง Google Apps Script (doPost)...';
+  const curUrl = (document.getElementById('cfgGasUrl').value || gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
+  gasConfig.url = curUrl;
+
+  statusBox.innerHTML = '⏳ กำลังทดสอบส่งคำสั่งไปยัง Google Apps Script...';
   const res = await sendToGoogleSheetDB({
     action: 'ping',
     driveFolderId: document.getElementById('cfgDriveFolderId').value.trim()
   });
   if (res && res.ok) {
-    statusBox.innerHTML = `✅ <b>เชื่อมต่อสำเร็จ!</b> ระบบพร้อมบันทึกแถวใหม่ลงฐานข้อมูล Google Sheets และจัดเก็บไฟล์ลง Google Drive อัตโนมัติ` +
-      (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets</a>` : '') +
+    statusBox.innerHTML = `✅ <b>เชื่อมต่อสำเร็จ!</b> ลิงก์ <code>${curUrl}</code> พร้อมบันทึกข้อมูลลงฐานข้อมูล Google Sheets และ Google Drive` +
+      (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '') +
       (res.driveUrl ? ` | 📁 <a href="${res.driveUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดโฟลเดอร์ Google Drive</a>` : '');
+    updateTopSyncIndicator('ok', '🟢 เชื่อมต่อ Google Sheets แล้ว');
     showToast('✅ เชื่อมต่อฐานข้อมูล Google Sheets สำเร็จ!');
   } else {
-    statusBox.innerHTML = '⚠️ ส่งคำสั่งเชื่อมต่อแล้ว กรุณาตรวจสอบว่าใน Apps Script ตั้งค่าการ Deploy > ผู้ที่มีสิทธิ์เข้าถึง เป็น "ทุกคน (Anyone)"';
-    showToast('⚠️ กรุณาตรวจสอบสิทธิ์การ Deploy ของ Google Apps Script');
+    statusBox.innerHTML = '⚠️ ส่งคำสั่งเชื่อมต่อแล้ว หากใช้งานจากเครื่องอื่นที่ไม่ใช่เครื่องแอดมิน แนะนำให้ตั้งค่าสิทธิ์การ Deploy เป็น "ทุกคน (Anyone)"';
+    updateTopSyncIndicator('err', '🔴 ตรวจสอบสิทธิ์ Deploy');
   }
 }
 
