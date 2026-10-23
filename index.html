@@ -418,14 +418,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
     </header>
 
     <main class="content">
-      <!-- แจ้งเตือนอัตโนมัติหากลืมกด New Version ใน Google Apps Script -->
-      <div class="note lock" id="oldGasVersionBanner" style="display:none;margin-bottom:16px">
-        <b>⚠️ ตรวจพบว่าลิงก์ Google Apps Script ของคุณยังรันโค้ดเวอร์ชันเก่าอยู่ (ยังไม่อัปเดตเป็น New Version):</b><br>
-        1. นำโค้ด <code>รหัส.gs</code> ล่าสุดไปวางใน Google Apps Script แล้วกด <b>Ctrl + S</b><br>
-        2. กดปุ่ม <b>การทำให้ใช้งานได้ (Deploy) > จัดการการทำให้ใช้งานได้ (Manage deployments)</b><br>
-        3. คลิก <b>รูปดินสอ (แก้ไข)</b> มุมขวาบน > ช่อง <b>เวอร์ชัน (Version)</b> เลือกเป็น <b>"เวอร์ชันใหม่ (New version)"</b> > กดปุ่ม <b>การทำให้ใช้งานได้ (Deploy)</b> แล้วกลับมาคลิกปุ่ม "🔄 ซิงค์ข้อมูลล่าสุด" บนหน้าเว็บนี้ครับ
-      </div>
-
       <!-- ==================== PAGE: OVERVIEW ==================== -->
       <section class="page active" id="page-overview">
         <div class="kpis" id="overviewKpis"></div>
@@ -572,28 +564,43 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
       <!-- ==================== PAGE: LINE NOTIFICATION (ADMIN ONLY) ==================== -->
       <section class="page" id="page-line">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-h">
+            <div>
+              <h3>🤖 ตั้งค่า LINE OA & ระบบดึง Group ID / User ID อัตโนมัติ</h3>
+              <p>เชื่อมต่อกับชีต <code>ตั้งค่าแจ้งเตือนLINE</code> ใน Google Sheets โดยตรง — รองรับทั้งการส่งผ่านบอทอัตโนมัติ และการแชร์ผ่านแอป LINE</p>
+            </div>
+            <button class="btn btn-sky btn-sm" onclick="pullStateFromGas(true)">🔄 ดึงไอดีที่ทักบอทเข้ามาอัตโนมัติ</button>
+          </div>
+          <div class="note" style="margin-top:0">
+            <b>📌 วิธีดึงรหัสกลุ่มไลน์ (C...) หรือรหัสผู้ใช้ (U...) เข้าตารางอัตโนมัติโดยไม่ต้องหาเอง:</b><br>
+            1. นำลิงก์ Web App URL <code>https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec</code> ไปใส่ในช่อง <b>Webhook URL</b> บนเว็บ LINE Developers (และเปิด Use webhook)<br>
+            2. เชิญบอทเข้ากลุ่มไลน์ หรือทักแชทบอท แล้วพิมพ์คำว่า <b><code>id</code></b> หรือ <b><code>ลงทะเบียน</code></b> บอทจะตอบกลับรหัสพร้อมบันทึกเข้าตารางด้านล่างนี้ให้อัตโนมัติทันที!
+          </div>
+        </div>
+
         <div class="grid">
           <div class="card c5" style="margin-bottom:0">
             <div class="card-h">
               <div>
-                <h3>➕ เพิ่มและจัดการไอดีไลน์ (LINE ID / Group ID)</h3>
-                <p>กำหนดไอดีไลน์สำหรับรับแจ้งเตือนผ่าน LINE Messaging API</p>
+                <h3>➕ เพิ่มและจัดการไอดีรับแจ้งเตือน LINE</h3>
+                <p>ข้อมูลจะถูกบันทึกลงชีต <code>ตั้งค่าแจ้งเตือนLINE</code> ใน Google Sheets ทันที</p>
               </div>
             </div>
-            <form id="lineRecForm" action="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" method="POST" onsubmit="addLineRecipient(event)" style="margin-bottom:14px">
+            <form id="lineRecForm" onsubmit="addLineRecipient(event)" style="margin-bottom:14px">
               <div class="form-group">
                 <label>ชื่อผู้รับ / ชื่อกลุ่มไลน์</label>
                 <input type="text" id="lineRecName" class="inp" placeholder="เช่น กลุ่มสารสนเทศ สพจ.อน. / จนท.อ.เมือง" required>
               </div>
               <div class="form-group">
-                <label>LINE User ID (U...) หรือ Group ID (C...)</label>
-                <input type="text" id="lineRecId" class="inp" placeholder="ระบุรหัส User ID หรือ Group ID" required>
+                <label>รหัส LINE User ID (ขึ้นต้นด้วย U...) หรือ Group ID (ขึ้นต้นด้วย C...)</label>
+                <input type="text" id="lineRecId" class="inp" placeholder="เช่น C1234567890abcdef... หรือ U1234567890..." required>
               </div>
               <div class="form-group">
                 <label>ผูกกับอำเภอ</label>
                 <select id="lineRecDist" class="inp"></select>
               </div>
-              <button type="submit" class="btn btn-line" style="width:100%">+ บันทึกไอดีไลน์</button>
+              <button type="submit" class="btn btn-line" id="btnSaveLineRec" style="width:100%">💾 บันทึกไอดีลง Google Sheets</button>
             </form>
             <div class="tbl-wrap" id="lineRecipientTable"></div>
           </div>
@@ -602,10 +609,11 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             <div class="card-h">
               <div>
                 <h3>📢 แจ้งเตือนทาง LINE ภายหลังจากอนุมัติรายงาน (เฉพาะ Admin)</h3>
-                <p>ส่งแจ้งเตือนเข้า LINE อัตโนมัติผ่าน Google Apps Script (LINE Messaging API) หรือแชร์ผ่านแอป LINE</p>
+                <p>เลือกส่งผ่านบอท LINE OA อัตโนมัติ หรือกดแชร์เข้าห้องแชท LINE ได้ทันที</p>
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <button class="btn btn-line btn-sm" onclick="sendMonthlySummaryLine()">📲 ส่งสรุปผลการอนุมัติเดือนนี้เข้า LINE</button>
+                <button class="btn btn-line btn-sm" onclick="sendMonthlySummaryLine(false)">🤖 ส่งสรุปเดือนนี้ผ่านบอท LINE</button>
+                <button class="btn btn-ghost btn-sm" onclick="sendMonthlySummaryLine(true)">📲 แชร์สรุปผ่านแอป LINE</button>
               </div>
             </div>
             <div class="tbl-wrap" id="approvedForLineTable"></div>
@@ -670,7 +678,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <div class="card-h">
             <div>
               <h3>🔗 เชื่อมต่อฐานข้อมูล Google Sheets, Google Drive & LINE Messaging API (เฉพาะ Admin จังหวัด)</h3>
-              <p>เชื่อมโยงกับ Web App URL (/exec) เรียบร้อยแล้ว ข้อมูลจากทุกเครื่องจะซิงค์เข้า Google Sheets อัตโนมัติ</p>
+              <p>บันทึกค่าการเชื่อมต่อและ LINE Channel Access Token ไว้ที่ฐานข้อมูลกลางของจังหวัด</p>
             </div>
             <span class="pill pill-ok" id="gasConnBadge">🟢 พร้อมเชื่อมต่อ</span>
           </div>
@@ -683,17 +691,17 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             <input type="text" id="cfgDriveFolderId" class="inp" placeholder="ระบุ Folder ID ของ Google Drive (ถ้ามี)">
           </div>
           <div class="form-group">
-            <label>LINE Channel Access Token (สำหรับส่งแจ้งเตือนผ่าน LINE Messaging API อัตโนมัติ)</label>
-            <input type="password" id="cfgLineToken" class="inp" placeholder="ใส่ Channel Access Token ของ LINE OA (ถ้ามี)">
+            <label>LINE Channel Access Token (Long-lived Token จาก LINE Developers Console) <span id="tokenSavedHint" style="color:var(--ok);font-weight:700"></span></label>
+            <input type="password" id="cfgLineToken" class="inp" placeholder="ใส่ Channel Access Token ของ LINE OA เพื่อให้บอทส่งข้อความอัตโนมัติ">
           </div>
           <div class="form-group">
-            <label>LINE User ID / Group ID เป้าหมายหลัก (ระบุภายหลังได้ หากเว้นว่างจะส่งแบบ Broadcast หรือแชร์ผ่าน LINE)</label>
+            <label>LINE User ID (U...) หรือ Group ID (C...) เป้าหมายหลัก (เว้นว่างได้ หากตั้งค่าในหน้าตารางไอดีไลน์แล้ว)</label>
             <input type="text" id="cfgLineTarget" class="inp" placeholder="เช่น C1234567890abcdef... หรือ U1234567890abcdef...">
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-            <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">💾 บันทึกการตั้งค่า & ซิงค์ขึ้น Google Sheets</button>
+            <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">💾 บันทึกการตั้งค่า & Token ลง Cloud</button>
             <button class="btn btn-sky btn-sm" onclick="testGasConnection()">🔌 ทดสอบการเชื่อมต่อ Google Sheets & Drive</button>
-            <button class="btn btn-line btn-sm" onclick="testLineConnection()">🔔 ทดสอบแจ้งเตือน LINE</button>
+            <button class="btn btn-line btn-sm" onclick="testLineConnection()">🔔 ทดสอบส่งข้อความเข้า LINE</button>
           </div>
           <div id="gasStatusBox" class="note" style="display:none"></div>
         </div>
@@ -710,7 +718,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('topicModal')">✕</button>
     </div>
     <div class="modal-b">
-      <form id="topicConfigForm" action="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" method="POST" onsubmit="saveTopicModalSubmit(event)">
+      <form id="topicConfigForm" onsubmit="saveTopicModalSubmit(event)">
         <input type="hidden" id="editTopicRepId" name="repId">
         <div class="form-group">
           <label for="topicGroupSelect">เลือกกลุ่มงานหลัก (4 กลุ่มงาน)</label>
@@ -751,7 +759,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('submitModal')">✕</button>
     </div>
     <div class="modal-b">
-      <form id="reportSubmitForm" action="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" method="POST" onsubmit="confirmSubmitReport(event)">
+      <form id="reportSubmitForm" onsubmit="confirmSubmitReport(event)">
         <input type="hidden" id="subMonth" name="ประจำเดือน">
         <input type="hidden" id="subDistId" name="รหัสอำเภอ">
         <input type="hidden" id="subRepId" name="รหัสรายงาน">
@@ -846,8 +854,8 @@ const ACCOUNTS = {
   'UTI03': { pass: '3333', role: 'district', name: '3. สำนักงานพัฒนาชุมชนอำเภอหนองฉาง', distId: 'UTI03' },
   'UTI04': { pass: '4444', role: 'district', name: '4. สำนักงานพัฒนาชุมชนอำเภอทัพทัน', distId: 'UTI04' },
   'UTI05': { pass: '5555', role: 'district', name: '5. สำนักงานพัฒนาชุมชนอำเภอสว่างอารมณ์', distId: 'UTI05' },
-  'UTI06': { pass: '6666', role: 'district', name: '6. สำนักงานพัฒนาชุมชนอำเภอลานสัก ', distId: 'UTI06' },
-  'UTI07': { pass: '7777', role: 'district', name: '7. สำนักงานพัฒนาชุมชนอำเภอห้วยคต ', distId: 'UTI07' },
+  'UTI06': { pass: '6666', role: 'district', name: '6. สำนักงานพัฒนาชุมชนอำเภอลานสัก (UTI06)', distId: 'UTI06' },
+  'UTI07': { pass: '7777', role: 'district', name: '7. สำนักงานพัฒนาชุมชนอำเภอลานสัก / ห้วยคต (UTI07)', distId: 'UTI07' },
   'UTI08': { pass: '8888', role: 'district', name: '8. สำนักงานพัฒนาชุมชนอำเภอบ้านไร่', distId: 'UTI08' }
 };
 
@@ -857,8 +865,8 @@ const DISTRICTS = [
   { id: 'UTI03', name: '3. สพอ.หนองฉาง', short: 'อ.หนองฉาง' },
   { id: 'UTI04', name: '4. สพอ.ทัพทัน', short: 'อ.ทัพทัน' },
   { id: 'UTI05', name: '5. สพอ.สว่างอารมณ์', short: 'อ.สว่างอารมณ์' },
-  { id: 'UTI06', name: '6. สพอ.ลานสัก ', short: 'อ.ลานสัก (06)' },
-  { id: 'UTI07', name: '7. สพอ.ห้วยคต ', short: 'อ.ห้วยคต (07)' },
+  { id: 'UTI06', name: '6. สพอ.ลานสัก (UTI06)', short: 'อ.ลานสัก (06)' },
+  { id: 'UTI07', name: '7. สพอ.ลานสัก/ห้วยคต (UTI07)', short: 'อ.ห้วยคต (07)' },
   { id: 'UTI08', name: '8. สพอ.บ้านไร่', short: 'อ.บ้านไร่' }
 ];
 
@@ -918,11 +926,11 @@ const DEFAULT_WORKGROUPS = [
   }
 ];
 
-const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V12';
-const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V12';
-const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V12';
-const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V12';
-const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V12';
+const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V13';
+const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V13';
+const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V13';
+const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V13';
+const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V13';
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
@@ -1047,14 +1055,6 @@ function ensureDBStructure() {
   });
 }
 
-function syncFormActionUrls() {
-  const activeUrl = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
-  ['reportSubmitForm', 'topicConfigForm', 'lineRecForm'].forEach(formId => {
-    const f = document.getElementById(formId);
-    if (f) f.setAttribute('action', activeUrl);
-  });
-}
-
 function updateTopSyncIndicator(state, text) {
   const badge = document.getElementById('topSyncStatus');
   const cfgBadge = document.getElementById('gasConnBadge');
@@ -1112,7 +1112,6 @@ function loadState() {
   document.getElementById('cfgDriveFolderId').value = gasConfig.driveFolderId || '';
   document.getElementById('cfgLineToken').value = gasConfig.token || '';
   document.getElementById('cfgLineTarget').value = gasConfig.target || '';
-  syncFormActionUrls();
 }
 
 function saveDB() {
@@ -1208,7 +1207,6 @@ async function sendToGoogleSheetDB(payload) {
   const hasLargeFile = Boolean(payload.filePayload && payload.filePayload.base64);
   const serialized = JSON.stringify(payload);
 
-  // 1. กรณีดึงข้อมูล (getInitialData / ping)
   if (payload.action === 'getInitialData' || payload.action === 'ping') {
     try {
       const sep = targetUrl.includes('?') ? '&' : '?';
@@ -1225,8 +1223,6 @@ async function sendToGoogleSheetDB(payload) {
     }
   }
 
-  // 2. กรณีบันทึกข้อมูลขนาดเล็ก (ไม่มีไฟล์แนบ เช่น ให้คะแนน, ส่งลิงก์งาน, เพิ่ม/ซ่อนหัวข้อรายงาน):
-  // ส่งผ่าน POST และหากติด CORS ให้ส่งผ่าน GET Query Payload เพื่อการันตีว่าลง Google Sheets 100%
   try {
     const response = await fetch(targetUrl, {
       method: 'POST',
@@ -1238,12 +1234,12 @@ async function sendToGoogleSheetDB(payload) {
     const parsed = JSON.parse(text);
     if (parsed && parsed.ok) {
       updateTopSyncIndicator('ok', '🟢 ซิงค์ Google Sheets แล้ว');
-      return parsed;
     }
+    return parsed;
   } catch (postErr) {
     if (!hasLargeFile && serialized.length < 1800) {
       const getFallback = await callViaJsonp(targetUrl, { payload: serialized });
-      if (getFallback && getFallback.ok) {
+      if (getFallback) {
         updateTopSyncIndicator('ok', '🟢 ซิงค์ Google Sheets แล้ว');
         return getFallback;
       }
@@ -1262,7 +1258,6 @@ async function sendToGoogleSheetDB(payload) {
       return { ok: false, error: String(e2) };
     }
   }
-  return { ok: false };
 }
 
 async function syncTopicsAndVisibilityToGas() {
@@ -1275,27 +1270,23 @@ async function syncTopicsAndVisibilityToGas() {
   });
 }
 
+async function syncLineConfigToGas() {
+  if (!isAdmin()) return null;
+  return await sendToGoogleSheetDB({
+    action: 'saveLineConfig',
+    lineRecipients: lineRecipients,
+    token: gasConfig.token || '',
+    target: gasConfig.target || ''
+  });
+}
+
 async function pullStateFromGas(showNotification = false, silentBackground = false) {
   if (!silentBackground) {
     updateTopSyncIndicator('pend', '⏳ กำลังซิงค์ข้อมูล...');
   }
   try {
     const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
-    const warnBanner = document.getElementById('oldGasVersionBanner');
-
-    // ตรวจจับกรณีลิงก์ /exec ยังรันโค้ดเก่า 75 บรรทัด (ที่ตอบกลับมาแค่ status: 'CDD Uthai Report API Ready' ไม่มี records)
-    if (res && res.ok && !Array.isArray(res.records)) {
-      if (warnBanner) warnBanner.style.display = 'block';
-      updateTopSyncIndicator('err', '⚠️ ต้องกด New Version ใน Apps Script');
-      if (showNotification) {
-        showToast('⚠️ ลิงก์ Apps Script ยังเป็นเวอร์ชันเก่า กรุณาอัปเดตเป็น New Version ตามแถบแจ้งเตือนด้านบน');
-      }
-      return;
-    }
-
-    if (warnBanner) warnBanner.style.display = 'none';
-
-    if (!res || !res.ok || res.opaque) {
+    if (!res || !res.ok || res.opaque || !Array.isArray(res.records)) {
       if (showNotification) showToast('ℹ️ อัปเดตสถานะเรียบร้อยแล้ว');
       return;
     }
@@ -1308,9 +1299,18 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
       hiddenReportsByMonth = res.hiddenReportsByMonth;
       localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
     }
-    if (Array.isArray(res.lineRecipients) && res.lineRecipients.length > 0) {
+    // ซิงค์รายการไอดีไลน์จากชีต ตั้งค่าแจ้งเตือนLINE ทุกครั้ง (แม้มี 0 รายการก็ซิงค์ให้ตรงกัน)
+    if (Array.isArray(res.lineRecipients)) {
       lineRecipients = res.lineRecipients;
       localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
+    }
+    if (res.lineTarget && !gasConfig.target) {
+      gasConfig.target = res.lineTarget;
+      document.getElementById('cfgLineTarget').value = res.lineTarget;
+    }
+    const tokenHint = document.getElementById('tokenSavedHint');
+    if (tokenHint) {
+      tokenHint.textContent = res.lineTokenSaved ? '(บันทึก Token ไว้บน Cloud แล้ว ✅)' : '';
     }
 
     db = createEmptyDB();
@@ -1343,7 +1343,7 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
     populateReportDropdown();
     renderAll();
     if (showNotification) {
-      showToast(`☁️ ดึงข้อมูลจาก Google Sheets สำเร็จ (${res.records.length} รายการที่ส่งแล้ว)`);
+      showToast(`☁️ ซิงค์ข้อมูลล่าสุดสำเร็จ (รายงาน ${res.records.length} รายการ • ไอดีไลน์ ${lineRecipients.length} รายการ)`);
     }
   } catch (err) {
     if (!silentBackground) {
@@ -2264,7 +2264,6 @@ async function confirmSubmitReport(e) {
     }
     saveDB();
   } else {
-    // ดึงข้อมูลซ้ำจาก Google Sheets เพื่อให้ได้ลิงก์ Google Drive ล่าสุดกรณีส่งผ่านโหมดสำรอง
     setTimeout(() => pullStateFromGas(false, true), 1500);
   }
 
@@ -2291,7 +2290,7 @@ function initFilters() {
 
   const lDist = document.getElementById('lineRecDist');
   if (lDist) {
-    lDist.innerHTML = `<option value="ALL">จังหวัดอุทัยธานี (แจ้งเตือนภาพรวม)</option>` +
+    lDist.innerHTML = `<option value="ALL">จังหวัดอุทัยธานี (แจ้งเตือนภาพรวมทุกอำเภอ)</option>` +
       DISTRICTS.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
   }
 
@@ -2404,7 +2403,8 @@ function renderApprovalPage() {
 
       const actions = admin ? `
         <button class="btn btn-ok btn-xs" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">✅ อนุมัติ (+2)</button>
-        <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}')">💬 แจ้ง LINE</button>
+        <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)">🤖 บอท LINE</button>
+        <button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',true)">📲 แชร์</button>
       ` : `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${m}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>`;
 
       lRows += `<tr>
@@ -2415,7 +2415,7 @@ function renderApprovalPage() {
         <td class="center"><b>${rec.score}</b></td>
         <td class="center">${fileCellHtml}</td>
         <td>${rec.sender || '-'}</td>
-        <td class="center">${actions}</td>
+        <td class="center" style="white-space:nowrap">${actions}</td>
       </tr>`;
     });
   });
@@ -2447,43 +2447,66 @@ function approveAllPendingInFilter() {
   showToast(`✅ อนุมัติรายการที่รอตรวจทั้งหมด ${count} งาน และซิงค์ลง Google Sheets เรียบร้อยแล้ว`);
 }
 
-/* ================== 13. LINE NOTIFICATION (ADMIN ONLY) ================== */
-function addLineRecipient(e) {
+/* ================== 13. LINE NOTIFICATION & ID SAVING TO GOOGLE SHEETS (ADMIN ONLY) ================== */
+async function addLineRecipient(e) {
   e.preventDefault();
   if (!isAdmin()) return;
   const name = document.getElementById('lineRecName').value.trim();
   const lineId = document.getElementById('lineRecId').value.trim();
   const distId = document.getElementById('lineRecDist').value;
+  if (!name || !lineId) return;
+
+  const btn = document.getElementById('btnSaveLineRec');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึกลง Google Sheets...';
+
   lineRecipients.push({ id: Date.now().toString(), name, lineId, distId });
   localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
-  syncTopicsAndVisibilityToGas();
+  renderLinePage();
+
+  const res = await syncLineConfigToGas();
+  btn.disabled = false;
+  btn.textContent = '💾 บันทึกไอดีลง Google Sheets';
   document.getElementById('lineRecName').value = '';
   document.getElementById('lineRecId').value = '';
-  renderLinePage();
-  showToast('✅ เพิ่มไอดีไลน์สำหรับรับการแจ้งเตือนเรียบร้อยแล้ว');
+
+  const isValidFormat = /^[UCR][0-9a-fA-F]{32}$/.test(lineId);
+  if (!isValidFormat) {
+    showToast('⚠️ บันทึกแล้ว (หมายเหตุ: หากส่งผ่านบอท LINE OA รหัสต้องขึ้นต้นด้วย U หรือ C จำนวน 33 ตัวอักษร)');
+  } else {
+    showToast('✅ บันทึกไอดีไลน์ลงชีต "ตั้งค่าแจ้งเตือนLINE" เรียบร้อยแล้ว');
+  }
 }
 
-function removeLineRecipient(id) {
+async function removeLineRecipient(id) {
   if (!isAdmin()) return;
-  lineRecipients = lineRecipients.filter(x => x.id !== id);
+  lineRecipients = lineRecipients.filter(x => String(x.id) !== String(id));
   localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
-  syncTopicsAndVisibilityToGas();
   renderLinePage();
+  await syncLineConfigToGas();
+  showToast('🗑️ ลบไอดีไลน์ออกจาก Google Sheets เรียบร้อยแล้ว');
 }
 
 function renderLinePage() {
   if (!isAdmin()) return;
-  const rRows = lineRecipients.map(r => `
-    <tr>
-      <td><b>${r.name}</b><br><small style="color:var(--muted)">ID: ${r.lineId}</small></td>
-      <td>${r.distId === 'ALL' ? 'ทุกอำเภอ (จังหวัด)' : r.distId}</td>
-      <td class="center"><button class="btn btn-danger btn-xs" onclick="removeLineRecipient('${r.id}')">ลบ</button></td>
-    </tr>
-  `).join('');
+  const rRows = lineRecipients.map(r => {
+    const validApiId = /^[UCR][0-9a-fA-F]{32}$/.test(r.lineId);
+    const badge = validApiId
+      ? `<span class="pill pill-ok">🟢 รหัส Messaging API ถูกต้อง</span>`
+      : `<span class="pill pill-pend" title="รหัสสำหรับบอทส่งอัตโนมัติต้องขึ้นต้นด้วย U หรือ C">⚠️ ไม่ใช่รหัส U.../C... (ใช้โหมดแชร์แทน)</span>`;
+    return `
+      <tr>
+        <td><b>${r.name}</b><br><small style="color:var(--muted);word-break:break-all">ID: ${r.lineId}</small><br>${badge}</td>
+        <td>${r.distId === 'ALL' ? 'ทุกอำเภอ (จังหวัด)' : r.distId}</td>
+        <td class="center"><button class="btn btn-danger btn-xs" onclick="removeLineRecipient('${r.id}')">ลบ</button></td>
+      </tr>
+    `;
+  }).join('');
+
   document.getElementById('lineRecipientTable').innerHTML = `
     <table>
-      <thead><tr><th>ชื่อ / LINE ID</th><th>อำเภอ</th><th class="center">ลบ</th></tr></thead>
-      <tbody>${rRows || '<tr><td colspan="3" class="center">ยังไม่มีรายชื่อไอดีไลน์ (สามารถเพิ่มภายหลังได้)</td></tr>'}</tbody>
+      <thead><tr><th>ชื่อ / รหัส LINE User ID, Group ID</th><th>อำเภอ</th><th class="center">ลบ</th></tr></thead>
+      <tbody>${rRows || '<tr><td colspan="3" class="center">ยังไม่มีรายชื่อไอดีไลน์ (พิมพ์เพิ่มด้านบน หรือพิมพ์ id ในกลุ่มที่มีบอทแล้วกดซิงค์)</td></tr>'}</tbody>
     </table>
   `;
 
@@ -2497,8 +2520,9 @@ function renderLinePage() {
           <td><b>${d.short}</b></td>
           <td>${r.name}</td>
           <td class="center"><span class="pill pill-ok">+${rec.score} คะแนน</span></td>
-          <td class="center">
-            <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${currentMonth}','${d.id}','${r.id}')">📲 แจ้งเตือน LINE</button>
+          <td class="center" style="white-space:nowrap">
+            <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${currentMonth}','${d.id}','${r.id}',false)">🤖 ส่งผ่านบอท</button>
+            <button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${currentMonth}','${d.id}','${r.id}',true)">📲 แชร์ผ่านแอป</button>
           </td>
         </tr>`;
       }
@@ -2506,18 +2530,27 @@ function renderLinePage() {
   });
   document.getElementById('approvedForLineTable').innerHTML = `
     <table>
-      <thead><tr><th>อำเภอ</th><th>รายงานที่อนุมัติแล้ว (เดือน${currentMonth})</th><th class="center">คะแนน</th><th class="center">ส่งแจ้งเตือน</th></tr></thead>
+      <thead><tr><th>อำเภอ</th><th>รายงานที่อนุมัติแล้ว (เดือน${currentMonth})</th><th class="center">คะแนน</th><th class="center">ส่งแจ้งเตือน LINE</th></tr></thead>
       <tbody>${aRows || '<tr><td colspan="4" class="center">ยังไม่มีรายการที่อนุมัติในเดือนนี้</td></tr>'}</tbody>
     </table>
   `;
 }
 
-async function dispatchLineMessage(messageText, distIdFilter = 'ALL') {
+async function dispatchLineMessage(messageText, distIdFilter = 'ALL', forceManualShare = false) {
   if (!isAdmin()) {
     showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถส่งแจ้งเตือน LINE ได้');
     return;
   }
 
+  // กรณีเลือกปุ่ม "แชร์ผ่านแอป LINE" โดยตรง
+  if (forceManualShare) {
+    const shareUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(messageText);
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    showToast('📲 เปิดหน้าต่างแชร์ข้อความไปยังแอป LINE เรียบร้อยแล้ว');
+    return;
+  }
+
+  showToast('⏳ กำลังส่งข้อความผ่านบอท LINE Messaging API...');
   const filteredRecipients = lineRecipients.filter(r => r.distId === 'ALL' || distIdFilter === 'ALL' || r.distId === distIdFilter);
   const res = await sendToGoogleSheetDB({
     action: 'sendLine',
@@ -2527,26 +2560,28 @@ async function dispatchLineMessage(messageText, distIdFilter = 'ALL') {
     recipients: filteredRecipients
   });
 
-  if (res && res.ok && !res.opaque && (res.mode === 'push' || res.mode === 'broadcast')) {
-    showToast('📲 ส่งแจ้งเตือนผ่าน LINE Messaging API เรียบร้อยแล้ว');
+  if (res && res.ok && !res.opaque) {
+    showToast(`✅ ส่งแจ้งเตือนผ่านบอท LINE OA สำเร็จ! (${res.mode === 'push' ? `ส่งเข้า ${res.sentCount} กลุ่ม/ผู้ใช้` : 'ส่งแบบ Broadcast'})`);
     return;
   }
 
+  // หากบอทส่งไม่ผ่าน (เช่น ยังไม่ได้ใส่ Channel Access Token หรือใส่ ID ไม่ใช่รหัส U.../C...) ให้แจ้งเตือนและเปิดหน้าต่างแชร์ให้แทน
+  const errReason = (res && res.error) ? res.error : 'ยังไม่ได้ตั้งค่า LINE Channel Access Token';
+  showToast(`⚠️ บอทส่งอัตโนมัติไม่ผ่าน (${errReason}) ระบบจึงเปิดหน้าต่างแชร์ LINE ให้แทน`);
   const shareUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(messageText);
   window.open(shareUrl, '_blank', 'noopener,noreferrer');
-  showToast('📲 เปิดส่งข้อความแจ้งเตือนไปยัง LINE เรียบร้อยแล้ว');
 }
 
-function sendSingleLineAlert(month, distId, repId) {
+function sendSingleLineAlert(month, distId, repId, forceManualShare = false) {
   const dist = DISTRICTS.find(d => d.id === distId);
   const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
   const rec = db[month][distId][repId];
   const fileLine = rec.fileName ? `\nไฟล์แนบ: ${rec.fileName}` : '';
   const msg = `✅ [CDD Uthai Report - แจ้งผลการอนุมัติรายงาน]\nประจำเดือน: ${month}\nหน่วยงาน: ${dist.name}\nกลุ่มงาน: ${rep.groupShort}\nรายงาน: ${rep.name}${fileLine}\nสถานะ: ${rec.status} (+${rec.score} คะแนน)`;
-  dispatchLineMessage(msg, distId);
+  dispatchLineMessage(msg, distId, forceManualShare);
 }
 
-function sendMonthlySummaryLine() {
+function sendMonthlySummaryLine(forceManualShare = false) {
   const reports = getAllReportsFlat(currentMonth, false);
   let lines = [`📊 [CDD Uthai Report] สรุปคะแนนประจำเดือน${currentMonth}`, `สพจ.อุทัยธานี (เปิดส่ง ${reports.length} งาน • 1 งาน = 2 คะแนน)`];
   DISTRICTS.forEach(d => {
@@ -2558,7 +2593,7 @@ function sendMonthlySummaryLine() {
     });
     lines.push(`• ${d.short}: ${sc}/${reports.length * 2} คะแนน (${app}/${reports.length} งาน)`);
   });
-  dispatchLineMessage(lines.join('\n'), 'ALL');
+  dispatchLineMessage(lines.join('\n'), 'ALL', forceManualShare);
 }
 
 /* ================== 14. EXCEL / GOOGLE SHEETS IMPORT & EXPORT ================== */
@@ -2697,9 +2732,10 @@ async function saveGasSettings() {
     target: document.getElementById('cfgLineTarget').value.trim()
   };
   localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
-  syncFormActionUrls();
+  await syncLineConfigToGas();
   await syncTopicsAndVisibilityToGas();
   await testGasConnection();
+  showToast('💾 บันทึกการตั้งค่าและ LINE Token ลงฐานข้อมูลกลางเรียบร้อยแล้ว');
 }
 
 async function testGasConnection() {
@@ -2711,25 +2747,17 @@ async function testGasConnection() {
   statusBox.innerHTML = '⏳ กำลังตรวจสอบเวอร์ชันและการเชื่อมต่อกับ Google Apps Script...';
   const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
 
-  if (res && res.ok && !Array.isArray(res.records)) {
-    statusBox.innerHTML = `⚠️ <b>เชื่อมต่อถึงลิงก์สำเร็จ แต่ลิงก์นี้ยังรันโค้ดเวอร์ชันเก่าอยู่!</b><br>กรุณาวางโค้ด <code>รหัส.gs</code> ใหม่ใน Apps Script แล้วไปที่ <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b>`;
-    updateTopSyncIndicator('err', '⚠️ ต้องกด New Version ใน Apps Script');
-    return;
-  }
-
   if (res && res.ok && Array.isArray(res.records)) {
-    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์ (เวอร์ชัน ${res.version || 'ล่าสุด'})!</b><br>พบข้อมูลรายงานที่บันทึกใน Google Sheets แล้วจำนวน <b>${res.records.length}</b> รายการ` +
+    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์ (เวอร์ชัน ${res.version || 'ล่าสุด'})!</b><br>พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${(res.lineRecipients || []).length}</b> รายการ` +
       (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
     updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ)`);
-    showToast('✅ เชื่อมต่อฐานข้อมูล Google Sheets สำเร็จสมบูรณ์!');
   } else {
-    statusBox.innerHTML = '⚠️ ไม่สามารถอ่านค่าตอบกลับได้ กรุณาตรวจสอบว่าในหน้า Manage Deployments ตั้งค่าผู้มีสิทธิ์เข้าถึงเป็น "ทุกคน (Anyone)" และเลือก "เวอร์ชันใหม่ (New version)" แล้ว';
-    updateTopSyncIndicator('err', '🔴 ตรวจสอบสิทธิ์ Deploy');
+    statusBox.innerHTML = '⚠️ กรุณาตรวจสอบว่าอัปเดตโค้ด รหัส.gs เป็น V13 และกด Deploy > Manage deployments > New version แล้ว';
   }
 }
 
 function testLineConnection() {
-  dispatchLineMessage('🔔 ทดสอบการแจ้งเตือนจากระบบ CDD Uthai Report กลุ่มงานสารสนเทศการพัฒนาชุมชน สพจ.อุทัยธานี', 'ALL');
+  dispatchLineMessage('🔔 ทดสอบการแจ้งเตือนจากระบบ CDD Uthai Report กลุ่มงานสารสนเทศการพัฒนาชุมชน สพจ.อุทัยธานี', 'ALL', false);
 }
 
 function closeModal(id) {
@@ -2749,7 +2777,7 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('on'), 3500);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 4000);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
