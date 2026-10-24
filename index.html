@@ -245,14 +245,10 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 .m-chip.on{background:rgba(16,185,129,.15); color:#059669; border-color:rgba(16,185,129,.35)}
 .m-chip.off{background:rgba(244,63,94,.12); color:#E11D48; border-color:rgba(244,63,94,.3); text-decoration:line-through}
 
-/* Recipient Selector Chips */
-.rec-chip{
-  display:inline-flex; align-items:center; gap:6px; padding:5px 11px;
-  border-radius:10px; font-size:12px; font-weight:600; cursor:pointer;
-  border:1.5px solid var(--line-2); background:var(--surface-2); transition:var(--t);
-}
-.rec-chip.checked{
-  border-color:var(--line-green); background:rgba(6,199,85,.12); color:#059669; font-weight:700;
+/* District Selector Box in LINE Page */
+.line-selector-box{
+  background:linear-gradient(135deg,rgba(79,70,229,.07) 0%,rgba(6,199,85,.08) 100%);
+  border:1.5px solid rgba(6,199,85,.35); border-radius:var(--r-lg); padding:16px; margin-bottom:16px;
 }
 
 /* File Upload Box inside Modal */
@@ -360,7 +356,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         <span class="b-cnt" id="badgePend">0</span>
       </button>
       <button class="nav-item" data-page="line" id="navLine" onclick="switchPage('line')">
-        <span>💬 แจ้งเตือน LINE & แจ้งงานค้าง</span>
+        <span>💬 แจ้งเตือน LINE (เลือกอำเภอ/ไอดี)</span>
       </button>
 
       <div class="nav-label">เมนูหลัก 4 กลุ่มงาน (ส่งรายงาน)</div>
@@ -414,9 +410,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         </span>
         <button class="btn btn-ok btn-sm" onclick="pullStateFromGas(true)" title="ดึงข้อมูลล่าสุดจากฐานข้อมูล Google Sheets ทันที">
           🔄 ซิงค์ข้อมูลล่าสุด
-        </button>
-        <button class="btn btn-line btn-sm" id="btnTopLine" onclick="switchPage('line')">
-          💬 ส่งแจ้งเตือน LINE
         </button>
         <button class="btn btn-sky btn-sm" id="btnTopTopics" onclick="openAddTopicModal()">
           ➕ เพิ่ม/ซ่อนหัวข้อรายงาน
@@ -567,4 +560,2840 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-primary btn-sm" onclick="openAddTopicModal()">➕ เพิ่มหัวข้อรายงานใหม่</button>
-              <button class="btn btn-ghost btn-sm" onclick="copyPrevMonthVisibility()">📋 คัดลอกการเปิด
+              <button class="btn btn-ghost btn-sm" onclick="copyPrevMonthVisibility()">📋 คัดลอกการเปิด/ซ่อนจากเดือนก่อนหน้า</button>
+            </div>
+          </div>
+
+          <div class="note" style="margin-bottom:16px">
+            <b>💡 วิธีใช้งานการซ่อน/เปิดรายงานรายเดือน:</b>
+            เดือนไหนที่มีงานส่งเท่าเดิมไม่ต้องปรับอะไร หากเดือนถัดไป<b>ไม่ต้องส่งงานตัวไหน</b> ให้คลิกปุ่ม <span class="pill pill-rej">🙈 ซ่อนเดือนนี้</span> หรือคลิกที่ชื่อเดือนในตารางด้านล่างเพื่อเปลี่ยนเป็นสถานะงดส่ง และหากเดือนถัดไปมี<b>การเพิ่มหัวข้อส่งงานใหม่</b> สามารถกดปุ่ม <b>"➕ เพิ่มหัวข้อรายงานใหม่"</b> ได้ทันที
+          </div>
+
+          <div class="subtabs" id="topicGroupTabs"></div>
+          <div class="tbl-wrap" id="topicManagerTableWrap"></div>
+        </div>
+      </section>
+
+      <!-- ==================== PAGE: MANAGE PASSWORDS FOR DISTRICTS (ADMIN ONLY) ==================== -->
+      <section class="page" id="page-passwords">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h3>🔑 จัดการและเปลี่ยนรหัสผ่านให้อำเภอ & ผู้ดูแลระบบ (เฉพาะ Admin จังหวัดเท่านั้น)</h3>
+              <p>เมื่อแอดมินเปลี่ยนรหัสผ่านและกดบันทึก ระบบจะซิงค์ขึ้น Cloud ทันที ทำให้อำเภอใช้รหัสผ่านใหม่เข้าสู่ระบบได้จากทุกเครื่อง</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="toggleShowAllPasswords()" id="btnToggleShowPass">👁️ แสดงรหัสผ่านเป็นตัวอักษร</button>
+              <button class="btn btn-warn btn-sm" onclick="resetPasswordsToDefault()">🔄 คืนค่ารหัสผ่านเริ่มต้น</button>
+              <button class="btn btn-primary btn-sm" onclick="saveAllPasswordsFromTable()">💾 บันทึกรหัสผ่านทั้งหมดลง Cloud</button>
+            </div>
+          </div>
+
+          <div class="note lock" style="margin-bottom:16px">
+            <b>🔐 สิทธิ์เฉพาะแอดมินจังหวัด (Admin):</b> คุณสามารถแก้ไขรหัสผ่านของทั้ง 8 อำเภอ (<code>UTI01</code> – <code>UTI08</code>) และรหัสของ <code>Admin</code> ได้ในตารางด้านล่าง เมื่อแก้ไขแล้วกดปุ่ม <b>"💾 บันทึก"</b> ระบบจะอัปเดตลงฐานข้อมูลทันที
+          </div>
+
+          <div class="tbl-wrap" id="passwordManagerTableWrap"></div>
+        </div>
+      </section>
+
+      <!-- ==================== PAGE: LINE NOTIFICATION & DISTRICT SELECTOR (ADMIN ONLY) ==================== -->
+      <section class="page" id="page-line">
+        <div class="grid">
+          <!-- ซ้าย: ฟอร์มบันทึกไอดีไลน์ประจำอำเภอ -->
+          <div class="card c5" style="margin-bottom:0">
+            <div class="card-h">
+              <div>
+                <h3 id="lineFormHeaderTitle">➕ บันทึกและผูกไอดีไลน์ประจำอำเภอ</h3>
+                <p>ผูกไอดีไลน์เข้ากับแต่ละอำเภอ เพื่อเลือกส่งเฉพาะอำเภอหรือเลือกตามไอดีได้ทันที</p>
+              </div>
+            </div>
+
+            <form id="lineRecForm" onsubmit="addLineRecipient(event)" style="margin-bottom:14px;background:var(--surface-2);padding:14px;border-radius:14px;border:1px solid var(--line)">
+              <input type="hidden" id="editLineRecItemId" value="">
+              <div class="form-group">
+                <label>1. เลือกอำเภอที่ต้องการผูกกับไอดีนี้</label>
+                <select id="lineRecDist" class="inp" required></select>
+              </div>
+              <div class="form-group">
+                <label>2. ชื่อผู้รับ / ชื่อกลุ่มไลน์อำเภอ</label>
+                <input type="text" id="lineRecName" class="inp" placeholder="เช่น สพอ.เมืองอุทัยธานี / กลุ่มงานสารสนเทศฯ" required>
+              </div>
+              <div class="form-group">
+                <label>3. รหัส LINE User ID (U...) หรือ Group ID (C...) หรือไอดีไลน์</label>
+                <input type="text" id="lineRecId" class="inp" placeholder="วางรหัส U... หรือ C... (33 ตัวอักษร)" required>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button type="submit" class="btn btn-line" id="btnSaveLineRec" style="flex:1">💾 บันทึกไอดีไลน์</button>
+                <button type="button" class="btn btn-ghost" id="btnCancelEditLineRec" style="display:none" onclick="cancelEditLineRecipient()">ยกเลิกแก้ไข</button>
+              </div>
+            </form>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+              <span style="font-size:12.5px;font-weight:700;color:var(--ink-2)">📋 รายชื่อไอดีที่บันทึกไว้ (ติ๊ก ☑️ เพื่อเลือกส่งได้)</span>
+              <div style="display:flex;gap:4px">
+                <button type="button" class="btn btn-ghost btn-xs" onclick="toggleAllLineCheckboxes(true)">☑️ เลือกทั้งหมด</button>
+                <button type="button" class="btn btn-ghost btn-xs" onclick="toggleAllLineCheckboxes(false)">⬜ ยกเลิกทั้งหมด</button>
+              </div>
+            </div>
+            <div class="tbl-wrap" id="lineRecipientTable"></div>
+          </div>
+
+          <!-- ขวา: เมนูเลือกอำเภอที่จะส่งรายงาน & ตารางส่งรายหัวข้อ -->
+          <div class="card c7" style="margin-bottom:0">
+            <div class="card-h">
+              <div>
+                <h3>📢 เมนูเลือกอำเภอและเลือกไอดีที่จะส่งรายงานทาง LINE</h3>
+                <p>เลือกส่งเฉพาะอำเภอตามไอดีที่กำหนด หรือเลือกส่งเฉพาะไอดีที่ต้องการได้ทันที</p>
+              </div>
+            </div>
+
+            <!-- กล่องเมนูเลือกอำเภอและไอดีเป้าหมาย -->
+            <div class="line-selector-box">
+              <div style="margin-bottom:10px">
+                <label style="font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:6px">
+                  📍 คลิกเลือกอำเภอที่ต้องการส่งรายงาน (ดึงไอดีของอำเภอนั้นอัตโนมัติ):
+                </label>
+                <div class="subtabs" id="lineDistrictQuickTabs" style="margin-bottom:0;background:var(--surface)"></div>
+              </div>
+
+              <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:12px">
+                <div>
+                  <label style="font-size:12px;font-weight:700;color:var(--ink-2)">1. เลือกอำเภอที่จะส่งรายงาน</label>
+                  <select class="inp" id="lineSendDistSelect" onchange="onLineSendDistChange()"></select>
+                </div>
+                <div>
+                  <label style="font-size:12px;font-weight:700;color:var(--ink-2)">2. รูปแบบการเลือกไอดีผู้รับปลายทาง</label>
+                  <select class="inp" id="lineSendTargetMode" onchange="onLineTargetModeChange()">
+                    <option value="BY_DISTRICT">🎯 ส่งตามไอดีที่ผูกกับอำเภอที่เลือกเท่านั้น</option>
+                    <option value="BY_SPECIFIC_ID">📌 เลือกเจาะจง 1 ไอดีจากรายการที่บันทึกไว้</option>
+                    <option value="BY_CHECKED">☑️ ส่งเฉพาะไอดีที่ติ๊กถูกไว้ในตารางด้านซ้าย</option>
+                    <option value="BROADCAST">📢 ส่ง Broadcast หาทุกคนที่แอดบอทจังหวัด</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- ดรอปดาวน์ย่อยกรณีเลือกเจาะจง 1 ไอดี -->
+              <div id="specificLineIdSelectWrap" style="display:none;margin-top:10px">
+                <label style="font-size:12px;font-weight:700;color:var(--blue-600)">📌 เลือกไอดีผู้รับที่ต้องการส่งให้โดยตรง:</label>
+                <select class="inp" id="lineSpecificRecSelect" onchange="renderLineTargetPreview()"></select>
+              </div>
+
+              <!-- กล่องแสดงตัวอย่างไอดีปลายทางที่จะถูกส่งไป -->
+              <div id="lineTargetPreviewBox" style="margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:12.5px"></div>
+
+              <!-- ปุ่มกดส่งรายงานสรุปตามอำเภอ/ไอดีที่เลือก -->
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+                <button type="button" class="btn btn-line btn-sm" onclick="sendDistrictSummaryLine(false)">
+                  🤖 ส่งสรุปผลงานอำเภอที่เลือก (เข้าไอดีที่กำหนด)
+                </button>
+                <button type="button" class="btn btn-warn btn-sm" onclick="sendDistrictPendingAlertLine(false)">
+                  ⚠️ ส่งแจ้งเตือนงานค้างส่งเฉพาะอำเภอที่เลือก
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="sendDistrictSummaryLine(true)">
+                  📲 แชร์สรุปผ่านแอป LINE
+                </button>
+              </div>
+            </div>
+
+            <!-- ตัวกรองสถานะของตารางรายงานด้านล่าง -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+              <h4 style="font-size:14px;font-weight:800" id="lineReportTableTitle">📑 รายการรายงานประจำเดือน</h4>
+              <select class="inp" id="lineReportStatusFilter" style="width:auto;padding:6px 12px;font-size:12.5px" onchange="renderLineApprovedTable()">
+                <option value="อนุมัติแล้ว">✅ แสดงเฉพาะรายงานที่อนุมัติแล้ว</option>
+                <option value="รอตรวจสอบ">⏳ แสดงเฉพาะรายงานที่รอตรวจสอบ</option>
+                <option value="ยังไม่ส่งรายงาน">⚪ แสดงเฉพาะรายงานที่ยังไม่ส่ง</option>
+                <option value="ALL">📋 แสดงทุกสถานะ</option>
+              </select>
+            </div>
+
+            <div class="tbl-wrap" id="approvedForLineTable"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== PAGE: WORKGROUPS (G1 - G4) ==================== -->
+      <section class="page" id="page-workgroup">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h3 id="wgTitle">กลุ่มงาน</h3>
+              <p id="wgSub">ตารางส่งรายงานประจำเดือน อัปโหลดไฟล์เข้า Google Drive แยกตามกลุ่มงาน (ไม่เกิน 5 MB) และบันทึกลง Google Sheets อัตโนมัติ</p>
+            </div>
+            <div id="wgAdminControls" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <label style="font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer;background:var(--surface-2);padding:6px 12px;border-radius:99px;border:1px solid var(--line)">
+                <input type="checkbox" id="chkShowHiddenInWg" onchange="renderWorkgroupPage(currentPage)">
+                แสดงรายงานที่ซ่อนในเดือนนี้ด้วย
+              </label>
+              <button class="btn btn-sky btn-sm" onclick="openAddTopicModal(currentPage)">➕ เพิ่มหัวข้อในกลุ่มงานนี้</button>
+              <button class="btn btn-ghost btn-sm" onclick="switchPage('topics')">🗂️ ตั้งค่าซ่อน/เปิดรายเดือน</button>
+            </div>
+          </div>
+          <div class="tbl-wrap" id="wgTableWrap"></div>
+        </div>
+      </section>
+
+      <!-- ==================== PAGE: EXCEL IMPORT / EXPORT (ADMIN ONLY + PIN 02102542) ==================== -->
+      <section class="page" id="page-excel">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h3>📥 นำเข้าข้อมูลการส่งรายงานประจำเดือนด้วย Excel / Google Sheets</h3>
+              <p>เฉพาะแอดมินระดับจังหวัด (Admin) เท่านั้น และต้องยืนยันรหัสลับก่อนนำเข้าข้อมูลหรือรีเซ็ตระบบ</p>
+            </div>
+          </div>
+
+          <div class="note lock" style="margin-bottom:16px">
+            <b>🔐 ระบบป้องกันความปลอดภัยระดับจังหวัด:</b> การนำเข้าข้อมูลด้วยไฟล์ Excel และการรีเซ็ตข้อมูลเป็นค่าเริ่มต้น อนุญาตให้เฉพาะ <b>Admin จังหวัด</b> เท่านั้น และต้องกรอกรหัสผ่านชั้นที่ 2 ก่อนดำเนินการทุกครั้ง
+          </div>
+
+          <div class="drop" id="excelDropZone" onclick="triggerProtectedExcelPick()">
+            <div style="font-size:38px;margin-bottom:8px">📊</div>
+            <h4 style="font-size:16px;font-weight:800;margin-bottom:4px">คลิกเพื่อเลือกไฟล์ Excel (.xlsx, .csv) หรือลากไฟล์มาวางที่นี่</h4>
+            <p style="font-size:13px;color:var(--muted)">ระบบจะขอรหัสยืนยันความปลอดภัยก่อนนำเข้าข้อมูลและซิงค์ขึ้น Google Sheets อัตโนมัติ</p>
+            <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" hidden onchange="handleExcelFileSelected(event)">
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+            <button class="btn btn-primary btn-sm" onclick="triggerProtectedExcelPick()">📂 เลือกไฟล์ Excel เพื่อนำเข้า</button>
+            <button class="btn btn-ok btn-sm" onclick="downloadGoogleSheetTemplate()">📥 ดาวน์โหลดตารางแม่แบบสำหรับ Google Sheets / Excel (.xlsx)</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportCurrentToExcel()">📤 ส่งออกข้อมูลปัจจุบันเป็น Excel (.xlsx)</button>
+            <button class="btn btn-danger btn-sm" onclick="requestResetData()">🔄 รีเซ็ตข้อมูลการส่งงานเป็นเริ่มต้น (0 งาน)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== PAGE: SETTINGS ==================== -->
+      <section class="page" id="page-settings">
+        <div class="card" id="gasSettingsCard">
+          <div class="card-h">
+            <div>
+              <h3>🔗 เชื่อมต่อฐานข้อมูล Google Sheets, Google Drive & LINE Messaging API (เฉพาะ Admin จังหวัด)</h3>
+              <p>บันทึกค่าการเชื่อมต่อและ LINE Channel Access Token ไว้ที่ฐานข้อมูลกลางของจังหวัด</p>
+            </div>
+            <span class="pill pill-ok" id="gasConnBadge">🟢 พร้อมเชื่อมต่อ</span>
+          </div>
+          <div class="form-group">
+            <label>Google Apps Script Web App URL (/exec)</label>
+            <input type="url" id="cfgGasUrl" class="inp" value="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" placeholder="https://script.google.com/macros/s/.../exec">
+          </div>
+          <div class="form-group">
+            <label>Google Drive Folder ID หลัก (เว้นว่างได้ ระบบจะสร้างโฟลเดอร์ CDD_Uthai_Report_Files_สพจ_อุทัยธานี แยก 4 กลุ่มงานให้อัตโนมัติ)</label>
+            <input type="text" id="cfgDriveFolderId" class="inp" placeholder="ระบุ Folder ID ของ Google Drive (ถ้ามี)">
+          </div>
+          <div class="form-group">
+            <label>LINE Channel Access Token (Long-lived Token จาก LINE Developers Console) <span id="tokenSavedHint" style="color:var(--ok);font-weight:700"></span></label>
+            <input type="password" id="cfgLineToken" class="inp" placeholder="ใส่ Channel Access Token ของ LINE OA เพื่อให้บอทส่งข้อความอัตโนมัติ">
+          </div>
+          <div class="form-group">
+            <label>LINE User ID (U...) หรือ Group ID (C...) เป้าหมายหลักของจังหวัด (เว้นว่างได้ หากตั้งค่าแยกตามอำเภอในหน้าแจ้งเตือน LINE แล้ว)</label>
+            <input type="text" id="cfgLineTarget" class="inp" placeholder="เช่น U1234567890abcdef... หรือ C1234567890abcdef...">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">💾 บันทึกการตั้งค่า & Token ลง Cloud</button>
+            <button class="btn btn-sky btn-sm" onclick="testGasConnection()">🔌 ทดสอบการเชื่อมต่อ Google Sheets & Drive</button>
+            <button class="btn btn-line btn-sm" onclick="testLineConnection()">🔔 ทดสอบส่งข้อความเข้า LINE</button>
+          </div>
+          <div id="gasStatusBox" class="note" style="display:none"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ==================== MODAL: ADD / EDIT REPORT TOPIC (ADMIN ONLY) ==================== -->
+<div class="ov" id="topicModal">
+  <div class="modal">
+    <div class="modal-h">
+      <h3 id="topicModalTitle">➕ เพิ่มหัวข้อการรายงานใหม่ (เฉพาะ Admin)</h3>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('topicModal')">✕</button>
+    </div>
+    <div class="modal-b">
+      <form id="topicConfigForm" onsubmit="saveTopicModalSubmit(event)">
+        <input type="hidden" id="editTopicRepId" name="repId">
+        <div class="form-group">
+          <label for="topicGroupSelect">เลือกกลุ่มงานหลัก (4 กลุ่มงาน)</label>
+          <select id="topicGroupSelect" name="groupId" class="inp" required onchange="onTopicGroupSelectChange()">
+            <option value="G1">1. กลุ่มงานประสานและสนับสนุนการบริหารงานพัฒนาชุมชน</option>
+            <option value="G2">2. กลุ่มงานส่งเสริมการพัฒนาชุมชน</option>
+            <option value="G3">3. กลุ่มงานสารสนเทศการพัฒนาชุมชน</option>
+            <option value="G4">4. กลุ่มงานยุทธศาสตร์การพัฒนาชุมชน</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="topicNameInput">ชื่อหัวข้อการรายงาน</label>
+          <textarea id="topicNameInput" name="repName" class="inp" rows="2" placeholder="เช่น 6. รายงานผลการดำเนินงานโครงการพิเศษ..." required></textarea>
+        </div>
+        <div class="form-group" id="topicScopeBox">
+          <label>กำหนดเดือนที่ต้องส่งรายงานหัวข้อนี้</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+            <button type="button" class="btn btn-ghost btn-xs" onclick="setTopicModalMonths('ALL')">✅ เปิดส่งทุกเดือน (ม.ค.–ธ.ค.)</button>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="setTopicModalMonths('CURRENT_ONWARD')">⏩ เฉพาะเดือนปัจจุบันและเดือนถัดไป</button>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="setTopicModalMonths('ONLY_CURRENT')">📌 เฉพาะเดือนปัจจุบัน (<span class="cur-month-lbl"></span>)</button>
+          </div>
+          <div id="topicModalMonthChecks" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--surface-2);padding:10px;border-radius:12px;border:1px solid var(--line)"></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('topicModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">💾 บันทึกหัวข้อรายงานลง Google Sheets</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: SUBMIT REPORT + FILE UPLOAD (<= 5 MB) ==================== -->
+<div class="ov" id="submitModal">
+  <div class="modal">
+    <div class="modal-h">
+      <h3 id="subModalTitle">📤 ส่งรายงานประจำเดือน & อัปโหลดไฟล์งาน</h3>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('submitModal')">✕</button>
+    </div>
+    <div class="modal-b">
+      <form id="reportSubmitForm" onsubmit="confirmSubmitReport(event)">
+        <input type="hidden" id="subMonth" name="ประจำเดือน">
+        <input type="hidden" id="subDistId" name="รหัสอำเภอ">
+        <input type="hidden" id="subRepId" name="รหัสรายงาน">
+        <div class="form-group">
+          <label>อำเภอ / กลุ่มงาน</label>
+          <input type="text" id="subDistName" name="อำเภอ" class="inp" readonly>
+        </div>
+        <div class="form-group">
+          <label>หัวข้อรายงาน</label>
+          <textarea id="subRepName" name="หัวข้อรายงาน" class="inp" rows="2" readonly></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>📎 อัปโหลดไฟล์รายงาน (รองรับทุกนามสกุล ขนาดไม่เกิน 5 MB — จัดเก็บลง Google Drive แยกตามกลุ่มงาน)</label>
+          <div class="file-upload-box" onclick="document.getElementById('subFileInput').click()">
+            <div style="font-size:24px;margin-bottom:4px">📁 คลิกเพื่อเลือกไฟล์แนบ (ทุกนามสกุล ≤ 5 MB)</div>
+            <div style="font-size:12px;color:var(--muted)" id="subDriveFolderHint">ไฟล์จะถูกจัดเก็บเข้าโฟลเดอร์กลุ่มงานใน Google Drive อัตโนมัติ</div>
+            <input type="file" id="subFileInput" name="ไฟล์แนบ" accept="*/*" hidden onchange="handleReportFileChange(event)">
+          </div>
+          <div class="file-meta" id="subFileMeta">
+            <span id="subFileNameTxt" style="font-weight:700;color:var(--blue-600);word-break:break-all"></span>
+            <button type="button" class="btn btn-danger btn-xs" onclick="clearSelectedReportFile()">ลบไฟล์</button>
+          </div>
+          <div class="login-err" id="subFileErr" style="margin-top:8px;margin-bottom:0"></div>
+        </div>
+
+        <div class="form-group">
+          <label>ลิงก์เพิ่มเติม / โพสต์ประชาสัมพันธ์ / ลิงก์ภายนอก (ถ้ามี)</label>
+          <input type="url" id="subLink" name="ลิงก์เอกสารแนบ" class="inp" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label>ชื่อผู้ส่งรายงาน</label>
+          <input type="text" id="subSender" name="ผู้ส่งรายงาน" class="inp" placeholder="ระบุชื่อเจ้าหน้าที่ผู้ส่งงาน" required>
+        </div>
+        <div class="form-group">
+          <label>หมายเหตุ / รายละเอียดผลการดำเนินงาน</label>
+          <textarea id="subNote" name="หมายเหตุ" class="inp" rows="2" placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('submitModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="btnConfirmSubmit">📤 ยืนยันการส่งรายงาน</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: ADMIN SECURITY PIN (02102542) ==================== -->
+<div class="ov" id="pinModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-h">
+      <h3>🔐 ยืนยันรหัสความปลอดภัยแอดมินจังหวัด</h3>
+      <button class="btn btn-ghost btn-xs" onclick="closeModal('pinModal')">✕</button>
+    </div>
+    <div class="modal-b">
+      <p id="pinModalDesc" style="font-size:13.5px;color:var(--muted);margin-bottom:14px">
+        กรุณากรอกรหัสยืนยันสำหรับแอดมินระดับจังหวัดเพื่อดำเนินการต่อ
+      </p>
+      <div class="login-err" id="pinErr">รหัสยืนยันไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง</div>
+      <form onsubmit="verifyPinSubmit(event)">
+        <div class="form-group">
+          <label for="pinInput">รหัสยืนยันการดำเนินการ (Admin Security PIN)</label>
+          <input type="password" id="pinInput" class="inp" placeholder="กรอกรหัสยืนยัน" required autocomplete="off">
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('pinModal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-danger">✅ ยืนยันรหัส</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================== 1. DATA & PRODUCTION GOOGLE APPS SCRIPT URL (/exec) ================== */
+const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec';
+
+const MONTHS = [
+  'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
+];
+
+const ADMIN_ACTION_PIN = '02102542';
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+const DEFAULT_ACCOUNTS = {
+  'Admin': { pass: '9999', role: 'admin', name: 'แอดมินจังหวัด (สพจ.อุทัยธานี)', distId: 'ALL' },
+  'UTI01': { pass: '1111', role: 'district', name: '1. สำนักงานพัฒนาชุมชนอำเภอเมือง', distId: 'UTI01' },
+  'UTI02': { pass: '2222', role: 'district', name: '2. สำนักงานพัฒนาชุมชนอำเภอหนองขาหย่าง', distId: 'UTI02' },
+  'UTI03': { pass: '3333', role: 'district', name: '3. สำนักงานพัฒนาชุมชนอำเภอหนองฉาง', distId: 'UTI03' },
+  'UTI04': { pass: '4444', role: 'district', name: '4. สำนักงานพัฒนาชุมชนอำเภอทัพทัน', distId: 'UTI04' },
+  'UTI05': { pass: '5555', role: 'district', name: '5. สำนักงานพัฒนาชุมชนอำเภอสว่างอารมณ์', distId: 'UTI05' },
+  'UTI06': { pass: '6666', role: 'district', name: '6. สำนักงานพัฒนาชุมชนอำเภอลานสัก (UTI06)', distId: 'UTI06' },
+  'UTI07': { pass: '7777', role: 'district', name: '7. สำนักงานพัฒนาชุมชนอำเภอลานสัก / ห้วยคต (UTI07)', distId: 'UTI07' },
+  'UTI08': { pass: '8888', role: 'district', name: '8. สำนักงานพัฒนาชุมชนอำเภอบ้านไร่', distId: 'UTI08' }
+};
+
+let ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+
+const DISTRICTS = [
+  { id: 'UTI01', name: '1. สพอ.เมืองอุทัยธานี', short: 'อ.เมืองฯ' },
+  { id: 'UTI02', name: '2. สพอ.หนองขาหย่าง', short: 'อ.หนองขาหย่าง' },
+  { id: 'UTI03', name: '3. สพอ.หนองฉาง', short: 'อ.หนองฉาง' },
+  { id: 'UTI04', name: '4. สพอ.ทัพทัน', short: 'อ.ทัพทัน' },
+  { id: 'UTI05', name: '5. สพอ.สว่างอารมณ์', short: 'อ.สว่างอารมณ์' },
+  { id: 'UTI06', name: '6. สพอ.ลานสัก (UTI06)', short: 'อ.ลานสัก (06)' },
+  { id: 'UTI07', name: '7. สพอ.ลานสัก/ห้วยคต (UTI07)', short: 'อ.ห้วยคต (07)' },
+  { id: 'UTI08', name: '8. สพอ.บ้านไร่', short: 'อ.บ้านไร่' }
+];
+
+const DEFAULT_WORKGROUPS = [
+  {
+    id: 'G1',
+    name: '1. กลุ่มงานประสานและสนับสนุนการบริหารงานพัฒนาชุมชน',
+    short: '1. กลุ่มงานประสานฯ',
+    reports: [
+      { id: 'G1-R1', name: '1. รายงานวันลาข้าราชการ' },
+      { id: 'G1-R2', name: '2. ค่าเช่าบ้าน' },
+      { id: 'G1-R3', name: '3. ค่าใช้จ่ายในการเดินทางไปราชการ' },
+      { id: 'G1-R4', name: '4. รายงานการประชุมสำนักงานพัฒนาชุมชนอำเภอประจำเดือน' },
+      { id: 'G1-R5', name: '5. รายงานมาตรการประหยัดพลังงาน' }
+    ]
+  },
+  {
+    id: 'G2',
+    name: '2. กลุ่มงานส่งเสริมการพัฒนาชุมชน',
+    short: '2. กลุ่มงานส่งเสริมฯ',
+    reports: [
+      { id: 'G2-R1', name: '1. รายงานยอดจำหน่ายสินค้า OTOP (ระบบ online)' },
+      { id: 'G2-R2', name: '2. รายงานตลาดนัดคนไทยยิ้มได้ (ในระบบ online)' },
+      { id: 'G2-R3', name: '3. รายงานผลการขับเคลื่อนกิจกรรมตามภารกิจองค์กรสตรี' },
+      { id: 'G2-R4', name: '4. รายงานผลการดำเนินงานกิจกรรมผ้าไทยใส่ให้สนุก ตามพระราชดำริฯ พร้อมส่งลิ้งค์การเผยแพร่ประชาสัมพันธ์ผ่านสื่อสังคม online (ผ่านทางไลน์กลุ่ม : รง.ผ้าไทย อน.)' },
+      { id: 'G2-R5', name: '5. รายงานโครงการวัด ประชารัฐ สร้างสุข เฉลิมพระเกียรติ ข่าวประชาสัมพันธ์ และกิจกรรมจิตอาสา' },
+      { id: 'G2-R6', name: '6. รายงานการประชาสัมพันธ์ชุมชนท่องเที่ยวของจังหวัดอุทัยธานี (ผ่านช่องทางไลน์กลุ่ม : จนท.นวัตวิถี อน.)' },
+      { id: 'G2-R7', name: '7. รายงานผลการดำเนินกิจกรรมตัวชี้วัด OTOP PLUS' },
+      { id: 'G2-R8', name: '8. รายงานปฏิบัติการ "Quick Win" 90 วัน ปลูกผักสวนครัวเพื่อสร้างความมั่นคงทางอาหาร' },
+      { id: 'G2-R9', name: '9. รายงานผู้ผลิต ผู้ประกอบการ OTOP ที่เข้าร่วมโครงการไทยช่วยไทย พลัส' }
+    ]
+  },
+  {
+    id: 'G3',
+    name: '3. กลุ่มงานสารสนเทศการพัฒนาชุมชน',
+    short: '3. กลุ่มงานสารสนเทศฯ',
+    reports: [
+      { id: 'G3-R1', name: '1. รายงานข่าวประชาสัมพันธ์งานพัฒนาชุมชน 5 ช่องทาง' },
+      { id: 'G3-R2', name: '2. รายงานการใช้ประโยชน์ Click ชุมชน' },
+      { id: 'G3-R3', name: '3. รายงาน CDD AI' },
+      { id: 'G3-R4', name: '4. รายงานผลการดำเนินงานกองทุนแม่ของแผ่นดิน 128 สืบสานปณิธานกองทุนแม่ของแผ่นดิน' },
+      { id: 'G3-R5', name: '5. รายงานผลการดำเนินงานกิจกรรมขับเคลื่อนพัฒนาครัวเรือนยากจน' },
+      { id: 'G3-R6', name: '6. รายงานการรักษาสิ่งแวดล้อมในที่ทำงาน 5 ส.' },
+      { id: 'G3-R7', name: '7. รายงานผลประเด็นเน้นย้ำของอธิบดีกรมการพัฒนาชุมชน 5+1 เรื่อง การส่งเสริมการใช้ประโยชน์ข้อมูลความจำเป็นพื้นฐาน' }
+    ]
+  },
+  {
+    id: 'G4',
+    name: '4. กลุ่มงานยุทธศาสตร์การพัฒนาชุมชน',
+    short: '4. กลุ่มงานยุทธศาสตร์ฯ',
+    reports: [
+      { id: 'G4-R1', name: '1. รายงานผลการบริหารงบประมาณและการเบิกจ่ายประจำเดือน' },
+      { id: 'G4-R2', name: '2. รายงานผลการดำเนินงานตามแผนปฏิบัติราชการประจำปี' },
+      { id: 'G4-R3', name: '3. รายงานผลการติดตามและประเมินผลโครงการพัฒนาชุมชน' },
+      { id: 'G4-R4', name: '4. รายงานสรุปผลการขับเคลื่อนงานยุทธศาสตร์กรมการพัฒนาชุมชน' }
+    ]
+  }
+];
+
+const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V15';
+const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V15';
+const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V15';
+const ACCOUNTS_CFG_KEY = 'CDD_UTHAI_ACCOUNTS_CFG_V15';
+const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V15';
+const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V15';
+
+let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
+let hiddenReportsByMonth = {};
+let currentUser = null;
+let currentMonth = MONTHS[new Date().getMonth()];
+let currentPage = 'overview';
+let selectedApprovalGroup = 'ALL';
+let selectedTopicGroup = 'ALL';
+let selectedLineDistrict = 'ALL';
+let showPasswordsPlain = false;
+let db = {};
+let lineRecipients = [];
+let checkedLineRecipientIds = new Set();
+let lastLocalConfigSavedAt = 0; // ป้องกัน Auto-Sync เขียนทับข้อมูลที่เพิ่งกดบันทึก
+let gasConfig = {
+  url: DEFAULT_GAS_WEB_APP_URL,
+  driveFolderId: '',
+  token: '',
+  target: ''
+};
+let pendingPinCallback = null;
+let stagedUploadFile = null;
+let autoSyncIntervalId = null;
+
+/* ================== 2. INDEXEDDB FOR UP TO 5MB FILE STORAGE ================== */
+const IDB_NAME = 'CDD_UTHAI_FILE_DB';
+const IDB_STORE = 'report_files';
+
+function openFileIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const idb = e.target.result;
+      if (!idb.objectStoreNames.contains(IDB_STORE)) {
+        idb.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function saveFileToIDB(key, fileObj) {
+  try {
+    const idb = await openFileIDB();
+    return new Promise((resolve, reject) => {
+      const tx = idb.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(fileObj, key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = e => reject(e.target.error);
+    });
+  } catch (err) {
+    return false;
+  }
+}
+
+async function getFileFromIDB(key) {
+  try {
+    const idb = await openFileIDB();
+    return new Promise((resolve, reject) => {
+      const tx = idb.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
+async function clearAllFilesIDB() {
+  try {
+    const idb = await openFileIDB();
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).clear();
+  } catch (err) {}
+}
+
+/* ================== 3. INITIALIZATION & DYNAMIC REPORT HELPERS ================== */
+function createEmptyRecord() {
+  return {
+    status: 'ยังไม่ส่งรายงาน',
+    score: 0,
+    link: '',
+    fileName: '',
+    fileSize: 0,
+    mimeType: '',
+    driveViewUrl: '',
+    driveDownloadUrl: '',
+    sender: '',
+    submittedAt: '',
+    note: ''
+  };
+}
+
+function createEmptyDB() {
+  const fresh = {};
+  MONTHS.forEach(m => {
+    fresh[m] = {};
+    DISTRICTS.forEach(d => {
+      fresh[m][d.id] = {};
+      WORKGROUPS.forEach(g => {
+        g.reports.forEach(r => {
+          fresh[m][d.id][r.id] = createEmptyRecord();
+        });
+      });
+    });
+  });
+  return fresh;
+}
+
+function ensureDBStructure() {
+  MONTHS.forEach(m => {
+    if (!db[m]) db[m] = {};
+    if (!Array.isArray(hiddenReportsByMonth[m])) hiddenReportsByMonth[m] = [];
+    DISTRICTS.forEach(d => {
+      if (!db[m][d.id]) db[m][d.id] = {};
+      WORKGROUPS.forEach(g => {
+        g.reports.forEach(r => {
+          if (!db[m][d.id][r.id]) {
+            db[m][d.id][r.id] = createEmptyRecord();
+          }
+        });
+      });
+    });
+  });
+}
+
+function updateTopSyncIndicator(state, text) {
+  const badge = document.getElementById('topSyncStatus');
+  const cfgBadge = document.getElementById('gasConnBadge');
+  if (!badge) return;
+  badge.className = 'pill ' + (state === 'ok' ? 'pill-ok' : state === 'err' ? 'pill-rej' : 'pill-pend');
+  badge.textContent = text;
+  if (cfgBadge) {
+    cfgBadge.className = badge.className;
+    cfgBadge.textContent = text;
+  }
+}
+
+function loadState() {
+  // ดึงข้อมูลจากทั้งคีย์ใหม่และคีย์ก่อนหน้าเพื่อไม่ให้ข้อมูลที่เคยบันทึกไว้สูญหาย
+  try {
+    const accRaw = localStorage.getItem(ACCOUNTS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_ACCOUNTS_CFG_V14');
+    if (accRaw) {
+      ACCOUNTS = { ...JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS)), ...JSON.parse(accRaw) };
+    }
+  } catch (e) {
+    ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+  }
+  try {
+    const wgRaw = localStorage.getItem(WORKGROUPS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_WORKGROUPS_CFG_V14');
+    WORKGROUPS = wgRaw ? JSON.parse(wgRaw) : JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
+  } catch (e) {
+    WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
+  }
+  try {
+    const hidRaw = localStorage.getItem(HIDDEN_REPORTS_KEY) || localStorage.getItem('CDD_UTHAI_HIDDEN_REPORTS_V14');
+    hiddenReportsByMonth = hidRaw ? JSON.parse(hidRaw) : {};
+  } catch (e) {
+    hiddenReportsByMonth = {};
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('CDD_UTHAI_REPORT_DB_V14');
+    db = raw ? JSON.parse(raw) : createEmptyDB();
+  } catch (e) {
+    db = createEmptyDB();
+  }
+  ensureDBStructure();
+
+  try {
+    const lr = localStorage.getItem(LINE_REC_KEY) || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V14') || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V13');
+    lineRecipients = lr ? JSON.parse(lr) : [];
+    lineRecipients.forEach(r => checkedLineRecipientIds.add(String(r.id)));
+  } catch (e) {
+    lineRecipients = [];
+  }
+  try {
+    const gc = localStorage.getItem(GAS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_GAS_CFG_V14') || localStorage.getItem('CDD_UTHAI_GAS_CFG_V13');
+    if (gc) {
+      const parsed = JSON.parse(gc);
+      const cleanUrl = (!parsed.url || parsed.url.endsWith('/dev')) ? DEFAULT_GAS_WEB_APP_URL : parsed.url;
+      gasConfig = {
+        url: cleanUrl,
+        driveFolderId: parsed.driveFolderId || '',
+        token: parsed.token || '',
+        target: parsed.target || ''
+      };
+    }
+  } catch (e) {}
+
+  document.getElementById('cfgGasUrl').value = gasConfig.url || DEFAULT_GAS_WEB_APP_URL;
+  document.getElementById('cfgDriveFolderId').value = gasConfig.driveFolderId || '';
+  document.getElementById('cfgLineToken').value = gasConfig.token || '';
+  document.getElementById('cfgLineTarget').value = gasConfig.target || '';
+}
+
+function saveDB() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  updatePendingBadge();
+}
+
+function saveWorkgroupsAndVisibility(syncToCloud = true) {
+  lastLocalConfigSavedAt = Date.now();
+  localStorage.setItem(WORKGROUPS_CFG_KEY, JSON.stringify(WORKGROUPS));
+  localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
+  localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
+  localStorage.setItem(ACCOUNTS_CFG_KEY, JSON.stringify(ACCOUNTS));
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+  ensureDBStructure();
+  saveDB();
+  if (syncToCloud) {
+    syncAllConfigToGas();
+  }
+}
+
+function isReportHidden(month, repId) {
+  return Array.isArray(hiddenReportsByMonth[month]) && hiddenReportsByMonth[month].includes(repId);
+}
+
+function getAllReportsFlat(month = null, includeHidden = true) {
+  const list = [];
+  WORKGROUPS.forEach(g => {
+    g.reports.forEach(r => {
+      if (month && !includeHidden && isReportHidden(month, r.id)) return;
+      list.push({ groupId: g.id, groupName: g.name, groupShort: g.short, ...r });
+    });
+  });
+  return list;
+}
+
+function getGroupReportsForMonth(gId, month = currentMonth, includeHidden = false) {
+  const group = WORKGROUPS.find(g => g.id === gId);
+  if (!group) return [];
+  return group.reports.filter(r => includeHidden || !isReportHidden(month, r.id));
+}
+
+function updateSidebarGroupCounts() {
+  WORKGROUPS.forEach(g => {
+    const activeCnt = getGroupReportsForMonth(g.id, currentMonth, false).length;
+    const totalCnt = g.reports.length;
+    const el = document.getElementById('navCnt' + g.id);
+    if (el) {
+      el.textContent = activeCnt === totalCnt ? `${activeCnt} งาน` : `${activeCnt}/${totalCnt} งาน`;
+    }
+  });
+}
+
+function getDistrictLabel(distId) {
+  if (distId === 'ALL') return 'ทุกอำเภอ (จังหวัด)';
+  const d = DISTRICTS.find(x => x.id === distId);
+  return d ? d.name : distId;
+}
+
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+/* ================== 4. CLOUD SYNC ENGINE (100% COMPATIBLE WITH DEPLOYED /exec) ================== */
+function callViaJsonp(url, queryParamsObj) {
+  return new Promise((resolve) => {
+    const cbName = 'gasCb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve(null);
+    }, 14000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+
+    const params = new URLSearchParams({ ...queryParamsObj, callback: cbName, _t: Date.now() });
+    const sep = url.includes('?') ? '&' : '?';
+    script.src = `${url}${sep}${params.toString()}`;
+    script.onerror = function() {
+      cleanup();
+      resolve(null);
+    };
+    document.body.appendChild(script);
+  });
+}
+
+async function sendToGoogleSheetDB(payload) {
+  const targetUrl = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
+  if (!targetUrl) return { ok: false, error: 'ไม่ได้ระบุ URL' };
+
+  const hasLargeFile = Boolean(payload.filePayload && payload.filePayload.base64);
+  const serialized = JSON.stringify(payload);
+
+  if (payload.action === 'getInitialData' || payload.action === 'ping') {
+    try {
+      const sep = targetUrl.includes('?') ? '&' : '?';
+      const getRes = await fetch(`${targetUrl}${sep}action=${encodeURIComponent(payload.action)}&_t=${Date.now()}`, {
+        method: 'GET',
+        redirect: 'follow',
+        cache: 'no-store'
+      });
+      const parsed = await getRes.json();
+      if (parsed) return parsed;
+    } catch (e) {
+      const jsonpData = await callViaJsonp(targetUrl, { action: payload.action });
+      if (jsonpData) return jsonpData;
+    }
+  }
+
+  try {
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: serialized
+    });
+    const text = await response.text();
+    const parsed = JSON.parse(text);
+    if (parsed) {
+      if (parsed.ok) updateTopSyncIndicator('ok', '🟢 ซิงค์ Google Sheets แล้ว');
+      return parsed;
+    }
+  } catch (postErr) {
+    if (!hasLargeFile && serialized.length < 1900) {
+      const getFallback = await callViaJsonp(targetUrl, { payload: serialized });
+      if (getFallback) {
+        if (getFallback.ok) updateTopSyncIndicator('ok', '🟢 ซิงค์ Google Sheets แล้ว');
+        return getFallback;
+      }
+    }
+    try {
+      await fetch(targetUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: serialized
+      });
+      updateTopSyncIndicator('ok', '🟢 ส่งข้อมูลเข้า Google Sheets แล้ว');
+      return { ok: true, opaque: true };
+    } catch (e2) {
+      updateTopSyncIndicator('err', '🔴 เชื่อมต่อไม่ได้');
+      return { ok: false, error: String(e2) };
+    }
+  }
+}
+
+// ใช้คำสั่ง saveTopicsConfig ที่รองรับทุกเวอร์ชันของ รหัส.gs เพื่อบันทึกทั้งหัวข้อ, ไอดีไลน์, รหัสผ่าน และ Token!
+async function syncAllConfigToGas() {
+  if (!isAdmin()) return null;
+  lastLocalConfigSavedAt = Date.now();
+  const enrichedHidden = {
+    ...hiddenReportsByMonth,
+    _meta_accounts: ACCOUNTS,
+    _meta_lineRecipients: lineRecipients,
+    _meta_gasConfig: {
+      token: gasConfig.token || '',
+      target: gasConfig.target || '',
+      driveFolderId: gasConfig.driveFolderId || ''
+    }
+  };
+  return await sendToGoogleSheetDB({
+    action: 'saveTopicsConfig',
+    workgroups: WORKGROUPS,
+    hiddenReportsByMonth: enrichedHidden,
+    lineRecipients: lineRecipients
+  });
+}
+
+async function pullStateFromGas(showNotification = false, silentBackground = false) {
+  if (!silentBackground) {
+    updateTopSyncIndicator('pend', '⏳ กำลังซิงค์ข้อมูล...');
+  }
+  try {
+    const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
+    const loginHint = document.getElementById('loginSyncHint');
+
+    if (!res || !res.ok || res.opaque || !Array.isArray(res.records)) {
+      if (loginHint) loginHint.textContent = '🔒 สงวนสิทธิ์เฉพาะเจ้าหน้าที่พัฒนาชุมชนจังหวัดอุทัยธานี';
+      if (showNotification) showToast('ℹ️ อัปเดตสถานะเรียบร้อยแล้ว');
+      return;
+    }
+
+    // หากเพิ่งกดบันทึกตั้งค่าในเครื่องไม่เกิน 10 วินาที ไม่ให้ค่าเก่าจาก Cloud มาทับ
+    const recentlyModifiedLocally = (Date.now() - lastLocalConfigSavedAt) < 10000;
+
+    if (!recentlyModifiedLocally) {
+      const hidObj = res.hiddenReportsByMonth || {};
+
+      // 1. ซิงค์รหัสผ่านอำเภอ
+      const cloudAccounts = res.accounts || hidObj._meta_accounts;
+      if (cloudAccounts && typeof cloudAccounts === 'object') {
+        ACCOUNTS = { ...JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS)), ...cloudAccounts };
+        localStorage.setItem(ACCOUNTS_CFG_KEY, JSON.stringify(ACCOUNTS));
+      }
+
+      // 2. ซิงค์ตั้งค่า Token ของ LINE
+      if (hidObj._meta_gasConfig && typeof hidObj._meta_gasConfig === 'object') {
+        if (hidObj._meta_gasConfig.token && !gasConfig.token) {
+          gasConfig.token = hidObj._meta_gasConfig.token;
+          document.getElementById('cfgLineToken').value = gasConfig.token;
+        }
+        if (hidObj._meta_gasConfig.target && !gasConfig.target) {
+          gasConfig.target = hidObj._meta_gasConfig.target;
+          document.getElementById('cfgLineTarget').value = gasConfig.target;
+        }
+        localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+      }
+
+      // 3. ซิงค์หัวข้อรายงานและการซ่อนรายเดือน
+      if (Array.isArray(res.workgroups) && res.workgroups.length === 4) {
+        WORKGROUPS = res.workgroups;
+        localStorage.setItem(WORKGROUPS_CFG_KEY, JSON.stringify(WORKGROUPS));
+      }
+      if (res.hiddenReportsByMonth && typeof res.hiddenReportsByMonth === 'object') {
+        hiddenReportsByMonth = res.hiddenReportsByMonth;
+        localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
+      }
+
+      // 4. ซิงค์รายชื่อไอดีไลน์ประจำอำเภอ (ผสานข้อมูล Cloud กับเครื่อง ไม่ให้ไอดีหาย)
+      const cloudLineList = Array.isArray(res.lineRecipients) && res.lineRecipients.length > 0
+        ? res.lineRecipients
+        : (Array.isArray(hidObj._meta_lineRecipients) ? hidObj._meta_lineRecipients : null);
+
+      if (Array.isArray(cloudLineList) && cloudLineList.length > 0) {
+        lineRecipients = cloudLineList;
+        localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
+        lineRecipients.forEach(r => checkedLineRecipientIds.add(String(r.id)));
+      }
+    }
+
+    if (loginHint) {
+      loginHint.textContent = '🟢 ซิงค์รหัสผ่านและฐานข้อมูลล่าสุดจาก Google Sheets เรียบร้อยแล้ว';
+    }
+    const tokenHint = document.getElementById('tokenSavedHint');
+    if (tokenHint) {
+      tokenHint.textContent = (gasConfig.token || res.lineTokenSaved) ? '(พร้อมส่งผ่านบอท LINE ✅)' : '';
+    }
+
+    // 5. ซิงค์ข้อมูลการส่งรายงาน
+    db = createEmptyDB();
+    ensureDBStructure();
+
+    res.records.forEach(r => {
+      const m = r.month;
+      const dId = r.distId;
+      const rId = r.repId;
+      if (db[m] && db[m][dId] && db[m][dId][rId]) {
+        db[m][dId][rId] = {
+          status: r.status || 'ยังไม่ส่งรายงาน',
+          score: Number(r.score || 0),
+          fileName: r.fileName || '',
+          fileSize: Number(r.fileSize || 0),
+          mimeType: '',
+          driveViewUrl: r.driveViewUrl || '',
+          driveDownloadUrl: r.driveDownloadUrl || '',
+          link: r.link || r.driveViewUrl || '',
+          sender: r.sender || '',
+          submittedAt: r.updatedAt || '',
+          note: r.note || ''
+        };
+      }
+    });
+    saveDB();
+
+    const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ • ${timeStr})`);
+    if (currentUser) {
+      populateReportDropdown();
+      renderAll();
+    }
+    if (showNotification) {
+      showToast(`☁️ ซิงค์ข้อมูลสำเร็จ (รายงาน ${res.records.length} รายการ • ไอดีไลน์ ${lineRecipients.length} รายการ)`);
+    }
+  } catch (err) {
+    if (!silentBackground) {
+      updateTopSyncIndicator('err', '🔴 ซิงค์ไม่สำเร็จ');
+    }
+  }
+}
+
+function startAutoSyncTimer() {
+  if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
+  autoSyncIntervalId = setInterval(() => {
+    const anyModalOpen = document.querySelector('.ov.on');
+    const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+    const isConfigPage = ['passwords', 'line', 'topics', 'settings'].includes(currentPage);
+    if (currentUser && !anyModalOpen && !(isConfigPage && isTypingInForm)) {
+      pullStateFromGas(false, true);
+    }
+  }, 18000);
+}
+
+/* ================== 5. SECURITY PIN (02102542) & ADMIN GUARD ================== */
+function isAdmin() {
+  return currentUser && currentUser.role === 'admin';
+}
+
+function requireAdminAndPin(actionDescription, callback) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินระดับจังหวัด (Admin) เท่านั้นที่มีสิทธิ์ทำรายการนี้');
+    return;
+  }
+  pendingPinCallback = callback;
+  document.getElementById('pinModalDesc').textContent = actionDescription;
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinErr').style.display = 'none';
+  document.getElementById('pinModal').classList.add('on');
+  setTimeout(() => document.getElementById('pinInput').focus(), 80);
+}
+
+function verifyPinSubmit(e) {
+  e.preventDefault();
+  if (!isAdmin()) {
+    closeModal('pinModal');
+    showToast('⛔ เฉพาะแอดมินระดับจังหวัดเท่านั้น');
+    return;
+  }
+  const entered = document.getElementById('pinInput').value.trim();
+  if (entered !== ADMIN_ACTION_PIN) {
+    document.getElementById('pinErr').style.display = 'block';
+    return;
+  }
+  closeModal('pinModal');
+  if (typeof pendingPinCallback === 'function') {
+    const cb = pendingPinCallback;
+    pendingPinCallback = null;
+    cb();
+  }
+}
+
+function requestResetData() {
+  requireAdminAndPin(
+    'ยืนยันการรีเซ็ตข้อมูลการส่งรายงานและไฟล์แนบทั้งหมดกลับเป็นค่าเริ่มต้น (0 งาน / ยังไม่ส่งรายงาน) กรุณากรอกรหัสความปลอดภัยของแอดมินจังหวัด',
+    async () => {
+      db = createEmptyDB();
+      await clearAllFilesIDB();
+      saveDB();
+      await sendToGoogleSheetDB({ action: 'resetAllRecords' });
+      renderAll();
+      showToast('🔄 รีเซ็ตข้อมูลการส่งรายงานทั้งหมดเป็นค่าเริ่มต้น (0 งาน) เรียบร้อยแล้ว');
+    }
+  );
+}
+
+function triggerProtectedExcelPick() {
+  requireAdminAndPin(
+    'การนำเข้าข้อมูลจากไฟล์ Excel สงวนสิทธิ์เฉพาะแอดมินระดับจังหวัด กรุณากรอกรหัสความปลอดภัยก่อนเลือกไฟล์',
+    () => {
+      const inp = document.getElementById('excelFileInput');
+      inp.value = '';
+      inp.click();
+    }
+  );
+}
+
+/* ================== 6. LOGIN & ROLE PERMISSIONS ================== */
+function handleLogin(e) {
+  e.preventDefault();
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const matchedKey = Object.keys(ACCOUNTS).find(k => k.toLowerCase() === u.toLowerCase());
+  const acc = matchedKey ? ACCOUNTS[matchedKey] : null;
+
+  if (!acc || String(acc.pass) !== p) {
+    document.getElementById('loginErr').style.display = 'block';
+    return;
+  }
+  document.getElementById('loginErr').style.display = 'none';
+  currentUser = { username: matchedKey, ...acc };
+  document.getElementById('loginScreen').classList.add('hidden');
+  applyRolePermissions();
+  initFilters();
+  switchPage('overview');
+  pullStateFromGas(false);
+  startAutoSyncTimer();
+  showToast('ยินดีต้อนรับเข้าสู่ CDD Uthai Report: ' + currentUser.name);
+}
+
+function handleLogout() {
+  currentUser = null;
+  if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+function applyRolePermissions() {
+  const admin = isAdmin();
+  document.getElementById('uRoleTxt').textContent = admin ? 'ผู้ดูแลระบบระดับจังหวัด (Admin)' : 'ระดับอำเภอ (District)';
+  document.getElementById('uNameTxt').textContent = currentUser.name;
+
+  const adminElements = [
+    'btnTopTopics', 'btnTopPasswords', 'btnTopExcel', 'btnTopReset',
+    'navTopics', 'navPasswords', 'navExcel', 'navDataLabel', 'navLine',
+    'gasSettingsCard', 'adminBulkActions', 'wgAdminControls', 'btnOverviewManageTopics'
+  ];
+  adminElements.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('admin-only-hidden', !admin);
+  });
+}
+
+/* ================== 7. ADMIN PASSWORD MANAGEMENT FOR DISTRICTS ================== */
+function renderPasswordManagerPage() {
+  if (!isAdmin()) return;
+  const wrap = document.getElementById('passwordManagerTableWrap');
+  if (!wrap) return;
+
+  const orderedKeys = ['Admin', 'UTI01', 'UTI02', 'UTI03', 'UTI04', 'UTI05', 'UTI06', 'UTI07', 'UTI08'];
+  const inputType = showPasswordsPlain ? 'text' : 'password';
+
+  const rows = orderedKeys.map((key, idx) => {
+    const acc = ACCOUNTS[key] || DEFAULT_ACCOUNTS[key];
+    const isAdm = acc.role === 'admin';
+    return `
+      <tr>
+        <td class="center">${idx + 1}</td>
+        <td><span class="pill ${isAdm ? 'pill-rej' : 'pill-ok'}">${key}</span></td>
+        <td>
+          <input type="text" class="inp" id="accName_${key}" value="${acc.name}" style="padding:7px 10px;font-size:13px">
+        </td>
+        <td class="center">
+          <span class="pill ${isAdm ? 'pill-pend' : 'pill-none'}">${isAdm ? 'แอดมินจังหวัด (Admin)' : 'ระดับอำเภอ'}</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="${inputType}" class="inp acc-pass-inp" id="accPass_${key}" value="${acc.pass}" style="padding:7px 10px;font-weight:700;max-width:180px" required>
+            <button type="button" class="btn btn-ghost btn-xs" onclick="toggleSinglePassInput('accPass_${key}')" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
+          </div>
+        </td>
+        <td class="center">
+          <button type="button" class="btn btn-primary btn-xs" onclick="saveSingleAccountPassword('${key}')">💾 บันทึก</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th class="center">#</th>
+          <th>รหัสผู้ใช้งาน (Username)</th>
+          <th>ชื่อหน่วยงาน / อำเภอ</th>
+          <th class="center">สิทธิ์การใช้งาน</th>
+          <th>รหัสผ่าน (Password)</th>
+          <th class="center">บันทึกการแก้ไข</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function toggleShowAllPasswords() {
+  if (!isAdmin()) return;
+  showPasswordsPlain = !showPasswordsPlain;
+  const btn = document.getElementById('btnToggleShowPass');
+  if (btn) {
+    btn.textContent = showPasswordsPlain ? '🙈 ซ่อนรหัสผ่าน' : '👁️ แสดงรหัสผ่านเป็นตัวอักษร';
+  }
+  renderPasswordManagerPage();
+}
+
+function toggleSinglePassInput(inputId) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+async function saveSingleAccountPassword(key) {
+  if (!isAdmin()) return;
+  const passEl = document.getElementById('accPass_' + key);
+  const nameEl = document.getElementById('accName_' + key);
+  if (!passEl || !nameEl) return;
+
+  const newPass = passEl.value.trim();
+  const newName = nameEl.value.trim();
+  if (!newPass) {
+    showToast('⚠️ กรุณากรอกรหัสผ่าน ห้ามเว้นว่าง');
+    return;
+  }
+
+  ACCOUNTS[key].pass = newPass;
+  if (newName) ACCOUNTS[key].name = newName;
+  saveWorkgroupsAndVisibility(true);
+  showToast(`✅ เปลี่ยนรหัสผ่านของ "${key}" (${ACCOUNTS[key].name}) และซิงค์ลง Cloud เรียบร้อยแล้ว!`);
+}
+
+function saveAllPasswordsFromTable() {
+  if (!isAdmin()) return;
+  requireAdminAndPin(
+    'ยืนยันการบันทึกรหัสผ่านของทุกอำเภอลงฐานข้อมูล Cloud กรุณากรอกรหัสความปลอดภัยแอดมินจังหวัด',
+    async () => {
+      Object.keys(ACCOUNTS).forEach(key => {
+        const passEl = document.getElementById('accPass_' + key);
+        const nameEl = document.getElementById('accName_' + key);
+        if (passEl && passEl.value.trim()) ACCOUNTS[key].pass = passEl.value.trim();
+        if (nameEl && nameEl.value.trim()) ACCOUNTS[key].name = nameEl.value.trim();
+      });
+      saveWorkgroupsAndVisibility(true);
+      renderPasswordManagerPage();
+      showToast('✅ บันทึกรหัสผ่านของทุกอำเภอลงฐานข้อมูลเรียบร้อยแล้ว');
+    }
+  );
+}
+
+function resetPasswordsToDefault() {
+  if (!isAdmin()) return;
+  requireAdminAndPin(
+    'ยืนยันการรีเซ็ตรหัสผ่านของทุกอำเภอกลับเป็นค่าเริ่มต้น (Admin=9999, UTI01=1111 ... UTI08=8888)',
+    async () => {
+      ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+      saveWorkgroupsAndVisibility(true);
+      renderPasswordManagerPage();
+      showToast('🔄 คืนค่ารหัสผ่านเริ่มต้นให้ทุกอำเภอเรียบร้อยแล้ว');
+    }
+  );
+}
+
+/* ================== 8. NAVIGATION & RENDERING ================== */
+function initMonthBar() {
+  const bar = document.getElementById('monthBar');
+  bar.innerHTML = MONTHS.map(m =>
+    `<button class="m-btn ${m === currentMonth ? 'active' : ''}" onclick="selectMonth('${m}')">${m}</button>`
+  ).join('');
+  document.querySelectorAll('.cur-month-lbl').forEach(el => el.textContent = currentMonth);
+}
+
+function selectMonth(m) {
+  currentMonth = m;
+  const apM = document.getElementById('apFilterMonth');
+  if (apM) apM.value = m;
+  initMonthBar();
+  populateReportDropdown();
+  renderAll();
+}
+
+function switchPage(pageId) {
+  if (['excel', 'line', 'topics', 'passwords'].includes(pageId) && !isAdmin()) {
+    showToast('⛔ เมนูนี้สำหรับแอดมินระดับจังหวัดเท่านั้น');
+    return;
+  }
+  currentPage = pageId;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === pageId));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+  if (['G1', 'G2', 'G3', 'G4'].includes(pageId)) {
+    document.getElementById('page-workgroup').classList.add('active');
+    renderWorkgroupPage(pageId);
+  } else {
+    const target = document.getElementById('page-' + pageId);
+    if (target) target.classList.add('active');
+  }
+  renderAll();
+}
+
+function getVisibleDistricts() {
+  if (!currentUser) return [];
+  if (isAdmin()) return DISTRICTS;
+  return DISTRICTS.filter(d => d.id === currentUser.distId);
+}
+
+function renderAll() {
+  if (!currentUser) return;
+  updateSidebarGroupCounts();
+  updatePendingBadge();
+  renderOverview();
+  renderAnnual();
+  renderApprovalPage();
+  if (isAdmin()) {
+    renderLinePage();
+    renderTopicsManagerPage();
+    renderPasswordManagerPage();
+  }
+  if (['G1', 'G2', 'G3', 'G4'].includes(currentPage)) renderWorkgroupPage(currentPage);
+}
+
+function updatePendingBadge() {
+  let pend = 0;
+  const dists = getVisibleDistricts();
+  MONTHS.forEach(m => {
+    const activeReports = getAllReportsFlat(m, false);
+    dists.forEach(d => {
+      activeReports.forEach(r => {
+        if (db[m]?.[d.id]?.[r.id]?.status === 'รอตรวจสอบ') pend++;
+      });
+    });
+  });
+  document.getElementById('badgePend').textContent = pend;
+}
+
+/* ================== 9. OVERVIEW, CHARTS & ANNUAL DASHBOARD ================== */
+function renderOverview() {
+  const dists = getVisibleDistricts();
+  const activeReports = getAllReportsFlat(currentMonth, false);
+  const allReportsCount = getAllReportsFlat(null, true).length;
+  const hiddenCount = allReportsCount - activeReports.length;
+
+  const totalSlots = dists.length * activeReports.length;
+  const maxPossibleScore = totalSlots * 2;
+  const maxDScore = activeReports.length * 2;
+
+  document.getElementById('overviewChartSub').textContent =
+    `เกณฑ์คะแนน: 1 รายงาน = 2 คะแนน (เดือน${currentMonth} เปิดส่ง ${activeReports.length} งาน คะแนนเต็ม ${maxDScore} คะแนน/อำเภอ` +
+    (hiddenCount > 0 ? ` • ซ่อน/งดส่ง ${hiddenCount} งาน)` : ')');
+
+  let approvedCnt = 0, pendingCnt = 0, rejectCnt = 0, totalScore = 0;
+  dists.forEach(d => {
+    activeReports.forEach(r => {
+      const rec = db[currentMonth]?.[d.id]?.[r.id];
+      if (!rec) return;
+      totalScore += Number(rec.score || 0);
+      if (rec.status === 'อนุมัติแล้ว') approvedCnt++;
+      else if (rec.status === 'รอตรวจสอบ') pendingCnt++;
+      else if (rec.status === 'แก้ไข') rejectCnt++;
+    });
+  });
+
+  const noneCnt = Math.max(0, totalSlots - approvedCnt - pendingCnt - rejectCnt);
+  const pct = totalSlots ? ((approvedCnt / totalSlots) * 100).toFixed(1) : '0.0';
+  const scorePct = maxPossibleScore ? ((totalScore / maxPossibleScore) * 100).toFixed(1) : '0.0';
+
+  document.getElementById('overviewKpis').innerHTML = `
+    <div class="kpi hero">
+      <div class="kpi-lb">คะแนนรวมประจำเดือน${currentMonth}</div>
+      <div class="kpi-val">${totalScore} / ${maxPossibleScore} <small style="font-size:13px">คะแนน</small></div>
+      <div class="kpi-sub">เกณฑ์ 1 งาน = 2 คะแนน (${scorePct}%)</div>
+      <div class="kpi-bar"><i style="width:${scorePct}%"></i></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lb">อนุมัติแล้ว (ได้คะแนน)</div>
+      <div class="kpi-val" style="color:var(--ok)">${approvedCnt} / ${totalSlots} <small style="font-size:13px">งาน</small></div>
+      <div class="kpi-sub">ความก้าวหน้าร้อยละ ${pct}%</div>
+      <div class="kpi-bar"><i style="width:${pct}%;background:var(--ok)"></i></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lb">ส่งแล้ว (รอแอดมินตรวจ)</div>
+      <div class="kpi-val" style="color:var(--warn)">${pendingCnt} <small style="font-size:13px">งาน</small></div>
+      <div class="kpi-sub">รอการกดอนุมัติจากจังหวัด</div>
+      <div class="kpi-bar"><i style="width:${totalSlots ? (pendingCnt/totalSlots)*100 : 0}%;background:var(--warn)"></i></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lb">ยังไม่ส่งรายงาน (เดือน${currentMonth})</div>
+      <div class="kpi-val" style="color:var(--danger)">${noneCnt} <small style="font-size:13px">งาน</small></div>
+      <div class="kpi-sub">เปิดส่ง ${activeReports.length} หัวข้อ/อำเภอ ${hiddenCount > 0 ? `(งดส่ง ${hiddenCount} งาน)` : ''}</div>
+      <div class="kpi-bar"><i style="width:${totalSlots ? (noneCnt/totalSlots)*100 : 0}%;background:var(--danger)"></i></div>
+    </div>
+  `;
+
+  let dRows = '';
+  let barsHtml = '';
+
+  dists.forEach((d, idx) => {
+    let dApp = 0, dPend = 0, dScore = 0;
+    activeReports.forEach(r => {
+      const rec = db[currentMonth]?.[d.id]?.[r.id];
+      if (!rec) return;
+      dScore += Number(rec.score || 0);
+      if (rec.status === 'อนุมัติแล้ว') dApp++;
+      else if (rec.status === 'รอตรวจสอบ') dPend++;
+    });
+    const dPct = activeReports.length ? ((dApp / activeReports.length) * 100).toFixed(0) : '0';
+    const barW = maxDScore ? Math.round((dScore / maxDScore) * 100) : 0;
+
+    barsHtml += `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+          <b>${d.name}</b>
+          <span><b>${dScore}</b> / ${maxDScore} คะแนน (${dApp}/${activeReports.length} งาน)</span>
+        </div>
+        <div style="height:10px;background:var(--surface-3);border-radius:99px;overflow:hidden">
+          <div style="width:${barW}%;height:100%;background:linear-gradient(90deg,var(--blue-500),var(--acc-500));border-radius:99px;transition:width .4s"></div>
+        </div>
+      </div>
+    `;
+
+    dRows += `<tr>
+      <td>${idx + 1}</td>
+      <td><b>${d.name}</b></td>
+      <td class="center"><span class="pill pill-ok">${dApp} / ${activeReports.length}</span></td>
+      <td class="center"><span class="pill pill-pend">${dPend}</span></td>
+      <td class="num"><b>${dScore}</b> / ${maxDScore}</td>
+      <td class="num">${dPct}%</td>
+    </tr>`;
+  });
+
+  document.getElementById('chartDistrictBar').innerHTML = barsHtml;
+  document.getElementById('overviewDistrictTable').innerHTML = `
+    <table>
+      <thead><tr><th>#</th><th>สำนักงานพัฒนาชุมชนอำเภอ</th><th class="center">อนุมัติแล้ว</th><th class="center">รอตรวจ</th><th class="num">คะแนนที่ได้</th><th class="num">ความสำเร็จ</th></tr></thead>
+      <tbody>${dRows}</tbody>
+    </table>
+  `;
+
+  document.getElementById('chartStatusDonut').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;padding:6px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(16,185,129,.1)">
+        <span style="font-weight:700;color:#059669">✅ อนุมัติแล้ว</span>
+        <b style="font-size:16px;color:#059669">${approvedCnt} งาน</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(245,158,11,.12)">
+        <span style="font-weight:700;color:#D97706">⏳ รอตรวจสอบ</span>
+        <b style="font-size:16px;color:#D97706">${pendingCnt} งาน</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:var(--surface-3)">
+        <span style="font-weight:700;color:var(--muted)">⚪ ยังไม่ส่งรายงาน</span>
+        <b style="font-size:16px;color:var(--ink)">${noneCnt} งาน</b>
+      </div>
+      ${hiddenCount > 0 ? `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-radius:12px;background:rgba(244,63,94,.08)">
+        <span style="font-weight:700;color:var(--danger);font-size:12px">🙈 ซ่อน/งดส่งในเดือนนี้</span>
+        <b style="font-size:13px;color:var(--danger)">${hiddenCount} หัวข้อ</b>
+      </div>` : ''}
+    </div>
+  `;
+
+  let gRows = '';
+  WORKGROUPS.forEach(g => {
+    const gActiveReps = getGroupReportsForMonth(g.id, currentMonth, false);
+    const gHiddenCnt = g.reports.length - gActiveReps.length;
+    const gTotal = dists.length * gActiveReps.length;
+    let gApp = 0, gScore = 0;
+    dists.forEach(d => {
+      gActiveReps.forEach(r => {
+        const rec = db[currentMonth]?.[d.id]?.[r.id];
+        if (rec?.status === 'อนุมัติแล้ว') gApp++;
+        gScore += Number(rec?.score || 0);
+      });
+    });
+    gRows += `<tr onclick="switchPage('${g.id}')" style="cursor:pointer">
+      <td>
+        <b>${g.name}</b>
+        <div style="font-size:11.5px;color:var(--blue-600)">
+          เปิดส่งเดือนนี้ ${gActiveReps.length} หัวข้อ ${gHiddenCnt > 0 ? `<span style="color:var(--danger)">(ซ่อน ${gHiddenCnt} งาน)</span>` : ''}
+        </div>
+      </td>
+      <td class="center">${gApp}/${gTotal}</td>
+      <td class="num"><b>${gScore}</b> คะแนน</td>
+    </tr>`;
+  });
+  document.getElementById('overviewGroupTable').innerHTML = `
+    <table>
+      <thead><tr><th>กลุ่มงานหลัก (4 กลุ่มงาน)</th><th class="center">อนุมัติแล้ว</th><th class="num">คะแนนรวม</th></tr></thead>
+      <tbody>${gRows}</tbody>
+    </table>
+  `;
+}
+
+function renderAnnual() {
+  const dists = getVisibleDistricts();
+  let ths = MONTHS.map(m => {
+    const activeCnt = getAllReportsFlat(m, false).length;
+    return `<th class="center">${m.slice(0, 4)}<br><small style="font-weight:500;color:var(--muted)">(${activeCnt}งาน)</small></th>`;
+  }).join('');
+
+  let rows = '';
+  dists.forEach(d => {
+    let yearSum = 0;
+    let cells = MONTHS.map(m => {
+      let sc = 0;
+      const mReps = getAllReportsFlat(m, false);
+      mReps.forEach(r => sc += Number(db[m]?.[d.id]?.[r.id]?.score || 0));
+      yearSum += sc;
+      return `<td class="center">${sc}</td>`;
+    }).join('');
+    rows += `<tr><td><b>${d.name}</b></td>${cells}<td class="num"><b>${yearSum}</b></td></tr>`;
+  });
+  document.getElementById('annualTableWrap').innerHTML = `
+    <table>
+      <thead><tr><th>อำเภอ</th>${ths}<th class="num">รวมทั้งปี</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+/* ================== 10. MANAGE TOPICS & MONTHLY VISIBILITY (ADMIN ONLY) ================== */
+function renderTopicGroupTabs() {
+  const tabs = [
+    { id: 'ALL', label: 'ทั้งหมด (4 กลุ่มงาน)' },
+    ...WORKGROUPS.map(g => ({ id: g.id, label: `${g.short} (${g.reports.length})` }))
+  ];
+  const wrap = document.getElementById('topicGroupTabs');
+  if (!wrap) return;
+  wrap.innerHTML = tabs.map(t =>
+    `<button class="stab ${selectedTopicGroup === t.id ? 'active' : ''}" onclick="selectTopicGroup('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+
+function selectTopicGroup(gId) {
+  selectedTopicGroup = gId;
+  renderTopicsManagerPage();
+}
+
+function renderTopicsManagerPage() {
+  if (!isAdmin()) return;
+  renderTopicGroupTabs();
+
+  const groups = selectedTopicGroup === 'ALL' ? WORKGROUPS : WORKGROUPS.filter(g => g.id === selectedTopicGroup);
+  let rows = '';
+
+  groups.forEach(g => {
+    g.reports.forEach(r => {
+      const hiddenThisMonth = isReportHidden(currentMonth, r.id);
+      const monthChips = MONTHS.map(m => {
+        const isHid = isReportHidden(m, r.id);
+        return `<span class="m-chip ${isHid ? 'off' : 'on'}" onclick="toggleReportMonthVisibility('${m}','${r.id}')" title="คลิกเพื่อ ${isHid ? 'เปิดใช้งาน' : 'ซ่อน/งดส่ง'} ในเดือน${m}">${m.slice(0, 3)}</span>`;
+      }).join(' ');
+
+      rows += `<tr class="${hiddenThisMonth ? 'row-hidden-month' : ''}">
+        <td><span class="pill pill-none">${g.short}</span></td>
+        <td>
+          <b>${r.name}</b>
+          ${hiddenThisMonth ? `<span class="pill pill-rej" style="margin-left:6px">🙈 ซ่อนในเดือน${currentMonth}</span>` : `<span class="pill pill-ok" style="margin-left:6px">✅ เปิดส่งเดือน${currentMonth}</span>`}
+        </td>
+        <td class="center">
+          <button class="btn ${hiddenThisMonth ? 'btn-ok' : 'btn-warn'} btn-xs" onclick="toggleReportMonthVisibility('${currentMonth}','${r.id}')">
+            ${hiddenThisMonth ? `👁️ เปิดส่งเดือน${currentMonth}` : `🙈 ซ่อนเดือน${currentMonth}`}
+          </button>
+        </td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">${monthChips}</div>
+        </td>
+        <td class="center" style="white-space:nowrap">
+          <button class="btn btn-ghost btn-xs" onclick="openEditTopicModal('${g.id}','${r.id}')">✏️ แก้ไขชื่อ</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteReportTopic('${g.id}','${r.id}')">🗑️ ลบ</button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('topicManagerTableWrap').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>กลุ่มงาน</th>
+          <th>หัวข้อการรายงาน (สถานะเดือน${currentMonth})</th>
+          <th class="center">ซ่อน/เปิด (เดือน${currentMonth})</th>
+          <th>กำหนดการส่งรายเดือน (คลิกชื่อเดือนเพื่อ เปิด 🟢 / ซ่อน 🔴)</th>
+          <th class="center">จัดการหัวข้อ</th>
+        </tr>
+      </thead>
+      <tbody>${rows || '<tr><td colspan="5" class="center">ยังไม่มีหัวข้อรายงาน</td></tr>'}</tbody>
+    </table>
+  `;
+}
+
+function toggleReportMonthVisibility(month, repId) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้น');
+    return;
+  }
+  if (!Array.isArray(hiddenReportsByMonth[month])) {
+    hiddenReportsByMonth[month] = [];
+  }
+  const idx = hiddenReportsByMonth[month].indexOf(repId);
+  let nowHidden = false;
+  if (idx >= 0) {
+    hiddenReportsByMonth[month].splice(idx, 1);
+    nowHidden = false;
+  } else {
+    hiddenReportsByMonth[month].push(repId);
+    nowHidden = true;
+  }
+  saveWorkgroupsAndVisibility(true);
+  populateReportDropdown();
+  renderAll();
+  showToast(nowHidden ? `🙈 ซ่อนรายงานในเดือน${month} และซิงค์ไปยังทุกเครื่องแล้ว` : `👁️ เปิดใช้งานรายงานในเดือน${month} และซิงค์ไปยังทุกเครื่องแล้ว`);
+}
+
+function copyPrevMonthVisibility() {
+  if (!isAdmin()) return;
+  const curIdx = MONTHS.indexOf(currentMonth);
+  if (curIdx <= 0) {
+    showToast('⚠️ เดือนมกราคมเป็นเดือนแรกของปี ไม่สามารถคัดลอกจากเดือนก่อนหน้าได้');
+    return;
+  }
+  const prevMonth = MONTHS[curIdx - 1];
+  hiddenReportsByMonth[currentMonth] = [...(hiddenReportsByMonth[prevMonth] || [])];
+  saveWorkgroupsAndVisibility(true);
+  populateReportDropdown();
+  renderAll();
+  showToast(`📋 คัดลอกการเปิด/ซ่อนรายงานจากเดือน${prevMonth} มายังเดือน${currentMonth} เรียบร้อยแล้ว`);
+}
+
+function renderTopicModalMonthChecks(activeMonthsList) {
+  const wrap = document.getElementById('topicModalMonthChecks');
+  wrap.innerHTML = MONTHS.map(m => {
+    const checked = activeMonthsList.includes(m) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer">
+      <input type="checkbox" class="topic-m-chk" value="${m}" ${checked}> ${m}
+    </label>`;
+  }).join('');
+}
+
+function setTopicModalMonths(mode) {
+  const curIdx = MONTHS.indexOf(currentMonth);
+  let active = [];
+  if (mode === 'ALL') active = [...MONTHS];
+  else if (mode === 'CURRENT_ONWARD') active = MONTHS.slice(curIdx);
+  else if (mode === 'ONLY_CURRENT') active = [currentMonth];
+  renderTopicModalMonthChecks(active);
+}
+
+function onTopicGroupSelectChange() {
+  const editRepId = document.getElementById('editTopicRepId').value.trim();
+  if (editRepId) return;
+  const gSel = document.getElementById('topicGroupSelect');
+  const grp = WORKGROUPS.find(g => g.id === gSel.value);
+  const nextNo = grp ? grp.reports.length + 1 : 1;
+  const curVal = document.getElementById('topicNameInput').value.trim();
+  if (!curVal || /^\d+\.$/.test(curVal)) {
+    document.getElementById('topicNameInput').value = `${nextNo}. `;
+  }
+}
+
+function openAddTopicModal(defaultGroupId = null) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถเพิ่มหัวข้อรายงานได้');
+    return;
+  }
+  document.getElementById('topicModalTitle').textContent = '➕ เพิ่มหัวข้อการรายงานใหม่ (เฉพาะ Admin)';
+  document.getElementById('editTopicRepId').value = '';
+  const gSel = document.getElementById('topicGroupSelect');
+  gSel.disabled = false;
+  gSel.value = (defaultGroupId && ['G1','G2','G3','G4'].includes(defaultGroupId)) ? defaultGroupId : (selectedTopicGroup !== 'ALL' ? selectedTopicGroup : 'G1');
+
+  const grp = WORKGROUPS.find(g => g.id === gSel.value);
+  const nextNo = grp ? grp.reports.length + 1 : 1;
+  document.getElementById('topicNameInput').value = `${nextNo}. `;
+  setTopicModalMonths('ALL');
+  document.getElementById('topicModal').classList.add('on');
+  setTimeout(() => document.getElementById('topicNameInput').focus(), 80);
+}
+
+function openEditTopicModal(groupId, repId) {
+  if (!isAdmin()) return;
+  const grp = WORKGROUPS.find(g => g.id === groupId);
+  const rep = grp?.reports.find(r => r.id === repId);
+  if (!rep) return;
+
+  document.getElementById('topicModalTitle').textContent = '✏️ แก้ไขหัวข้อการรายงาน & เดือนที่เปิดส่ง';
+  document.getElementById('editTopicRepId').value = repId;
+  const gSel = document.getElementById('topicGroupSelect');
+  gSel.value = groupId;
+  gSel.disabled = true;
+  document.getElementById('topicNameInput').value = rep.name;
+
+  const activeMonths = MONTHS.filter(m => !isReportHidden(m, repId));
+  renderTopicModalMonthChecks(activeMonths);
+  document.getElementById('topicModal').classList.add('on');
+}
+
+function saveTopicModalSubmit(e) {
+  e.preventDefault();
+  if (!isAdmin()) return;
+
+  const editRepId = document.getElementById('editTopicRepId').value.trim();
+  const groupId = document.getElementById('topicGroupSelect').value;
+  const nameVal = document.getElementById('topicNameInput').value.trim();
+  if (!nameVal) return;
+
+  const checkedMonths = Array.from(document.querySelectorAll('.topic-m-chk:checked')).map(el => el.value);
+  const grp = WORKGROUPS.find(g => g.id === groupId);
+  if (!grp) return;
+
+  let targetRepId = editRepId;
+
+  if (editRepId) {
+    const rep = grp.reports.find(r => r.id === editRepId);
+    if (rep) rep.name = nameVal;
+  } else {
+    targetRepId = `${groupId}-R${Date.now()}`;
+    grp.reports.push({ id: targetRepId, name: nameVal });
+  }
+
+  MONTHS.forEach(m => {
+    if (!Array.isArray(hiddenReportsByMonth[m])) hiddenReportsByMonth[m] = [];
+    const idx = hiddenReportsByMonth[m].indexOf(targetRepId);
+    if (checkedMonths.includes(m)) {
+      if (idx >= 0) hiddenReportsByMonth[m].splice(idx, 1);
+    } else {
+      if (idx === -1) hiddenReportsByMonth[m].push(targetRepId);
+    }
+  });
+
+  saveWorkgroupsAndVisibility(true);
+  populateReportDropdown();
+  closeModal('topicModal');
+  renderAll();
+  showToast(editRepId ? '✅ แก้ไขหัวข้อรายงานและบันทึกลง Google Sheets เรียบร้อยแล้ว' : `✅ เพิ่มหัวข้อรายงานใหม่ใน ${grp.short} ลง Google Sheets เรียบร้อยแล้ว`);
+}
+
+function deleteReportTopic(groupId, repId) {
+  if (!isAdmin()) return;
+  const grp = WORKGROUPS.find(g => g.id === groupId);
+  const rep = grp?.reports.find(r => r.id === repId);
+  if (!rep) return;
+
+  if (!confirm(`ยืนยันการลบหัวข้อรายงาน "${rep.name}" ออกจากระบบหรือไม่?\n(หากต้องการเพียงแค่งดส่งในบางเดือน แนะนำให้ใช้ปุ่ม "ซ่อนเดือนนี้" แทน)`)) {
+    return;
+  }
+  grp.reports = grp.reports.filter(r => r.id !== repId);
+  MONTHS.forEach(m => {
+    if (Array.isArray(hiddenReportsByMonth[m])) {
+      hiddenReportsByMonth[m] = hiddenReportsByMonth[m].filter(id => id !== repId);
+    }
+  });
+  saveWorkgroupsAndVisibility(true);
+  populateReportDropdown();
+  renderAll();
+  showToast('🗑️ ลบหัวข้อรายงานออกจากระบบเรียบร้อยแล้ว');
+}
+
+/* ================== 11. FILE UPLOAD (<= 5 MB) & ADMIN DOWNLOAD ================== */
+function buildFileCellHtml(month, distId, repId, rec) {
+  const parts = [];
+  if (rec.fileName) {
+    const sizeStr = rec.fileSize ? ` (${formatBytes(rec.fileSize)})` : '';
+    if (isAdmin()) {
+      parts.push(`
+        <button class="btn btn-sky btn-xs" onclick="downloadSubmittedFile('${month}','${distId}','${repId}')" title="ดาวน์โหลดไฟล์ ${rec.fileName}">
+          ⬇️ ดาวน์โหลดไฟล์ (${rec.fileName}${sizeStr})
+        </button>
+      `);
+      if (rec.driveViewUrl) {
+        parts.push(`<a href="${rec.driveViewUrl}" target="_blank" class="btn btn-ghost btn-xs" title="เปิดดูใน Google Drive">📁 Drive</a>`);
+      }
+    } else {
+      parts.push(`<span class="pill pill-ok">📎 ${rec.fileName}${sizeStr}</span>`);
+    }
+  }
+  if (rec.link) {
+    parts.push(`<a href="${rec.link}" target="_blank" style="color:var(--blue-600);font-weight:700;font-size:12px">🔗 เปิดลิงก์แนบ</a>`);
+  }
+  return parts.length ? `<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;align-items:center">${parts.join('')}</div>` : '-';
+}
+
+async function downloadSubmittedFile(month, distId, repId) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินระดับจังหวัด (Admin) เท่านั้นที่สามารถดาวน์โหลดไฟล์งานได้');
+    return;
+  }
+  const rec = db[month]?.[distId]?.[repId];
+  if (!rec || !rec.fileName) {
+    showToast('⚠️ ไม่พบไฟล์แนบในรายการนี้');
+    return;
+  }
+
+  if (rec.driveDownloadUrl || rec.driveViewUrl) {
+    window.open(rec.driveDownloadUrl || rec.driveViewUrl, '_blank', 'noopener,noreferrer');
+    showToast(`⬇️ เปิดดาวน์โหลดไฟล์ "${rec.fileName}" จาก Google Drive`);
+    return;
+  }
+
+  const idbKey = `${month}__${distId}__${repId}`;
+  const storedFile = await getFileFromIDB(idbKey);
+  if (storedFile && storedFile.dataUrl) {
+    const a = document.createElement('a');
+    a.href = storedFile.dataUrl;
+    a.download = rec.fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast(`⬇️ กำลังดาวน์โหลดไฟล์ "${rec.fileName}"`);
+    return;
+  }
+
+  showToast('⚠️ ไม่พบไฟล์แนบ กรุณากดปุ่มซิงค์ข้อมูลล่าสุดด้านบน');
+}
+
+function handleReportFileChange(e) {
+  const errEl = document.getElementById('subFileErr');
+  const metaEl = document.getElementById('subFileMeta');
+  const nameTxt = document.getElementById('subFileNameTxt');
+  errEl.style.display = 'none';
+
+  const file = e.target.files[0];
+  if (!file) {
+    stagedUploadFile = null;
+    metaEl.classList.remove('show');
+    return;
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    errEl.textContent = `❌ ไฟล์ "${file.name}" มีขนาด ${formatBytes(file.size)} ซึ่งเกินกำหนด 5 MB กรุณาเลือกไฟล์ใหม่`;
+    errEl.style.display = 'block';
+    e.target.value = '';
+    stagedUploadFile = null;
+    metaEl.classList.remove('show');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const dataUrl = evt.target.result;
+    const base64 = dataUrl.split(',')[1] || '';
+    stagedUploadFile = {
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type || 'application/octet-stream',
+      base64: base64,
+      dataUrl: dataUrl
+    };
+    nameTxt.textContent = `📎 ${file.name} (${formatBytes(file.size)})`;
+    metaEl.classList.add('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearSelectedReportFile() {
+  stagedUploadFile = null;
+  document.getElementById('subFileInput').value = '';
+  document.getElementById('subFileMeta').classList.remove('show');
+  document.getElementById('subFileErr').style.display = 'none';
+}
+
+/* ================== 12. WORKGROUP TABLE & SUBMISSION TO GOOGLE SHEETS ================== */
+function renderWorkgroupPage(gId) {
+  const group = WORKGROUPS.find(g => g.id === gId);
+  if (!group) return;
+  const admin = isAdmin();
+  const showHidden = admin && document.getElementById('chkShowHiddenInWg')?.checked;
+  const visibleReports = getGroupReportsForMonth(gId, currentMonth, showHidden);
+  const hiddenCount = group.reports.length - getGroupReportsForMonth(gId, currentMonth, false).length;
+
+  document.getElementById('wgTitle').textContent = `${group.name} (ประจำเดือน${currentMonth})`;
+  document.getElementById('wgSub').textContent =
+    `เปิดส่งในเดือน${currentMonth} จำนวน ${getGroupReportsForMonth(gId, currentMonth, false).length} หัวข้อ` +
+    (hiddenCount > 0 ? ` (ซ่อน/งดส่งเดือนนี้ ${hiddenCount} หัวข้อ)` : '');
+
+  const dists = getVisibleDistricts();
+  let rows = '';
+
+  visibleReports.forEach(r => {
+    const isHid = isReportHidden(currentMonth, r.id);
+    dists.forEach(d => {
+      const rec = db[currentMonth][d.id][r.id];
+      const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none';
+      const fileCellHtml = buildFileCellHtml(currentMonth, d.id, r.id, rec);
+
+      const adminTopicTools = admin ? `
+        <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn ${isHid ? 'btn-ok' : 'btn-ghost'} btn-xs" onclick="toggleReportMonthVisibility('${currentMonth}','${r.id}')" title="ซ่อนหรือเปิดการส่งรายงานนี้เฉพาะเดือน${currentMonth}">
+            ${isHid ? '👁️ เปิดส่งเดือนนี้' : '🙈 ซ่อนเดือนนี้'}
+          </button>
+          <button class="btn btn-ghost btn-xs" onclick="openEditTopicModal('${group.id}','${r.id}')">✏️</button>
+        </div>
+      ` : '';
+
+      const manualBtns = admin ? `
+        <div class="sc-grp" title="ให้คะแนนแมนนวล">
+          <button class="sc-btn ${rec.score === 2 ? 'on-2' : ''}" onclick="setManualScore('${currentMonth}','${d.id}','${r.id}',2)">2</button>
+          <button class="sc-btn ${rec.score === 1 ? 'on-1' : ''}" onclick="setManualScore('${currentMonth}','${d.id}','${r.id}',1)">1</button>
+          <button class="sc-btn ${rec.score === 0 ? 'on-0' : ''}" onclick="setManualScore('${currentMonth}','${d.id}','${r.id}',0)">0</button>
+        </div>
+      ` : '';
+
+      rows += `<tr class="${isHid ? 'row-hidden-month' : ''}">
+        <td>
+          <b>${r.name}</b>
+          ${isHid ? `<span class="pill pill-rej" style="margin-left:5px">🙈 งดส่ง/ซ่อนในเดือน${currentMonth}</span>` : ''}
+          ${adminTopicTools}
+        </td>
+        <td>${d.name}</td>
+        <td class="center"><span class="pill ${pillCls}">${rec.status}</span></td>
+        <td class="center"><b>${rec.score}</b> / 2</td>
+        <td class="center">${fileCellHtml}</td>
+        <td>${rec.sender || '-'}</td>
+        <td class="center">
+          ${!isHid ? `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${currentMonth}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>` : '<span class="pill pill-none">งดส่งเดือนนี้</span>'}
+          ${manualBtns}
+        </td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('wgTableWrap').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>หัวข้อรายงาน (${group.short})</th>
+          <th>อำเภอ</th>
+          <th class="center">สถานะ</th>
+          <th class="center">คะแนน</th>
+          <th class="center">ไฟล์งาน (Google Drive) / ลิงก์</th>
+          <th>ผู้ส่ง</th>
+          <th class="center">ส่งงาน ${admin ? '/ ให้คะแนนแมนนวล' : ''}</th>
+        </tr>
+      </thead>
+      <tbody>${rows || `<tr><td colspan="7" class="center">ไม่มีหัวข้อรายงานที่ต้องส่งในเดือน${currentMonth}</td></tr>`}</tbody>
+    </table>
+  `;
+}
+
+function openSubmitModal(month, distId, repId) {
+  const dist = DISTRICTS.find(d => d.id === distId);
+  const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
+  const rec = db[month][distId][repId];
+
+  stagedUploadFile = null;
+  document.getElementById('subFileInput').value = '';
+  document.getElementById('subFileErr').style.display = 'none';
+
+  if (rec.fileName) {
+    document.getElementById('subFileNameTxt').textContent = `📎 ไฟล์เดิม: ${rec.fileName} (${formatBytes(rec.fileSize)})`;
+    document.getElementById('subFileMeta').classList.add('show');
+  } else {
+    document.getElementById('subFileMeta').classList.remove('show');
+  }
+
+  document.getElementById('subMonth').value = month;
+  document.getElementById('subDistId').value = distId;
+  document.getElementById('subRepId').value = repId;
+  document.getElementById('subDistName').value = `${dist.name} • ${rep.groupShort} (เดือน${month})`;
+  document.getElementById('subRepName').value = rep.name;
+  document.getElementById('subDriveFolderHint').textContent = `จะถูกบันทึกเข้าโฟลเดอร์ Google Drive: "${rep.groupName}"`;
+  document.getElementById('subLink').value = rec.link || '';
+  document.getElementById('subSender').value = rec.sender || currentUser.name;
+  document.getElementById('subNote').value = rec.note || '';
+  document.getElementById('submitModal').classList.add('on');
+}
+
+async function syncRecordToGas(actionType, month, distId, repId, filePayload = null) {
+  const dist = DISTRICTS.find(d => d.id === distId);
+  const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
+  const rec = db[month][distId][repId];
+
+  const payload = {
+    action: actionType,
+    driveFolderId: gasConfig.driveFolderId || '',
+    record: {
+      month,
+      distId,
+      distName: dist.name,
+      groupId: rep.groupId,
+      groupName: rep.groupName,
+      repId,
+      repName: rep.name,
+      status: rec.status,
+      score: rec.score,
+      sender: rec.sender,
+      link: rec.link,
+      fileName: rec.fileName || '',
+      fileSize: rec.fileSize || 0,
+      note: rec.note || ''
+    },
+    filePayload: filePayload
+  };
+
+  return await sendToGoogleSheetDB(payload);
+}
+
+async function confirmSubmitReport(e) {
+  e.preventDefault();
+  const m = document.getElementById('subMonth').value;
+  const dId = document.getElementById('subDistId').value;
+  const rId = document.getElementById('subRepId').value;
+  const prevRec = db[m][dId][rId];
+  const now = new Date().toLocaleString('th-TH');
+  const submitBtn = document.getElementById('btnConfirmSubmit');
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = '⏳ กำลังส่งข้อมูลเข้า Google Sheets & Google Drive...';
+
+  const newRec = {
+    status: isAdmin() ? 'อนุมัติแล้ว' : 'รอตรวจสอบ',
+    score: isAdmin() ? 2 : 0,
+    link: document.getElementById('subLink').value.trim(),
+    fileName: stagedUploadFile ? stagedUploadFile.fileName : (prevRec.fileName || ''),
+    fileSize: stagedUploadFile ? stagedUploadFile.fileSize : (prevRec.fileSize || 0),
+    mimeType: stagedUploadFile ? stagedUploadFile.mimeType : (prevRec.mimeType || ''),
+    driveViewUrl: prevRec.driveViewUrl || '',
+    driveDownloadUrl: prevRec.driveDownloadUrl || '',
+    sender: document.getElementById('subSender').value.trim(),
+    submittedAt: now,
+    note: document.getElementById('subNote').value.trim()
+  };
+
+  if (stagedUploadFile) {
+    const idbKey = `${m}__${dId}__${rId}`;
+    await saveFileToIDB(idbKey, {
+      fileName: stagedUploadFile.fileName,
+      fileSize: stagedUploadFile.fileSize,
+      mimeType: stagedUploadFile.mimeType,
+      dataUrl: stagedUploadFile.dataUrl
+    });
+  }
+
+  db[m][dId][rId] = newRec;
+  saveDB();
+
+  const gasResult = await syncRecordToGas(
+    'submitReport',
+    m,
+    dId,
+    rId,
+    stagedUploadFile ? {
+      fileName: stagedUploadFile.fileName,
+      fileSize: stagedUploadFile.fileSize,
+      mimeType: stagedUploadFile.mimeType,
+      base64: stagedUploadFile.base64
+    } : null
+  );
+
+  if (gasResult && gasResult.ok && gasResult.fileUrl) {
+    db[m][dId][rId].driveViewUrl = gasResult.fileUrl;
+    db[m][dId][rId].driveDownloadUrl = gasResult.downloadUrl || gasResult.fileUrl;
+    if (!db[m][dId][rId].link) {
+      db[m][dId][rId].link = gasResult.fileUrl;
+    }
+    saveDB();
+  } else {
+    setTimeout(() => pullStateFromGas(false, true), 1500);
+  }
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = '📤 ยืนยันการส่งรายงาน';
+  closeModal('submitModal');
+  renderAll();
+  showToast(
+    stagedUploadFile
+      ? `✅ บันทึกลง Google Sheets และอัปโหลดไฟล์ "${stagedUploadFile.fileName}" เข้า Google Drive สำเร็จ!`
+      : `✅ ส่งข้อมูลบันทึกลงฐานข้อมูล Google Sheets สำเร็จ!`
+  );
+}
+
+/* ================== 13. APPROVAL & MANUAL SCORING PAGE ================== */
+function initFilters() {
+  const mSel = document.getElementById('apFilterMonth');
+  mSel.innerHTML = MONTHS.map(m => `<option value="${m}" ${m === currentMonth ? 'selected' : ''}>${m}</option>`).join('');
+
+  const dSel = document.getElementById('apFilterDist');
+  const dists = getVisibleDistricts();
+  dSel.innerHTML = (isAdmin() ? `<option value="ALL">-- ทุกอำเภอ (8 อำเภอ) --</option>` : '') +
+    dists.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+
+  // เมนูเลือกผูกอำเภอในฟอร์มบันทึกไอดีไลน์
+  const lDist = document.getElementById('lineRecDist');
+  if (lDist) {
+    lDist.innerHTML =
+      DISTRICTS.map(d => `<option value="${d.id}">📍 ${d.name} (${d.id})</option>`).join('') +
+      `<option value="ALL">🌐 ทุกอำเภอ (ภาพรวมจังหวัดอุทัยธานี)</option>`;
+  }
+
+  // เมนูเลือกอำเภอที่จะส่งรายงานในหน้า LINE
+  const lSendDist = document.getElementById('lineSendDistSelect');
+  if (lSendDist) {
+    lSendDist.innerHTML =
+      `<option value="ALL">🌐 ทุกอำเภอ (สรุปภาพรวมทั้ง 8 อำเภอ)</option>` +
+      DISTRICTS.map(d => `<option value="${d.id}">📍 เฉพาะ ${d.name} (${d.id})</option>`).join('');
+  }
+
+  renderApprovalGroupTabs();
+  populateReportDropdown();
+}
+
+function onApprovalMonthChange() {
+  populateReportDropdown();
+  renderApprovalPage();
+}
+
+function renderApprovalGroupTabs() {
+  const tabs = [
+    { id: 'ALL', label: 'ทั้งหมด (4 กลุ่มงาน)' },
+    ...WORKGROUPS.map(g => ({ id: g.id, label: g.short }))
+  ];
+  document.getElementById('approvalGroupTabs').innerHTML = tabs.map(t =>
+    `<button class="stab ${selectedApprovalGroup === t.id ? 'active' : ''}" onclick="selectApprovalGroup('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+
+function selectApprovalGroup(gId) {
+  selectedApprovalGroup = gId;
+  renderApprovalGroupTabs();
+  populateReportDropdown();
+  renderApprovalPage();
+}
+
+function populateReportDropdown() {
+  const rSel = document.getElementById('apFilterReport');
+  if (!rSel) return;
+  const m = document.getElementById('apFilterMonth')?.value || currentMonth;
+  const reports = getAllReportsFlat(m, false).filter(r => selectedApprovalGroup === 'ALL' || r.groupId === selectedApprovalGroup);
+  rSel.innerHTML = `<option value="ALL">-- ทุกหัวข้อที่เปิดส่งในเดือน${m} (${reports.length} งาน) --</option>` +
+    reports.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+}
+
+function setManualScore(month, distId, repId, scoreVal) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถให้คะแนนและอนุมัติได้');
+    return;
+  }
+  const rec = db[month][distId][repId];
+  rec.score = Number(scoreVal);
+  rec.status = scoreVal > 0 ? 'อนุมัติแล้ว' : 'ยังไม่ส่งรายงาน';
+  if (scoreVal > 0 && !rec.submittedAt) {
+    rec.submittedAt = new Date().toLocaleString('th-TH');
+    rec.sender = rec.sender || 'Admin (ให้คะแนนแมนนวล)';
+  }
+  saveDB();
+  syncRecordToGas('manualScore', month, distId, repId);
+  renderAll();
+  showToast(`✅ บันทึกคะแนน ${scoreVal} คะแนน (${rec.status}) ลง Google Sheets เรียบร้อย`);
+}
+
+function renderApprovalPage() {
+  const m = document.getElementById('apFilterMonth')?.value || currentMonth;
+  const rFilter = document.getElementById('apFilterReport')?.value || 'ALL';
+  const dFilter = document.getElementById('apFilterDist')?.value || 'ALL';
+  const sFilter = document.getElementById('apFilterStatus')?.value || 'ALL';
+  const admin = isAdmin();
+
+  const reports = getAllReportsFlat(m, false).filter(r =>
+    (selectedApprovalGroup === 'ALL' || r.groupId === selectedApprovalGroup) &&
+    (rFilter === 'ALL' || r.id === rFilter)
+  );
+  const dists = getVisibleDistricts().filter(d => dFilter === 'ALL' || d.id === dFilter);
+
+  const thDists = dists.map(d => `<th class="center">${d.short}</th>`).join('');
+  let mRows = '';
+  reports.forEach(r => {
+    const cells = dists.map(d => {
+      const rec = db[m][d.id][r.id];
+      if (!admin) {
+        return `<td class="center"><span class="pill ${rec.score > 0 ? 'pill-ok' : 'pill-none'}">${rec.score} คะแนน</span></td>`;
+      }
+      return `<td class="center">
+        <div class="sc-grp">
+          <button class="sc-btn ${rec.score === 2 ? 'on-2' : ''}" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">2</button>
+          <button class="sc-btn ${rec.score === 1 ? 'on-1' : ''}" onclick="setManualScore('${m}','${d.id}','${r.id}',1)">1</button>
+          <button class="sc-btn ${rec.score === 0 ? 'on-0' : ''}" onclick="setManualScore('${m}','${d.id}','${r.id}',0)">0</button>
+        </div>
+      </td>`;
+    }).join('');
+
+    const hideBtn = admin ? `<button class="btn btn-ghost btn-xs" style="margin-left:6px" onclick="toggleReportMonthVisibility('${m}','${r.id}')" title="ซ่อนรายงานนี้ในเดือน${m}">🙈 ซ่อนเดือน${m}</button>` : '';
+    mRows += `<tr>
+      <td>
+        <span style="font-size:11px;color:var(--blue-600);font-weight:700">[${r.groupShort}]</span> ${hideBtn}<br>
+        <b>${r.name}</b>
+      </td>
+      ${cells}
+    </tr>`;
+  });
+  document.getElementById('approvalMatrixWrap').innerHTML = `
+    <table>
+      <thead><tr><th>หัวข้อรายงานที่เปิดส่ง (เดือน${m})</th>${thDists}</tr></thead>
+      <tbody>${mRows || `<tr><td colspan="${dists.length + 1}" class="center">ไม่มีหัวข้อรายงานที่เปิดส่งตามตัวกรอง</td></tr>`}</tbody>
+    </table>
+  `;
+
+  let lRows = '';
+  reports.forEach(r => {
+    dists.forEach(d => {
+      const rec = db[m][d.id][r.id];
+      if (sFilter !== 'ALL' && rec.status !== sFilter) return;
+      const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none';
+      const fileCellHtml = buildFileCellHtml(m, d.id, r.id, rec);
+
+      const actions = admin ? `
+        <button class="btn btn-ok btn-xs" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">✅ อนุมัติ (+2)</button>
+        <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)" title="ส่งเข้าไอดีของ ${d.short}">🤖 ส่ง LINE (${d.short})</button>
+        <button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',true)">📲 แชร์</button>
+      ` : `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${m}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>`;
+
+      lRows += `<tr>
+        <td>${m}</td>
+        <td><b>${d.name}</b></td>
+        <td><small style="color:var(--muted)">${r.groupShort}</small><br><b>${r.name}</b></td>
+        <td class="center"><span class="pill ${pillCls}">${rec.status}</span></td>
+        <td class="center"><b>${rec.score}</b></td>
+        <td class="center">${fileCellHtml}</td>
+        <td>${rec.sender || '-'}</td>
+        <td class="center" style="white-space:nowrap">${actions}</td>
+      </tr>`;
+    });
+  });
+  document.getElementById('approvalListWrap').innerHTML = `
+    <table>
+      <thead><tr><th>เดือน</th><th>อำเภอ</th><th>หัวข้อรายงาน</th><th class="center">สถานะ</th><th class="center">คะแนน</th><th class="center">ไฟล์แนบ (สำหรับ Admin ดาวน์โหลด)</th><th>ผู้ส่ง</th><th class="center">จัดการ</th></tr></thead>
+      <tbody>${lRows || '<tr><td colspan="8" class="center">ไม่พบรายการตามตัวกรองที่เลือก</td></tr>'}</tbody>
+    </table>
+  `;
+}
+
+function approveAllPendingInFilter() {
+  if (!isAdmin()) return;
+  const m = document.getElementById('apFilterMonth')?.value || currentMonth;
+  let count = 0;
+  const activeReps = getAllReportsFlat(m, false);
+  DISTRICTS.forEach(d => {
+    activeReps.forEach(r => {
+      if (db[m][d.id][r.id].status === 'รอตรวจสอบ') {
+        db[m][d.id][r.id].status = 'อนุมัติแล้ว';
+        db[m][d.id][r.id].score = 2;
+        syncRecordToGas('manualScore', m, d.id, r.id);
+        count++;
+      }
+    });
+  });
+  saveDB();
+  renderAll();
+  showToast(`✅ อนุมัติรายการที่รอตรวจทั้งหมด ${count} งาน และซิงค์ลง Google Sheets เรียบร้อยแล้ว`);
+}
+
+/* ================== 14. LINE NOTIFICATION & DISTRICT/ID SELECTOR (ADMIN ONLY) ================== */
+async function addLineRecipient(e) {
+  e.preventDefault();
+  if (!isAdmin()) return;
+  const editId = document.getElementById('editLineRecItemId').value.trim();
+  const distId = document.getElementById('lineRecDist').value;
+  const name = document.getElementById('lineRecName').value.trim();
+  const lineId = document.getElementById('lineRecId').value.trim();
+  if (!name || !lineId) return;
+
+  const btn = document.getElementById('btnSaveLineRec');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+
+  if (editId) {
+    const item = lineRecipients.find(x => String(x.id) === String(editId));
+    if (item) {
+      item.distId = distId;
+      item.name = name;
+      item.lineId = lineId;
+    }
+  } else {
+    const newId = Date.now().toString();
+    lineRecipients.push({ id: newId, name, lineId, distId });
+    checkedLineRecipientIds.add(newId);
+  }
+
+  // บันทึกลงเครื่องทันที + ซิงค์ขึ้น Google Sheets ผ่าน saveTopicsConfig
+  saveWorkgroupsAndVisibility(true);
+  cancelEditLineRecipient();
+  renderLinePage();
+
+  btn.disabled = false;
+  btn.textContent = '💾 บันทึกไอดีไลน์';
+  showToast(`✅ บันทึกไอดีไลน์ "${name}" (${getDistrictLabel(distId)}) เรียบร้อยแล้ว!`);
+}
+
+function openEditLineRecipient(id) {
+  if (!isAdmin()) return;
+  const item = lineRecipients.find(x => String(x.id) === String(id));
+  if (!item) return;
+  document.getElementById('editLineRecItemId').value = item.id;
+  document.getElementById('lineRecDist').value = item.distId || 'ALL';
+  document.getElementById('lineRecName').value = item.name || '';
+  document.getElementById('lineRecId').value = item.lineId || '';
+  document.getElementById('lineFormHeaderTitle').textContent = '✏️ แก้ไขไอดีไลน์ประจำอำเภอ';
+  document.getElementById('btnSaveLineRec').textContent = '💾 บันทึกการแก้ไข';
+  document.getElementById('btnCancelEditLineRec').style.display = 'inline-flex';
+  document.getElementById('lineRecName').focus();
+}
+
+function cancelEditLineRecipient() {
+  document.getElementById('editLineRecItemId').value = '';
+  document.getElementById('lineRecName').value = '';
+  document.getElementById('lineRecId').value = '';
+  document.getElementById('lineFormHeaderTitle').textContent = '➕ บันทึกและผูกไอดีไลน์ประจำอำเภอ';
+  document.getElementById('btnSaveLineRec').textContent = '💾 บันทึกไอดีไลน์';
+  document.getElementById('btnCancelEditLineRec').style.display = 'none';
+}
+
+async function removeLineRecipient(id) {
+  if (!isAdmin()) return;
+  lineRecipients = lineRecipients.filter(x => String(x.id) !== String(id));
+  checkedLineRecipientIds.delete(String(id));
+  saveWorkgroupsAndVisibility(true);
+  renderLinePage();
+  showToast('🗑️ ลบไอดีไลน์เรียบร้อยแล้ว');
+}
+
+function toggleLineRecipientCheck(id, isChecked) {
+  if (isChecked) checkedLineRecipientIds.add(String(id));
+  else checkedLineRecipientIds.delete(String(id));
+  renderLineTargetPreview();
+}
+
+function toggleAllLineCheckboxes(checkAll) {
+  lineRecipients.forEach(r => {
+    if (checkAll) checkedLineRecipientIds.add(String(r.id));
+    else checkedLineRecipientIds.delete(String(r.id));
+  });
+  renderLinePage();
+}
+
+function selectLineQuickDistrict(distId) {
+  selectedLineDistrict = distId;
+  const sel = document.getElementById('lineSendDistSelect');
+  if (sel) sel.value = distId;
+  // ตั้งโหมดเป็นส่งตามไอดีอำเภอที่เลือกอัตโนมัติ
+  const modeSel = document.getElementById('lineSendTargetMode');
+  if (modeSel && modeSel.value !== 'BY_SPECIFIC_ID' && modeSel.value !== 'BY_CHECKED') {
+    modeSel.value = 'BY_DISTRICT';
+  }
+  renderLinePage();
+}
+
+function onLineSendDistChange() {
+  const sel = document.getElementById('lineSendDistSelect');
+  selectedLineDistrict = sel ? sel.value : 'ALL';
+  renderLinePage();
+}
+
+function onLineTargetModeChange() {
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const specWrap = document.getElementById('specificLineIdSelectWrap');
+  if (specWrap) {
+    specWrap.style.display = mode === 'BY_SPECIFIC_ID' ? 'block' : 'none';
+  }
+  renderLineTargetPreview();
+}
+
+// คำนวณรายชื่อไอดีเป้าหมายตามเมนูที่แอดมินเลือก
+function getResolvedTargetRecipients(overrideDistId = null) {
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const targetDist = overrideDistId || selectedLineDistrict || 'ALL';
+
+  if (mode === 'BROADCAST') {
+    return [];
+  }
+  if (mode === 'BY_SPECIFIC_ID' && !overrideDistId) {
+    const specId = document.getElementById('lineSpecificRecSelect')?.value;
+    return lineRecipients.filter(r => String(r.id) === String(specId));
+  }
+  if (mode === 'BY_CHECKED' && !overrideDistId) {
+    return lineRecipients.filter(r => checkedLineRecipientIds.has(String(r.id)));
+  }
+
+  // โหมด BY_DISTRICT: เลือกเฉพาะไอดีที่ผูกกับอำเภอนั้นๆ
+  if (targetDist === 'ALL') {
+    return [...lineRecipients];
+  }
+  const exactDistMatches = lineRecipients.filter(r => r.distId === targetDist);
+  if (exactDistMatches.length > 0) {
+    return exactDistMatches;
+  }
+  // หากอำเภอนั้นยังไม่ได้ผูกไอดีแยก ให้ดึงไอดีที่ตั้งเป็น ALL (ภาพรวมจังหวัด) แทน
+  return lineRecipients.filter(r => r.distId === 'ALL');
+}
+
+function renderLineTargetPreview() {
+  const box = document.getElementById('lineTargetPreviewBox');
+  if (!box) return;
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const distName = getDistrictLabel(selectedLineDistrict);
+
+  if (mode === 'BROADCAST') {
+    box.innerHTML = `📢 <b>เป้าหมายการส่ง:</b> ส่งแบบ <b>Broadcast</b> เข้า LINE ของทุกคนที่เป็นเพื่อนกับบอท LINE OA (ข้อมูลของ: <b>${distName}</b>)`;
+    return;
+  }
+
+  const targets = getResolvedTargetRecipients();
+  if (targets.length === 0) {
+    box.innerHTML = `⚠️ <b>ยังไม่มีไอดีไลน์สำหรับ "${distName}" ในเงื่อนไขที่เลือก:</b> กรุณาเพิ่มไอดีไลน์ของ <b>${distName}</b> ในฟอร์มด้านซ้ายมือ (หรือหากกดส่งตอนนี้ ระบบจะส่งเข้าไอดีหลักในหน้าตั้งค่า / Broadcast แทน)`;
+    return;
+  }
+
+  const pills = targets.map(t =>
+    `<span class="pill pill-ok" style="margin-right:4px;margin-top:3px">🎯 ${t.name} (${getDistrictLabel(t.distId)})</span>`
+  ).join('');
+  box.innerHTML = `<div><b>🎯 ไอดีปลายทางที่จะได้รับรายงานของ "${distName}" (${targets.length} ไอดี):</b></div><div style="margin-top:4px">${pills}</div>`;
+}
+
+function renderLinePage() {
+  if (!isAdmin()) return;
+
+  // 1. ปุ่มลัดเลือกอำเภอ (Quick Tabs)
+  const qTabsWrap = document.getElementById('lineDistrictQuickTabs');
+  if (qTabsWrap) {
+    const allTabs = [
+      { id: 'ALL', label: '🌐 ทุกอำเภอ' },
+      ...DISTRICTS.map(d => {
+        const cnt = lineRecipients.filter(r => r.distId === d.id).length;
+        return { id: d.id, label: `${d.short}${cnt > 0 ? ` (${cnt})` : ''}` };
+      })
+    ];
+    qTabsWrap.innerHTML = allTabs.map(t =>
+      `<button type="button" class="stab ${selectedLineDistrict === t.id ? 'active' : ''}" onclick="selectLineQuickDistrict('${t.id}')">${t.label}</button>`
+    ).join('');
+  }
+
+  const sendDistSel = document.getElementById('lineSendDistSelect');
+  if (sendDistSel && sendDistSel.value !== selectedLineDistrict) {
+    sendDistSel.value = selectedLineDistrict;
+  }
+
+  // 2. อัปเดตดรอปดาวน์เลือกเจาะจง 1 ไอดี
+  const specSel = document.getElementById('lineSpecificRecSelect');
+  if (specSel) {
+    const prevVal = specSel.value;
+    specSel.innerHTML = lineRecipients.length
+      ? lineRecipients.map(r => `<option value="${r.id}">${r.name} — [${getDistrictLabel(r.distId)}] (${r.lineId.slice(0, 10)}...)</option>`).join('')
+      : `<option value="">-- ยังไม่มีไอดีที่บันทึกไว้ --</option>`;
+    if (prevVal && lineRecipients.some(r => String(r.id) === String(prevVal))) {
+      specSel.value = prevVal;
+    }
+  }
+
+  // 3. ตารางรายชื่อไอดีไลน์ด้านซ้าย
+  const rRows = lineRecipients.map(r => {
+    const isChecked = checkedLineRecipientIds.has(String(r.id)) ? 'checked' : '';
+    const validApiId = /^[UCR][0-9a-fA-F]{32}$/.test(r.lineId);
+    const badge = validApiId
+      ? `<span class="pill pill-ok">🟢 รหัส U.../C... พร้อมส่งตรง</span>`
+      : `<span class="pill pill-pend">📢 ไอดีทั่วไป</span>`;
+    return `
+      <tr>
+        <td class="center">
+          <input type="checkbox" ${isChecked} onchange="toggleLineRecipientCheck('${r.id}', this.checked)" style="width:16px;height:16px;cursor:pointer">
+        </td>
+        <td>
+          <b>${r.name}</b>
+          <div style="font-size:11px;color:var(--muted);word-break:break-all">ID: ${r.lineId}</div>
+          <div style="margin-top:3px">${badge}</div>
+        </td>
+        <td>
+          <span class="pill ${r.distId === 'ALL' ? 'pill-pend' : 'pill-ok'}" style="cursor:pointer" onclick="selectLineQuickDistrict('${r.distId}')" title="คลิกเพื่อเลือกส่งรายงานให้อำเภอนี้">
+            ${getDistrictLabel(r.distId)}
+          </span>
+        </td>
+        <td class="center" style="white-space:nowrap">
+          <button type="button" class="btn btn-line btn-xs" onclick="testSingleRecipientLine('${r.id}')" title="ทดสอบส่งเข้าไอดีนี้ทันที">🔔 ทดสอบ</button>
+          <button type="button" class="btn btn-ghost btn-xs" onclick="openEditLineRecipient('${r.id}')" title="แก้ไข">✏️</button>
+          <button type="button" class="btn btn-danger btn-xs" onclick="removeLineRecipient('${r.id}')" title="ลบ">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('lineRecipientTable').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th class="center">เลือก</th>
+          <th>ชื่อผู้รับ / รหัส LINE ID</th>
+          <th>อำเภอที่ผูกไว้</th>
+          <th class="center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>${rRows || '<tr><td colspan="4" class="center">ยังไม่มีรายชื่อไอดีไลน์ กรุณาเพิ่มในฟอร์มด้านบน</td></tr>'}</tbody>
+    </table>
+  `;
+
+  renderLineTargetPreview();
+  renderLineApprovedTable();
+}
+
+function renderLineApprovedTable() {
+  if (!isAdmin()) return;
+  const statusFilter = document.getElementById('lineReportStatusFilter')?.value || 'อนุมัติแล้ว';
+  const reports = getAllReportsFlat(currentMonth, false);
+  const dists = selectedLineDistrict === 'ALL' ? DISTRICTS : DISTRICTS.filter(d => d.id === selectedLineDistrict);
+
+  const titleEl = document.getElementById('lineReportTableTitle');
+  if (titleEl) {
+    titleEl.textContent = `📑 รายการรายงานประจำเดือน${currentMonth} — ${getDistrictLabel(selectedLineDistrict)}`;
+  }
+
+  let aRows = '';
+  dists.forEach(d => {
+    reports.forEach(r => {
+      const rec = db[currentMonth]?.[d.id]?.[r.id];
+      if (!rec) return;
+      if (statusFilter !== 'ALL' && rec.status !== statusFilter) return;
+
+      const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : 'pill-none';
+      aRows += `<tr>
+        <td><b>${d.short}</b></td>
+        <td><small style="color:var(--muted)">${r.groupShort}</small><br><b>${r.name}</b></td>
+        <td class="center"><span class="pill ${pillCls}">${rec.status} (${rec.score} คะแนน)</span></td>
+        <td class="center" style="white-space:nowrap">
+          <button type="button" class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${currentMonth}','${d.id}','${r.id}',false)">🤖 ส่งเข้าไอดี ${d.short}</button>
+          <button type="button" class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${currentMonth}','${d.id}','${r.id}',true)">📲 แชร์</button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('approvedForLineTable').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>อำเภอ</th>
+          <th>หัวข้อรายงาน (เดือน${currentMonth})</th>
+          <th class="center">สถานะ / คะแนน</th>
+          <th class="center">ส่งแจ้งเตือนเฉพาะรายการ</th>
+        </tr>
+      </thead>
+      <tbody>${aRows || `<tr><td colspan="4" class="center">ไม่พบรายการตามสถานะที่เลือกของ ${getDistrictLabel(selectedLineDistrict)}</td></tr>`}</tbody>
+    </table>
+  `;
+}
+
+// ทดสอบส่งข้อความเข้าไอดีเดียวที่กดปุ่ม "🔔 ทดสอบ"
+async function testSingleRecipientLine(recId) {
+  const item = lineRecipients.find(x => String(x.id) === String(recId));
+  if (!item) return;
+  const msg = `🔔 [ทดสอบการแจ้งเตือน CDD Uthai Report]\nผู้รับ: ${item.name}\nหน่วยงานที่ผูกไว้: ${getDistrictLabel(item.distId)}\nรหัสไอดี: ${item.lineId}\nสถานะ: เชื่อมต่อพร้อมรับแจ้งเตือนรายงานประจำเดือน${currentMonth} เรียบร้อยแล้ว!`;
+  await dispatchLineMessageToTargets(msg, [item], false);
+}
+
+// ฟังก์ชันกลางสำหรับส่งข้อความไปยังรายการไอดีที่เลือกโดยเฉพาะ
+async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [], forceManualShare = false) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถส่งแจ้งเตือน LINE ได้');
+    return;
+  }
+
+  if (forceManualShare) {
+    const shareUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(messageText);
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    showToast('📲 เปิดหน้าต่างแชร์ข้อความไปยังแอป LINE เรียบร้อยแล้ว');
+    return;
+  }
+
+  const activeToken = (document.getElementById('cfgLineToken')?.value || gasConfig.token || '').trim();
+  const fallbackTarget = (document.getElementById('cfgLineTarget')?.value || gasConfig.target || '').trim();
+
+  // กรองเฉพาะไอดีที่ต้องการส่งจริง
+  const cleanTargets = (targetRecipientObjs || []).filter(r => r && r.lineId);
+  const firstTargetId = cleanTargets.length === 1 ? cleanTargets[0].lineId.trim() : (cleanTargets.length === 0 ? fallbackTarget : '');
+
+  const targetNames = cleanTargets.length > 0
+    ? cleanTargets.map(r => r.name).join(', ')
+    : (fallbackTarget ? `ไอดีหลัก (${fallbackTarget.slice(0, 8)}...)` : 'Broadcast ทุกคน');
+
+  showToast(`⏳ กำลังส่ง LINE ไปยัง: ${targetNames}...`);
+
+  const res = await sendToGoogleSheetDB({
+    action: 'sendLine',
+    message: messageText,
+    token: activeToken,
+    target: firstTargetId,
+    recipients: cleanTargets
+  });
+
+  if (res && res.ok) {
+    showToast(`✅ ส่งแจ้งเตือน LINE ไปยัง "${targetNames}" เรียบร้อยแล้ว!`);
+    return;
+  }
+
+  const errReason = (res && res.error) ? res.error : 'กรุณาตรวจสอบว่าใส่ LINE Channel Access Token ในหน้าตั้งค่าแล้ว';
+  showToast(`⚠️ ${errReason} — ระบบเปิดหน้าต่างแชร์ผ่านแอป LINE ให้แทน`);
+  const shareUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(messageText);
+  window.open(shareUrl, '_blank', 'noopener,noreferrer');
+}
+
+// ส่งแจ้งเตือนรายหัวข้อ (ส่งตรงเข้าไอดีของอำเภอนั้น หรือตามโหมดที่เลือก)
+function sendSingleLineAlert(month, distId, repId, forceManualShare = false) {
+  const dist = DISTRICTS.find(d => d.id === distId);
+  const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
+  const rec = db[month][distId][repId];
+  const fileLine = rec.fileName ? `\nไฟล์แนบ: ${rec.fileName}` : '';
+  const msg = `📢 [CDD Uthai Report - แจ้งสถานะรายงาน]\nประจำเดือน: ${month}\nหน่วยงาน: ${dist.name}\nกลุ่มงาน: ${rep.groupShort}\nรายงาน: ${rep.name}${fileLine}\nสถานะ: ${rec.status} (${rec.score}/2 คะแนน)`;
+
+  // หากอยู่ในหน้าแจ้งเตือน LINE ให้ใช้โหมดผู้รับที่เลือก แต่ถ้ากดจากหน้าอนุมัติให้ส่งตรงหาไอดีของอำเภอนั้น
+  const targets = currentPage === 'line'
+    ? getResolvedTargetRecipients(selectedLineDistrict === 'ALL' ? distId : null)
+    : getResolvedTargetRecipients(distId);
+
+  dispatchLineMessageToTargets(msg, targets, forceManualShare);
+}
+
+// ส่งสรุปผลการส่งงานตามอำเภอที่เลือกในเมนู
+function sendDistrictSummaryLine(forceManualShare = false) {
+  const reports = getAllReportsFlat(currentMonth, false);
+  const targets = getResolvedTargetRecipients();
+
+  // กรณีเลือก "ทุกอำเภอ"
+  if (selectedLineDistrict === 'ALL') {
+    let lines = [
+      `📊 [CDD Uthai Report] สรุปคะแนนประจำเดือน${currentMonth}`,
+      `สพจ.อุทัยธานี (เปิดส่ง ${reports.length} งาน • คะแนนเต็ม ${reports.length * 2} คะแนน)`
+    ];
+    DISTRICTS.forEach(d => {
+      let sc = 0, app = 0, pend = 0;
+      reports.forEach(r => {
+        const rec = db[currentMonth][d.id][r.id];
+        sc += Number(rec?.score || 0);
+        if (rec?.status === 'อนุมัติแล้ว') app++;
+        else if (rec?.status === 'รอตรวจสอบ') pend++;
+      });
+      lines.push(`• ${d.short}: ${sc}/${reports.length * 2} คะแนน (อนุมัติ ${app}/${reports.length}${pend > 0 ? ` รอตรวจ ${pend}` : ''})`);
+    });
+    dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare);
+    return;
+  }
+
+  // กรณีเลือก "เฉพาะอำเภอ" (สรุปรายละเอียดของอำเภอนั้นโดยเฉพาะ)
+  const dist = DISTRICTS.find(d => d.id === selectedLineDistrict);
+  if (!dist) return;
+
+  let sc = 0, appList = [], pendList = [], missList = [];
+  reports.forEach(r => {
+    const rec = db[currentMonth][dist.id][r.id];
+    sc += Number(rec?.score || 0);
+    if (rec?.status === 'อนุมัติแล้ว') appList.push(r.name);
+    else if (rec?.status === 'รอตรวจสอบ') pendList.push(r.name);
+    else missList.push(r.name);
+  });
+
+  let lines = [
+    `📊 [CDD Uthai Report - สรุปผลการส่งรายงาน]`,
+    `หน่วยงาน: ${dist.name}`,
+    `ประจำเดือน: ${currentMonth}`,
+    `คะแนนที่ได้: ${sc} / ${reports.length * 2} คะแนน`,
+    `✅ อนุมัติแล้ว: ${appList.length} งาน`,
+    `⏳ รอตรวจสอบ: ${pendList.length} งาน`,
+    `⚪ ยังไม่ส่ง: ${missList.length} งาน`
+  ];
+  if (missList.length > 0 && missList.length <= 10) {
+    lines.push(`\n📌 รายการที่ยังไม่ส่ง (${missList.length} งาน):`);
+    missList.forEach(name => lines.push(`- ${name}`));
+  }
+  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare);
+}
+
+// ส่งแจ้งเตือนเฉพาะรายการค้างส่งของอำเภอที่เลือก
+function sendDistrictPendingAlertLine(forceManualShare = false) {
+  const reports = getAllReportsFlat(currentMonth, false);
+  const targets = getResolvedTargetRecipients();
+  const dists = selectedLineDistrict === 'ALL' ? DISTRICTS : DISTRICTS.filter(d => d.id === selectedLineDistrict);
+
+  let lines = [`⚠️ [CDD Uthai Report - แจ้งเตือนงานค้างส่ง ประจำเดือน${currentMonth}]`];
+  let totalMissing = 0;
+
+  dists.forEach(d => {
+    const missing = [];
+    reports.forEach(r => {
+      const rec = db[currentMonth][d.id][r.id];
+      if (!rec || rec.status === 'ยังไม่ส่งรายงาน' || rec.status === 'แก้ไข') {
+        missing.push(r.name);
+      }
+    });
+    totalMissing += missing.length;
+    if (selectedLineDistrict === 'ALL') {
+      lines.push(`• ${d.short}: ค้างส่ง ${missing.length} งาน`);
+    } else {
+      lines.push(`หน่วยงาน: ${d.name}`);
+      lines.push(`จำนวนที่ค้างส่ง: ${missing.length} / ${reports.length} งาน`);
+      missing.forEach(mName => lines.push(`- ${mName}`));
+    }
+  });
+
+  if (totalMissing === 0) {
+    lines.push(`🎉 ส่งรายงานครบทุกหัวข้อเรียบร้อยแล้ว!`);
+  }
+  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare);
+}
+
+/* ================== 15. EXCEL / GOOGLE SHEETS IMPORT & EXPORT ================== */
+function buildTemplateRows(useCurrentData = false) {
+  const rows = [];
+  const reports = getAllReportsFlat(currentMonth, false);
+  DISTRICTS.forEach(d => {
+    reports.forEach(r => {
+      const rec = useCurrentData ? db[currentMonth][d.id][r.id] : {
+        status: 'ยังไม่ส่งรายงาน', score: 0, fileName: '', driveViewUrl: '', driveDownloadUrl: '', link: '', sender: '', submittedAt: '', note: ''
+      };
+      rows.push({
+        'ประจำเดือน': currentMonth,
+        'รหัสอำเภอ': d.id,
+        'อำเภอ': d.name,
+        'รหัสกลุ่มงาน': r.groupId,
+        'กลุ่มงาน': r.groupName,
+        'รหัสรายงาน': r.id,
+        'หัวข้อรายงาน': r.name,
+        'สถานะการส่งงาน': rec.status,
+        'คะแนน': rec.score,
+        'ชื่อไฟล์แนบ': rec.fileName || '',
+        'ลิงก์เปิดดูใน Google Drive': rec.driveViewUrl || rec.link || '',
+        'ลิงก์ดาวน์โหลดไฟล์': rec.driveDownloadUrl || rec.driveViewUrl || '',
+        'ผู้ส่งรายงาน': rec.sender || '',
+        'หมายเหตุ': rec.note || '',
+        'อัปเดตล่าสุด': rec.submittedAt || ''
+      });
+    });
+  });
+  return rows;
+}
+
+function downloadGoogleSheetTemplate() {
+  const rows = buildTemplateRows(false);
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'ฐานข้อมูลรวมทั้งหมด');
+  XLSX.writeFile(wb, `CDD_Uthai_Report_GoogleSheet_Template_${currentMonth}.xlsx`);
+  showToast('📥 ดาวน์โหลดไฟล์แม่แบบที่ตรงกับหัวตาราง Google Sheets เรียบร้อยแล้ว');
+}
+
+function exportCurrentToExcel() {
+  const rows = buildTemplateRows(true);
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `รายงาน_${currentMonth}`);
+  XLSX.writeFile(wb, `CDD_Uthai_Report_สรุปรายงาน_${currentMonth}.xlsx`);
+  showToast('📤 ส่งออกข้อมูลเป็นไฟล์ Excel เรียบร้อยแล้ว');
+}
+
+function handleExcelFileSelected(e) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินระดับจังหวัดเท่านั้นที่สามารถนำเข้าข้อมูล Excel ได้');
+    return;
+  }
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const firstSheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      let importedCount = 0;
+      const allReps = getAllReportsFlat(null, true);
+      const batchForGas = [];
+
+      rows.forEach(row => {
+        const m = (row['ประจำเดือน'] || currentMonth).toString().trim();
+        if (!db[m]) return;
+        const dCode = (row['รหัสอำเภอ'] || '').toString().trim().toUpperCase();
+        const dName = (row['อำเภอ'] || '').toString().trim();
+        const dist = DISTRICTS.find(d => d.id === dCode || d.name.includes(dName) || (dName && d.short.includes(dName)));
+        if (!dist) return;
+
+        const rCode = (row['รหัสรายงาน'] || '').toString().trim().toUpperCase();
+        const rName = (row['หัวข้อรายงาน'] || '').toString().trim();
+        const rep = allReps.find(r => r.id === rCode || r.name === rName || (rName && r.name.includes(rName)));
+        if (!rep) return;
+
+        let st = (row['สถานะการส่งงาน'] || 'ยังไม่ส่งรายงาน').toString().trim();
+        let sc = row['คะแนน'] !== '' ? Number(row['คะแนน']) : (st === 'อนุมัติแล้ว' ? 2 : 0);
+        if (sc > 0 && st === 'ยังไม่ส่งรายงาน') st = 'อนุมัติแล้ว';
+
+        const viewUrl = (row['ลิงก์เปิดดูใน Google Drive'] || row['ลิงก์เอกสารแนบ'] || '').toString().trim();
+        const dlUrl = (row['ลิงก์ดาวน์โหลดไฟล์'] || row['ลิงก์ดาวน์โหลด Google Drive'] || viewUrl).toString().trim();
+        const recObj = {
+          status: st,
+          score: sc,
+          fileName: (row['ชื่อไฟล์แนบ'] || '').toString().trim(),
+          fileSize: 0,
+          mimeType: '',
+          driveViewUrl: viewUrl,
+          driveDownloadUrl: dlUrl,
+          link: viewUrl,
+          sender: (row['ผู้ส่งรายงาน'] || '').toString().trim(),
+          submittedAt: (row['อัปเดตล่าสุด'] || row['วันที่ส่ง'] || '').toString().trim(),
+          note: (row['หมายเหตุ'] || '').toString().trim()
+        };
+        db[m][dist.id][rep.id] = recObj;
+        batchForGas.push({
+          month: m,
+          distId: dist.id,
+          distName: dist.name,
+          groupId: rep.groupId,
+          groupName: rep.groupName,
+          repId: rep.id,
+          repName: rep.name,
+          ...recObj
+        });
+        importedCount++;
+      });
+
+      saveDB();
+      renderAll();
+      if (batchForGas.length > 0) {
+        await sendToGoogleSheetDB({ action: 'batchImport', records: batchForGas });
+      }
+      showToast(`✅ นำเข้าข้อมูลจากไฟล์ Excel และซิงค์ขึ้น Google Sheets สำเร็จ ${importedCount} รายการ`);
+    } catch (err) {
+      showToast('❌ รูปแบบไฟล์ไม่ถูกต้อง กรุณาใช้ไฟล์แม่แบบของระบบ');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ================== 16. UTILITIES & SETTINGS ================== */
+async function saveGasSettings() {
+  if (!isAdmin()) return;
+  gasConfig = {
+    url: document.getElementById('cfgGasUrl').value.trim() || DEFAULT_GAS_WEB_APP_URL,
+    driveFolderId: document.getElementById('cfgDriveFolderId').value.trim(),
+    token: document.getElementById('cfgLineToken').value.trim(),
+    target: document.getElementById('cfgLineTarget').value.trim()
+  };
+  saveWorkgroupsAndVisibility(true);
+  await testGasConnection();
+  showToast('💾 บันทึกการตั้งค่าและ LINE Token ลงฐานข้อมูลกลางเรียบร้อยแล้ว');
+}
+
+async function testGasConnection() {
+  const statusBox = document.getElementById('gasStatusBox');
+  statusBox.style.display = 'block';
+  const curUrl = (document.getElementById('cfgGasUrl').value || gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
+  gasConfig.url = curUrl;
+
+  statusBox.innerHTML = '⏳ กำลังตรวจสอบการเชื่อมต่อกับ Google Apps Script...';
+  const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
+
+  if (res && res.ok && Array.isArray(res.records)) {
+    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์!</b><br>พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
+      (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
+    updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ)`);
+  } else {
+    statusBox.innerHTML = '⚠️ ไม่สามารถอ่านค่าตอบกลับได้ กรุณาตรวจสอบลิงก์ /exec';
+  }
+}
+
+function testLineConnection() {
+  const targets = getResolvedTargetRecipients();
+  dispatchLineMessageToTargets('🔔 ทดสอบการแจ้งเตือนจากระบบ CDD Uthai Report กลุ่มงานสารสนเทศการพัฒนาชุมชน สพจ.อุทัยธานี', targets, false);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('on');
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  document.getElementById('btnTheme').textContent = next === 'dark' ? '☀️ โหมดสว่าง' : '🌙 โหมดมืด';
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 4000);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  initMonthBar();
+  pullStateFromGas(false, true);
+  window.addEventListener('focus', () => {
+    const anyModalOpen = document.querySelector('.ov.on');
+    const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+    if (currentUser && !anyModalOpen && !isTypingInForm) {
+      pullStateFromGas(false, true);
+    }
+  });
+  const drop = document.getElementById('excelDropZone');
+  if (drop) {
+    drop.addEventListener('dragover', e => { e.preventDefault(); });
+    drop.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      requireAdminAndPin(
+        'ยืนยันรหัสความปลอดภัยแอดมินจังหวัด เพื่อนำเข้าไฟล์ ' + file.name,
+        () => handleExcelFileSelected({ target: { files: [file] } })
+      );
+    });
+  }
+});
+</script>
+</body>
+</html>
