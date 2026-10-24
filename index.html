@@ -599,6 +599,37 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
       <!-- ==================== PAGE: LINE NOTIFICATION & DISTRICT SELECTOR (ADMIN ONLY) ==================== -->
       <section class="page" id="page-line">
+        <!-- กล่องตั้งค่าและตรวจสอบสถานะบอท LINE OA โดยตรง -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-h">
+            <div>
+              <h3>🤖 ตั้งค่าบอท LINE OA & ตรวจสอบสถานะการเชื่อมต่อ</h3>
+              <p>วาง <b>Channel access token (long-lived)</b> จากเว็บ LINE Developers ที่ช่องด้านล่างนี้ แล้วกดปุ่มตรวจสอบและบันทึก</p>
+            </div>
+            <span class="pill pill-pend" id="lineBotConnBadge">⏳ รอตรวจสอบ Token</span>
+          </div>
+
+          <div style="display:grid;gap:10px;grid-template-columns:1fr auto;align-items:end">
+            <div>
+              <label style="font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:4px">
+                🔑 LINE Channel Access Token (จากแท็บ Messaging API ใน LINE Developers):
+              </label>
+              <input type="password" id="quickLineTokenInput" class="inp" placeholder="วางรหัส Channel Access Token ยาวๆ ที่นี่..." oninput="syncQuickTokenInput(this.value)">
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="toggleQuickTokenVisibility()">👁️ ดู/ซ่อน</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="verifyAndSaveLineBotToken()">🔍 ตรวจสอบบอท & บันทึก Token</button>
+              <button type="button" class="btn btn-sky btn-sm" onclick="pullStateFromGas(true)">🔄 ดึงไอดีที่ทักบอทเข้ามา</button>
+            </div>
+          </div>
+
+          <div id="lineBotDiagResult" class="note" style="margin-top:10px">
+            <b>💡 วิธีให้บอท LINE ส่งแจ้งเตือนเข้ากลุ่มอำเภอได้จริง 100%:</b><br>
+            1. วาง <b>Channel Access Token</b> ด้านบนแล้วกดปุ่ม <b>"🔍 ตรวจสอบบอท & บันทึก Token"</b> (ระบบจะแสดงชื่อบอทของคุณขึ้นมา)<br>
+            2. รหัสไอดีที่ใช้ส่งผ่านบอทต้องเป็นรหัส 33 ตัวอักษรที่ขึ้นต้นด้วย <b><code>U...</code></b> (บุคคล) หรือ <b><code>C...</code></b> (กลุ่มไลน์) เท่านั้น — <b>วิธีดูรหัสง่ายๆ:</b> เชิญบอทเข้ากลุ่มไลน์ของอำเภอแล้วพิมพ์คำว่า <b><code>id</code></b> ในกลุ่ม บอทจะตอบกลับรหัส <code>C...</code> ทันทีและดึงเข้าตารางด้านล่างให้อัตโนมัติ!
+          </div>
+        </div>
+
         <div class="grid">
           <!-- ซ้าย: ฟอร์มบันทึกไอดีไลน์ประจำอำเภอ -->
           <div class="card c5" style="margin-bottom:0">
@@ -620,7 +651,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 <input type="text" id="lineRecName" class="inp" placeholder="เช่น สพอ.เมืองอุทัยธานี / กลุ่มงานสารสนเทศฯ" required>
               </div>
               <div class="form-group">
-                <label>3. รหัส LINE User ID (U...) หรือ Group ID (C...) หรือไอดีไลน์</label>
+                <label>3. รหัส LINE User ID (U...) หรือ Group ID (C...)</label>
                 <input type="text" id="lineRecId" class="inp" placeholder="วางรหัส U... หรือ C... (33 ตัวอักษร)" required>
               </div>
               <div style="display:flex;gap:8px">
@@ -668,7 +699,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                     <option value="BY_DISTRICT">🎯 ส่งตามไอดีที่ผูกกับอำเภอที่เลือกเท่านั้น</option>
                     <option value="BY_SPECIFIC_ID">📌 เลือกเจาะจง 1 ไอดีจากรายการที่บันทึกไว้</option>
                     <option value="BY_CHECKED">☑️ ส่งเฉพาะไอดีที่ติ๊กถูกไว้ในตารางด้านซ้าย</option>
-                    <option value="BROADCAST">📢 ส่ง Broadcast หาทุกคนที่แอดบอทจังหวัด</option>
+                    <option value="BROADCAST">📢 ส่ง Broadcast หาทุกคนที่แอดเพื่อนบอทจังหวัด</option>
                   </select>
                 </div>
               </div>
@@ -685,7 +716,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
               <!-- ปุ่มกดส่งรายงานสรุปตามอำเภอ/ไอดีที่เลือก -->
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
                 <button type="button" class="btn btn-line btn-sm" onclick="sendDistrictSummaryLine(false)">
-                  🤖 ส่งสรุปผลงานอำเภอที่เลือก (เข้าไอดีที่กำหนด)
+                  🤖 ส่งสรุปผลงานอำเภอที่เลือก (ผ่านบอท LINE)
                 </button>
                 <button type="button" class="btn btn-warn btn-sm" onclick="sendDistrictPendingAlertLine(false)">
                   ⚠️ ส่งแจ้งเตือนงานค้างส่งเฉพาะอำเภอที่เลือก
@@ -783,7 +814,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           </div>
           <div class="form-group">
             <label>LINE Channel Access Token (Long-lived Token จาก LINE Developers Console) <span id="tokenSavedHint" style="color:var(--ok);font-weight:700"></span></label>
-            <input type="password" id="cfgLineToken" class="inp" placeholder="ใส่ Channel Access Token ของ LINE OA เพื่อให้บอทส่งข้อความอัตโนมัติ">
+            <input type="password" id="cfgLineToken" class="inp" placeholder="ใส่ Channel Access Token ของ LINE OA เพื่อให้บอทส่งข้อความอัตโนมัติ" oninput="syncSettingsTokenInput(this.value)">
           </div>
           <div class="form-group">
             <label>LINE User ID (U...) หรือ Group ID (C...) เป้าหมายหลักของจังหวัด (เว้นว่างได้ หากตั้งค่าแยกตามอำเภอในหน้าแจ้งเตือน LINE แล้ว)</label>
@@ -792,7 +823,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
             <button class="btn btn-primary btn-sm" onclick="saveGasSettings()">💾 บันทึกการตั้งค่า & Token ลง Cloud</button>
             <button class="btn btn-sky btn-sm" onclick="testGasConnection()">🔌 ทดสอบการเชื่อมต่อ Google Sheets & Drive</button>
-            <button class="btn btn-line btn-sm" onclick="testLineConnection()">🔔 ทดสอบส่งข้อความเข้า LINE</button>
+            <button class="btn btn-line btn-sm" onclick="verifyAndSaveLineBotToken()">🔍 ตรวจสอบบอท LINE & ทดสอบส่ง</button>
           </div>
           <div id="gasStatusBox" class="note" style="display:none"></div>
         </div>
@@ -1019,12 +1050,12 @@ const DEFAULT_WORKGROUPS = [
   }
 ];
 
-const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V15';
-const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V15';
-const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V15';
-const ACCOUNTS_CFG_KEY = 'CDD_UTHAI_ACCOUNTS_CFG_V15';
-const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V15';
-const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V15';
+const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V16';
+const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V16';
+const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V16';
+const ACCOUNTS_CFG_KEY = 'CDD_UTHAI_ACCOUNTS_CFG_V16';
+const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V16';
+const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V16';
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
@@ -1038,7 +1069,7 @@ let showPasswordsPlain = false;
 let db = {};
 let lineRecipients = [];
 let checkedLineRecipientIds = new Set();
-let lastLocalConfigSavedAt = 0; // ป้องกัน Auto-Sync เขียนทับข้อมูลที่เพิ่งกดบันทึก
+let lastLocalConfigSavedAt = 0;
 let gasConfig = {
   url: DEFAULT_GAS_WEB_APP_URL,
   driveFolderId: '',
@@ -1165,10 +1196,27 @@ function updateTopSyncIndicator(state, text) {
   }
 }
 
+function syncQuickTokenInput(val) {
+  gasConfig.token = val.trim();
+  const sInp = document.getElementById('cfgLineToken');
+  if (sInp && sInp.value !== val) sInp.value = val;
+}
+
+function syncSettingsTokenInput(val) {
+  gasConfig.token = val.trim();
+  const qInp = document.getElementById('quickLineTokenInput');
+  if (qInp && qInp.value !== val) qInp.value = val;
+}
+
+function toggleQuickTokenVisibility() {
+  const qInp = document.getElementById('quickLineTokenInput');
+  if (!qInp) return;
+  qInp.type = qInp.type === 'password' ? 'text' : 'password';
+}
+
 function loadState() {
-  // ดึงข้อมูลจากทั้งคีย์ใหม่และคีย์ก่อนหน้าเพื่อไม่ให้ข้อมูลที่เคยบันทึกไว้สูญหาย
   try {
-    const accRaw = localStorage.getItem(ACCOUNTS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_ACCOUNTS_CFG_V14');
+    const accRaw = localStorage.getItem(ACCOUNTS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_ACCOUNTS_CFG_V15');
     if (accRaw) {
       ACCOUNTS = { ...JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS)), ...JSON.parse(accRaw) };
     }
@@ -1176,19 +1224,19 @@ function loadState() {
     ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
   }
   try {
-    const wgRaw = localStorage.getItem(WORKGROUPS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_WORKGROUPS_CFG_V14');
+    const wgRaw = localStorage.getItem(WORKGROUPS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_WORKGROUPS_CFG_V15');
     WORKGROUPS = wgRaw ? JSON.parse(wgRaw) : JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
   } catch (e) {
     WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
   }
   try {
-    const hidRaw = localStorage.getItem(HIDDEN_REPORTS_KEY) || localStorage.getItem('CDD_UTHAI_HIDDEN_REPORTS_V14');
+    const hidRaw = localStorage.getItem(HIDDEN_REPORTS_KEY) || localStorage.getItem('CDD_UTHAI_HIDDEN_REPORTS_V15');
     hiddenReportsByMonth = hidRaw ? JSON.parse(hidRaw) : {};
   } catch (e) {
     hiddenReportsByMonth = {};
   }
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('CDD_UTHAI_REPORT_DB_V14');
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('CDD_UTHAI_REPORT_DB_V15');
     db = raw ? JSON.parse(raw) : createEmptyDB();
   } catch (e) {
     db = createEmptyDB();
@@ -1196,14 +1244,14 @@ function loadState() {
   ensureDBStructure();
 
   try {
-    const lr = localStorage.getItem(LINE_REC_KEY) || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V14') || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V13');
+    const lr = localStorage.getItem(LINE_REC_KEY) || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V15') || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V14');
     lineRecipients = lr ? JSON.parse(lr) : [];
     lineRecipients.forEach(r => checkedLineRecipientIds.add(String(r.id)));
   } catch (e) {
     lineRecipients = [];
   }
   try {
-    const gc = localStorage.getItem(GAS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_GAS_CFG_V14') || localStorage.getItem('CDD_UTHAI_GAS_CFG_V13');
+    const gc = localStorage.getItem(GAS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_GAS_CFG_V15') || localStorage.getItem('CDD_UTHAI_GAS_CFG_V14');
     if (gc) {
       const parsed = JSON.parse(gc);
       const cleanUrl = (!parsed.url || parsed.url.endsWith('/dev')) ? DEFAULT_GAS_WEB_APP_URL : parsed.url;
@@ -1219,6 +1267,7 @@ function loadState() {
   document.getElementById('cfgGasUrl').value = gasConfig.url || DEFAULT_GAS_WEB_APP_URL;
   document.getElementById('cfgDriveFolderId').value = gasConfig.driveFolderId || '';
   document.getElementById('cfgLineToken').value = gasConfig.token || '';
+  document.getElementById('quickLineTokenInput').value = gasConfig.token || '';
   document.getElementById('cfgLineTarget').value = gasConfig.target || '';
 }
 
@@ -1286,7 +1335,7 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 }
 
-/* ================== 4. CLOUD SYNC ENGINE (100% COMPATIBLE WITH DEPLOYED /exec) ================== */
+/* ================== 4. CLOUD SYNC ENGINE ================== */
 function callViaJsonp(url, queryParamsObj) {
   return new Promise((resolve) => {
     const cbName = 'gasCb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
@@ -1355,7 +1404,7 @@ async function sendToGoogleSheetDB(payload) {
       return parsed;
     }
   } catch (postErr) {
-    if (!hasLargeFile && serialized.length < 1900) {
+    if (!hasLargeFile && serialized.length < 1800) {
       const getFallback = await callViaJsonp(targetUrl, { payload: serialized });
       if (getFallback) {
         if (getFallback.ok) updateTopSyncIndicator('ok', '🟢 ซิงค์ Google Sheets แล้ว');
@@ -1369,7 +1418,7 @@ async function sendToGoogleSheetDB(payload) {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: serialized
       });
-      updateTopSyncIndicator('ok', '🟢 ส่งข้อมูลเข้า Google Sheets แล้ว');
+      updateTopSyncIndicator('ok', '🟢 ส่งคำสั่งเข้า Google Sheets แล้ว');
       return { ok: true, opaque: true };
     } catch (e2) {
       updateTopSyncIndicator('err', '🔴 เชื่อมต่อไม่ได้');
@@ -1378,7 +1427,6 @@ async function sendToGoogleSheetDB(payload) {
   }
 }
 
-// ใช้คำสั่ง saveTopicsConfig ที่รองรับทุกเวอร์ชันของ รหัส.gs เพื่อบันทึกทั้งหัวข้อ, ไอดีไลน์, รหัสผ่าน และ Token!
 async function syncAllConfigToGas() {
   if (!isAdmin()) return null;
   lastLocalConfigSavedAt = Date.now();
@@ -1414,24 +1462,22 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
       return;
     }
 
-    // หากเพิ่งกดบันทึกตั้งค่าในเครื่องไม่เกิน 10 วินาที ไม่ให้ค่าเก่าจาก Cloud มาทับ
     const recentlyModifiedLocally = (Date.now() - lastLocalConfigSavedAt) < 10000;
 
     if (!recentlyModifiedLocally) {
       const hidObj = res.hiddenReportsByMonth || {};
 
-      // 1. ซิงค์รหัสผ่านอำเภอ
       const cloudAccounts = res.accounts || hidObj._meta_accounts;
       if (cloudAccounts && typeof cloudAccounts === 'object') {
         ACCOUNTS = { ...JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS)), ...cloudAccounts };
         localStorage.setItem(ACCOUNTS_CFG_KEY, JSON.stringify(ACCOUNTS));
       }
 
-      // 2. ซิงค์ตั้งค่า Token ของ LINE
       if (hidObj._meta_gasConfig && typeof hidObj._meta_gasConfig === 'object') {
         if (hidObj._meta_gasConfig.token && !gasConfig.token) {
           gasConfig.token = hidObj._meta_gasConfig.token;
           document.getElementById('cfgLineToken').value = gasConfig.token;
+          document.getElementById('quickLineTokenInput').value = gasConfig.token;
         }
         if (hidObj._meta_gasConfig.target && !gasConfig.target) {
           gasConfig.target = hidObj._meta_gasConfig.target;
@@ -1440,7 +1486,6 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
         localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
       }
 
-      // 3. ซิงค์หัวข้อรายงานและการซ่อนรายเดือน
       if (Array.isArray(res.workgroups) && res.workgroups.length === 4) {
         WORKGROUPS = res.workgroups;
         localStorage.setItem(WORKGROUPS_CFG_KEY, JSON.stringify(WORKGROUPS));
@@ -1450,13 +1495,20 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
         localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
       }
 
-      // 4. ซิงค์รายชื่อไอดีไลน์ประจำอำเภอ (ผสานข้อมูล Cloud กับเครื่อง ไม่ให้ไอดีหาย)
+      // ผสานรายการไอดีไลน์จาก Cloud (รวมไอดีที่ Webhook ดูดเข้ามาใหม่ด้วย)
       const cloudLineList = Array.isArray(res.lineRecipients) && res.lineRecipients.length > 0
         ? res.lineRecipients
         : (Array.isArray(hidObj._meta_lineRecipients) ? hidObj._meta_lineRecipients : null);
 
       if (Array.isArray(cloudLineList) && cloudLineList.length > 0) {
-        lineRecipients = cloudLineList;
+        // รวมไอดีจาก Cloud กับไอดีในเครื่องโดยไม่ให้ซ้ำกัน
+        const merged = [...cloudLineList];
+        lineRecipients.forEach(localItem => {
+          if (!merged.some(c => c.lineId === localItem.lineId && c.distId === localItem.distId)) {
+            merged.push(localItem);
+          }
+        });
+        lineRecipients = merged;
         localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
         lineRecipients.forEach(r => checkedLineRecipientIds.add(String(r.id)));
       }
@@ -1465,12 +1517,14 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
     if (loginHint) {
       loginHint.textContent = '🟢 ซิงค์รหัสผ่านและฐานข้อมูลล่าสุดจาก Google Sheets เรียบร้อยแล้ว';
     }
-    const tokenHint = document.getElementById('tokenSavedHint');
-    if (tokenHint) {
-      tokenHint.textContent = (gasConfig.token || res.lineTokenSaved) ? '(พร้อมส่งผ่านบอท LINE ✅)' : '';
+
+    const hasToken = Boolean(gasConfig.token || res.lineTokenSaved);
+    const botBadge = document.getElementById('lineBotConnBadge');
+    if (botBadge && hasToken && botBadge.textContent.includes('รอตรวจสอบ')) {
+      botBadge.className = 'pill pill-ok';
+      botBadge.textContent = '🟢 มี LINE Token พร้อมใช้งาน';
     }
 
-    // 5. ซิงค์ข้อมูลการส่งรายงาน
     db = createEmptyDB();
     ensureDBStructure();
 
@@ -2569,7 +2623,6 @@ function initFilters() {
   dSel.innerHTML = (isAdmin() ? `<option value="ALL">-- ทุกอำเภอ (8 อำเภอ) --</option>` : '') +
     dists.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
 
-  // เมนูเลือกผูกอำเภอในฟอร์มบันทึกไอดีไลน์
   const lDist = document.getElementById('lineRecDist');
   if (lDist) {
     lDist.innerHTML =
@@ -2577,7 +2630,6 @@ function initFilters() {
       `<option value="ALL">🌐 ทุกอำเภอ (ภาพรวมจังหวัดอุทัยธานี)</option>`;
   }
 
-  // เมนูเลือกอำเภอที่จะส่งรายงานในหน้า LINE
   const lSendDist = document.getElementById('lineSendDistSelect');
   if (lSendDist) {
     lSendDist.innerHTML =
@@ -2738,14 +2790,55 @@ function approveAllPendingInFilter() {
   showToast(`✅ อนุมัติรายการที่รอตรวจทั้งหมด ${count} งาน และซิงค์ลง Google Sheets เรียบร้อยแล้ว`);
 }
 
-/* ================== 14. LINE NOTIFICATION & DISTRICT/ID SELECTOR (ADMIN ONLY) ================== */
+/* ================== 14. LINE BOT VERIFICATION & DISTRICT/ID SELECTOR (ADMIN ONLY) ================== */
+async function verifyAndSaveLineBotToken() {
+  if (!isAdmin()) return;
+  const tokenVal = (document.getElementById('quickLineTokenInput')?.value || document.getElementById('cfgLineToken')?.value || '').trim();
+  const diagBox = document.getElementById('lineBotDiagResult');
+  const badge = document.getElementById('lineBotConnBadge');
+
+  if (!tokenVal) {
+    diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ กรุณาวางรหัส LINE Channel Access Token ในช่องด้านบนก่อนกดตรวจสอบครับ</span>`;
+    showToast('⚠️ กรุณาวาง LINE Channel Access Token ก่อน');
+    return;
+  }
+
+  gasConfig.token = tokenVal;
+  document.getElementById('cfgLineToken').value = tokenVal;
+  document.getElementById('quickLineTokenInput').value = tokenVal;
+  saveWorkgroupsAndVisibility(true);
+
+  diagBox.innerHTML = '⏳ กำลังตรวจสอบรหัส Token กับเซิร์ฟเวอร์ LINE Messaging API...';
+  const res = await sendToGoogleSheetDB({
+    action: 'checkLineBot',
+    token: tokenVal,
+    target: gasConfig.target || ''
+  });
+
+  if (res && res.ok && res.botName) {
+    badge.className = 'pill pill-ok';
+    badge.textContent = `🟢 บอทพร้อมใช้งาน: ${res.botName}`;
+    diagBox.innerHTML = `✅ <b>เชื่อมต่อบอท LINE OA สำเร็จ!</b> ชื่อบอทของคุณคือ: <b style="color:var(--blue-600)">${res.botName}</b> ${res.basicId ? `(${res.basicId})` : ''}<br>📌 ตอนนี้คุณสามารถเลือกอำเภอและกดส่งแจ้งเตือนผ่านบอท LINE ได้ทันที!`;
+    showToast(`✅ เชื่อมต่อบอท "${res.botName}" สำเร็จ!`);
+  } else if (res && res.error && res.error.includes('Unknown action')) {
+    badge.className = 'pill pill-pend';
+    badge.textContent = '⚠️ รออัปเดต รหัส.gs เป็น V16';
+    diagBox.innerHTML = `⚠️ <b>บันทึก Token แล้ว แต่โค้ด <code>รหัส.gs</code> ใน Google Apps Script ของคุณยังไม่ได้อัปเดตเป็น V16:</b><br>กรุณานำโค้ด <code>รหัส.gs</code> ด้านบนไปวางทับใน Google Apps Script แล้วกด <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b> เพื่อให้บอทส่งข้อความได้ครับ`;
+  } else {
+    badge.className = 'pill pill-rej';
+    badge.textContent = '🔴 Token ไม่ถูกต้อง';
+    diagBox.innerHTML = `❌ <b>ไม่สามารถเชื่อมต่อบอทได้:</b> ${(res && res.error) ? res.error : 'กรุณาตรวจสอบรหัส Channel Access Token จากหน้า LINE Developers'}`;
+    showToast('❌ รหัส LINE Channel Access Token ไม่ถูกต้อง');
+  }
+}
+
 async function addLineRecipient(e) {
   e.preventDefault();
   if (!isAdmin()) return;
   const editId = document.getElementById('editLineRecItemId').value.trim();
   const distId = document.getElementById('lineRecDist').value;
   const name = document.getElementById('lineRecName').value.trim();
-  const lineId = document.getElementById('lineRecId').value.trim();
+  const lineId = document.getElementById('lineRecId').value.replace(/[\r\n\s]/g, '').trim();
   if (!name || !lineId) return;
 
   const btn = document.getElementById('btnSaveLineRec');
@@ -2765,7 +2858,6 @@ async function addLineRecipient(e) {
     checkedLineRecipientIds.add(newId);
   }
 
-  // บันทึกลงเครื่องทันที + ซิงค์ขึ้น Google Sheets ผ่าน saveTopicsConfig
   saveWorkgroupsAndVisibility(true);
   cancelEditLineRecipient();
   renderLinePage();
@@ -2825,7 +2917,6 @@ function selectLineQuickDistrict(distId) {
   selectedLineDistrict = distId;
   const sel = document.getElementById('lineSendDistSelect');
   if (sel) sel.value = distId;
-  // ตั้งโหมดเป็นส่งตามไอดีอำเภอที่เลือกอัตโนมัติ
   const modeSel = document.getElementById('lineSendTargetMode');
   if (modeSel && modeSel.value !== 'BY_SPECIFIC_ID' && modeSel.value !== 'BY_CHECKED') {
     modeSel.value = 'BY_DISTRICT';
@@ -2848,12 +2939,11 @@ function onLineTargetModeChange() {
   renderLineTargetPreview();
 }
 
-// คำนวณรายชื่อไอดีเป้าหมายตามเมนูที่แอดมินเลือก
 function getResolvedTargetRecipients(overrideDistId = null) {
   const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
   const targetDist = overrideDistId || selectedLineDistrict || 'ALL';
 
-  if (mode === 'BROADCAST') {
+  if (mode === 'BROADCAST' && !overrideDistId) {
     return [];
   }
   if (mode === 'BY_SPECIFIC_ID' && !overrideDistId) {
@@ -2864,7 +2954,6 @@ function getResolvedTargetRecipients(overrideDistId = null) {
     return lineRecipients.filter(r => checkedLineRecipientIds.has(String(r.id)));
   }
 
-  // โหมด BY_DISTRICT: เลือกเฉพาะไอดีที่ผูกกับอำเภอนั้นๆ
   if (targetDist === 'ALL') {
     return [...lineRecipients];
   }
@@ -2872,7 +2961,6 @@ function getResolvedTargetRecipients(overrideDistId = null) {
   if (exactDistMatches.length > 0) {
     return exactDistMatches;
   }
-  // หากอำเภอนั้นยังไม่ได้ผูกไอดีแยก ให้ดึงไอดีที่ตั้งเป็น ALL (ภาพรวมจังหวัด) แทน
   return lineRecipients.filter(r => r.distId === 'ALL');
 }
 
@@ -2883,26 +2971,26 @@ function renderLineTargetPreview() {
   const distName = getDistrictLabel(selectedLineDistrict);
 
   if (mode === 'BROADCAST') {
-    box.innerHTML = `📢 <b>เป้าหมายการส่ง:</b> ส่งแบบ <b>Broadcast</b> เข้า LINE ของทุกคนที่เป็นเพื่อนกับบอท LINE OA (ข้อมูลของ: <b>${distName}</b>)`;
+    box.innerHTML = `📢 <b>เป้าหมายการส่ง:</b> ส่งผ่านบอทแบบ <b>Broadcast</b> เข้า LINE ของทุกคนที่เป็นเพื่อนกับบอท LINE OA (ข้อมูลของ: <b>${distName}</b>)`;
     return;
   }
 
   const targets = getResolvedTargetRecipients();
   if (targets.length === 0) {
-    box.innerHTML = `⚠️ <b>ยังไม่มีไอดีไลน์สำหรับ "${distName}" ในเงื่อนไขที่เลือก:</b> กรุณาเพิ่มไอดีไลน์ของ <b>${distName}</b> ในฟอร์มด้านซ้ายมือ (หรือหากกดส่งตอนนี้ ระบบจะส่งเข้าไอดีหลักในหน้าตั้งค่า / Broadcast แทน)`;
+    box.innerHTML = `⚠️ <b>ยังไม่มีไอดีไลน์สำหรับ "${distName}" ในเงื่อนไขที่เลือก:</b> กรุณาเพิ่มไอดีไลน์ของ <b>${distName}</b> ในฟอร์มด้านซ้ายมือ (หรือหากกดส่งตอนนี้ บอทจะส่งแบบ Broadcast เข้า LINE ของทุกคนที่แอดเพื่อนบอทแทน)`;
     return;
   }
 
-  const pills = targets.map(t =>
-    `<span class="pill pill-ok" style="margin-right:4px;margin-top:3px">🎯 ${t.name} (${getDistrictLabel(t.distId)})</span>`
-  ).join('');
+  const pills = targets.map(t => {
+    const isPushOk = /^[UCR][0-9a-fA-F]{32}$/.test(t.lineId);
+    return `<span class="pill ${isPushOk ? 'pill-ok' : 'pill-pend'}" style="margin-right:4px;margin-top:3px">🎯 ${t.name} (${getDistrictLabel(t.distId)})</span>`;
+  }).join('');
   box.innerHTML = `<div><b>🎯 ไอดีปลายทางที่จะได้รับรายงานของ "${distName}" (${targets.length} ไอดี):</b></div><div style="margin-top:4px">${pills}</div>`;
 }
 
 function renderLinePage() {
   if (!isAdmin()) return;
 
-  // 1. ปุ่มลัดเลือกอำเภอ (Quick Tabs)
   const qTabsWrap = document.getElementById('lineDistrictQuickTabs');
   if (qTabsWrap) {
     const allTabs = [
@@ -2922,7 +3010,6 @@ function renderLinePage() {
     sendDistSel.value = selectedLineDistrict;
   }
 
-  // 2. อัปเดตดรอปดาวน์เลือกเจาะจง 1 ไอดี
   const specSel = document.getElementById('lineSpecificRecSelect');
   if (specSel) {
     const prevVal = specSel.value;
@@ -2934,13 +3021,12 @@ function renderLinePage() {
     }
   }
 
-  // 3. ตารางรายชื่อไอดีไลน์ด้านซ้าย
   const rRows = lineRecipients.map(r => {
     const isChecked = checkedLineRecipientIds.has(String(r.id)) ? 'checked' : '';
     const validApiId = /^[UCR][0-9a-fA-F]{32}$/.test(r.lineId);
     const badge = validApiId
-      ? `<span class="pill pill-ok">🟢 รหัส U.../C... พร้อมส่งตรง</span>`
-      : `<span class="pill pill-pend">📢 ไอดีทั่วไป</span>`;
+      ? `<span class="pill pill-ok">🟢 รหัส U.../C... (ส่งตรงได้ 100%)</span>`
+      : `<span class="pill pill-rej" title="บอท LINE ต้องใช้รหัสที่ขึ้นต้นด้วย U หรือ C 33 ตัวอักษร">⚠️ ไม่ใช่รหัส U.../C... (จะส่งเป็น Broadcast แทน)</span>`;
     return `
       <tr>
         <td class="center">
@@ -2957,7 +3043,7 @@ function renderLinePage() {
           </span>
         </td>
         <td class="center" style="white-space:nowrap">
-          <button type="button" class="btn btn-line btn-xs" onclick="testSingleRecipientLine('${r.id}')" title="ทดสอบส่งเข้าไอดีนี้ทันที">🔔 ทดสอบ</button>
+          <button type="button" class="btn btn-line btn-xs" onclick="testSingleRecipientLine('${r.id}')" title="ทดสอบส่งเข้าไอดีนี้ทันที">🔔 ทดสอบส่ง</button>
           <button type="button" class="btn btn-ghost btn-xs" onclick="openEditLineRecipient('${r.id}')" title="แก้ไข">✏️</button>
           <button type="button" class="btn btn-danger btn-xs" onclick="removeLineRecipient('${r.id}')" title="ลบ">🗑️</button>
         </td>
@@ -2975,7 +3061,7 @@ function renderLinePage() {
           <th class="center">จัดการ</th>
         </tr>
       </thead>
-      <tbody>${rRows || '<tr><td colspan="4" class="center">ยังไม่มีรายชื่อไอดีไลน์ กรุณาเพิ่มในฟอร์มด้านบน</td></tr>'}</tbody>
+      <tbody>${rRows || '<tr><td colspan="4" class="center">ยังไม่มีรายชื่อไอดีไลน์ กรุณาเพิ่มในฟอร์มด้านบน หรือพิมพ์ id ในแชทบอทแล้วกดปุ่มซิงค์</td></tr>'}</tbody>
     </table>
   `;
 
@@ -3029,16 +3115,14 @@ function renderLineApprovedTable() {
   `;
 }
 
-// ทดสอบส่งข้อความเข้าไอดีเดียวที่กดปุ่ม "🔔 ทดสอบ"
 async function testSingleRecipientLine(recId) {
   const item = lineRecipients.find(x => String(x.id) === String(recId));
   if (!item) return;
-  const msg = `🔔 [ทดสอบการแจ้งเตือน CDD Uthai Report]\nผู้รับ: ${item.name}\nหน่วยงานที่ผูกไว้: ${getDistrictLabel(item.distId)}\nรหัสไอดี: ${item.lineId}\nสถานะ: เชื่อมต่อพร้อมรับแจ้งเตือนรายงานประจำเดือน${currentMonth} เรียบร้อยแล้ว!`;
-  await dispatchLineMessageToTargets(msg, [item], false);
+  const msg = `🔔 [ทดสอบการแจ้งเตือน CDD Uthai Report]\nผู้รับ: ${item.name}\nหน่วยงานที่ผูกไว้: ${getDistrictLabel(item.distId)}\nรหัสไอดี: ${item.lineId}\nสถานะ: บอท LINE OA เชื่อมต่อพร้อมส่งรายงานประจำเดือน${currentMonth} เรียบร้อยแล้ว!`;
+  await dispatchLineMessageToTargets(msg, [item], false, false);
 }
 
-// ฟังก์ชันกลางสำหรับส่งข้อความไปยังรายการไอดีที่เลือกโดยเฉพาะ
-async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [], forceManualShare = false) {
+async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [], forceManualShare = false, isBroadcastMode = false) {
   if (!isAdmin()) {
     showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถส่งแจ้งเตือน LINE ได้');
     return;
@@ -3051,39 +3135,53 @@ async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [
     return;
   }
 
-  const activeToken = (document.getElementById('cfgLineToken')?.value || gasConfig.token || '').trim();
+  const activeToken = (document.getElementById('quickLineTokenInput')?.value || document.getElementById('cfgLineToken')?.value || gasConfig.token || '').trim();
   const fallbackTarget = (document.getElementById('cfgLineTarget')?.value || gasConfig.target || '').trim();
+  const diagBox = document.getElementById('lineBotDiagResult');
 
-  // กรองเฉพาะไอดีที่ต้องการส่งจริง
+  if (!activeToken) {
+    if (diagBox) {
+      diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ ไม่สามารถส่งผ่านบอทได้ เพราะคุณยังไม่ได้ใส่รหัส LINE Channel Access Token ในกล่องด้านบนสุดของหน้านี้ครับ</span>`;
+    }
+    showToast('⚠️ กรุณาวางรหัส LINE Channel Access Token ในช่องตั้งค่าบอทด้านบนก่อน');
+    return;
+  }
+
   const cleanTargets = (targetRecipientObjs || []).filter(r => r && r.lineId);
   const firstTargetId = cleanTargets.length === 1 ? cleanTargets[0].lineId.trim() : (cleanTargets.length === 0 ? fallbackTarget : '');
 
-  const targetNames = cleanTargets.length > 0
-    ? cleanTargets.map(r => r.name).join(', ')
-    : (fallbackTarget ? `ไอดีหลัก (${fallbackTarget.slice(0, 8)}...)` : 'Broadcast ทุกคน');
+  const targetNames = isBroadcastMode
+    ? 'Broadcast หาเพื่อนทุกคนของบอท'
+    : (cleanTargets.length > 0 ? cleanTargets.map(r => r.name).join(', ') : (fallbackTarget ? `ไอดีหลัก (${fallbackTarget.slice(0, 8)}...)` : 'Broadcast ทุกคน'));
 
-  showToast(`⏳ กำลังส่ง LINE ไปยัง: ${targetNames}...`);
+  showToast(`⏳ กำลังส่งข้อความผ่านบอท LINE ไปยัง: ${targetNames}...`);
 
   const res = await sendToGoogleSheetDB({
     action: 'sendLine',
     message: messageText,
     token: activeToken,
     target: firstTargetId,
-    recipients: cleanTargets
+    recipients: cleanTargets,
+    forceBroadcast: isBroadcastMode
   });
 
   if (res && res.ok) {
-    showToast(`✅ ส่งแจ้งเตือน LINE ไปยัง "${targetNames}" เรียบร้อยแล้ว!`);
+    if (res.warning && diagBox) {
+      diagBox.innerHTML = `⚠️ <b>ส่งสำเร็จแบบ Broadcast:</b> ${res.warning}`;
+    } else if (diagBox) {
+      diagBox.innerHTML = `✅ <b>ส่งข้อความผ่านบอท LINE สำเร็จ!</b> เป้าหมาย: <b>${targetNames}</b> (${res.mode === 'push' ? `ส่งตรงเข้า ${res.sentCount} ไอดี` : 'ส่งแบบ Broadcast'})`;
+    }
+    showToast(`✅ บอท LINE ส่งข้อความไปยัง "${targetNames}" สำเร็จ!`);
     return;
   }
 
-  const errReason = (res && res.error) ? res.error : 'กรุณาตรวจสอบว่าใส่ LINE Channel Access Token ในหน้าตั้งค่าแล้ว';
-  showToast(`⚠️ ${errReason} — ระบบเปิดหน้าต่างแชร์ผ่านแอป LINE ให้แทน`);
-  const shareUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(messageText);
-  window.open(shareUrl, '_blank', 'noopener,noreferrer');
+  const errReason = (res && res.error) ? res.error : 'ตรวจสอบว่าอัปเดตโค้ด รหัส.gs เป็น V16 และกด Deploy > New version แล้ว';
+  if (diagBox) {
+    diagBox.innerHTML = `❌ <b>บอท LINE ส่งไม่ผ่าน:</b> <span style="color:var(--danger)">${errReason}</span>`;
+  }
+  showToast(`❌ บอทส่งไม่ผ่าน: ${errReason}`);
 }
 
-// ส่งแจ้งเตือนรายหัวข้อ (ส่งตรงเข้าไอดีของอำเภอนั้น หรือตามโหมดที่เลือก)
 function sendSingleLineAlert(month, distId, repId, forceManualShare = false) {
   const dist = DISTRICTS.find(d => d.id === distId);
   const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
@@ -3091,20 +3189,21 @@ function sendSingleLineAlert(month, distId, repId, forceManualShare = false) {
   const fileLine = rec.fileName ? `\nไฟล์แนบ: ${rec.fileName}` : '';
   const msg = `📢 [CDD Uthai Report - แจ้งสถานะรายงาน]\nประจำเดือน: ${month}\nหน่วยงาน: ${dist.name}\nกลุ่มงาน: ${rep.groupShort}\nรายงาน: ${rep.name}${fileLine}\nสถานะ: ${rec.status} (${rec.score}/2 คะแนน)`;
 
-  // หากอยู่ในหน้าแจ้งเตือน LINE ให้ใช้โหมดผู้รับที่เลือก แต่ถ้ากดจากหน้าอนุมัติให้ส่งตรงหาไอดีของอำเภอนั้น
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const isBcast = currentPage === 'line' && mode === 'BROADCAST';
   const targets = currentPage === 'line'
     ? getResolvedTargetRecipients(selectedLineDistrict === 'ALL' ? distId : null)
     : getResolvedTargetRecipients(distId);
 
-  dispatchLineMessageToTargets(msg, targets, forceManualShare);
+  dispatchLineMessageToTargets(msg, targets, forceManualShare, isBcast);
 }
 
-// ส่งสรุปผลการส่งงานตามอำเภอที่เลือกในเมนู
 function sendDistrictSummaryLine(forceManualShare = false) {
   const reports = getAllReportsFlat(currentMonth, false);
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const isBcast = mode === 'BROADCAST';
   const targets = getResolvedTargetRecipients();
 
-  // กรณีเลือก "ทุกอำเภอ"
   if (selectedLineDistrict === 'ALL') {
     let lines = [
       `📊 [CDD Uthai Report] สรุปคะแนนประจำเดือน${currentMonth}`,
@@ -3120,11 +3219,10 @@ function sendDistrictSummaryLine(forceManualShare = false) {
       });
       lines.push(`• ${d.short}: ${sc}/${reports.length * 2} คะแนน (อนุมัติ ${app}/${reports.length}${pend > 0 ? ` รอตรวจ ${pend}` : ''})`);
     });
-    dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare);
+    dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare, isBcast);
     return;
   }
 
-  // กรณีเลือก "เฉพาะอำเภอ" (สรุปรายละเอียดของอำเภอนั้นโดยเฉพาะ)
   const dist = DISTRICTS.find(d => d.id === selectedLineDistrict);
   if (!dist) return;
 
@@ -3150,12 +3248,13 @@ function sendDistrictSummaryLine(forceManualShare = false) {
     lines.push(`\n📌 รายการที่ยังไม่ส่ง (${missList.length} งาน):`);
     missList.forEach(name => lines.push(`- ${name}`));
   }
-  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare);
+  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare, isBcast);
 }
 
-// ส่งแจ้งเตือนเฉพาะรายการค้างส่งของอำเภอที่เลือก
 function sendDistrictPendingAlertLine(forceManualShare = false) {
   const reports = getAllReportsFlat(currentMonth, false);
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const isBcast = mode === 'BROADCAST';
   const targets = getResolvedTargetRecipients();
   const dists = selectedLineDistrict === 'ALL' ? DISTRICTS : DISTRICTS.filter(d => d.id === selectedLineDistrict);
 
@@ -3183,7 +3282,7 @@ function sendDistrictPendingAlertLine(forceManualShare = false) {
   if (totalMissing === 0) {
     lines.push(`🎉 ส่งรายงานครบทุกหัวข้อเรียบร้อยแล้ว!`);
   }
-  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare);
+  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare, isBcast);
 }
 
 /* ================== 15. EXCEL / GOOGLE SHEETS IMPORT & EXPORT ================== */
@@ -3321,6 +3420,7 @@ async function saveGasSettings() {
     token: document.getElementById('cfgLineToken').value.trim(),
     target: document.getElementById('cfgLineTarget').value.trim()
   };
+  document.getElementById('quickLineTokenInput').value = gasConfig.token;
   saveWorkgroupsAndVisibility(true);
   await testGasConnection();
   showToast('💾 บันทึกการตั้งค่าและ LINE Token ลงฐานข้อมูลกลางเรียบร้อยแล้ว');
@@ -3336,17 +3436,12 @@ async function testGasConnection() {
   const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
 
   if (res && res.ok && Array.isArray(res.records)) {
-    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์!</b><br>พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
+    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์ (เวอร์ชัน ${res.version || 'ล่าสุด'})!</b><br>พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
       (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
     updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ)`);
   } else {
     statusBox.innerHTML = '⚠️ ไม่สามารถอ่านค่าตอบกลับได้ กรุณาตรวจสอบลิงก์ /exec';
   }
-}
-
-function testLineConnection() {
-  const targets = getResolvedTargetRecipients();
-  dispatchLineMessageToTargets('🔔 ทดสอบการแจ้งเตือนจากระบบ CDD Uthai Report กลุ่มงานสารสนเทศการพัฒนาชุมชน สพจ.อุทัยธานี', targets, false);
 }
 
 function closeModal(id) {
@@ -3366,7 +3461,7 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('on'), 4000);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 4500);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
