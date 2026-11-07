@@ -301,6 +301,12 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 .cdd-announcement{overflow:hidden;display:none;background:linear-gradient(90deg,rgba(79,70,229,.1),rgba(236,72,153,.1));border-radius:12px;border:1px solid var(--line);margin-top:10px;align-items:center;gap:12px;min-height:35px}
 .cdd-announcement.show{display:flex}
 .cdd-announcement-label{flex:none;padding:5px 10px;font-weight:800;color:var(--blue-600);font-size:12px}
+/* District-facing return alerts (also available on each page). */
+.cdd-return-panel{margin:14px 22px 0;padding:16px 18px;border:2px solid rgba(225,29,72,.45);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
+.cdd-return-panel h3{font-size:15px;color:var(--danger);margin-bottom:7px}
+.cdd-return-panel .return-alert-entry{padding:11px 12px;margin-top:8px;border-radius:12px;background:rgba(244,63,94,.07);border:1px solid rgba(244,63,94,.2)}
+.cdd-return-panel .return-alert-entry p{margin:4px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.cdd-return-panel .return-alert-meta{font-size:12px;color:var(--muted)}
 /* Deterministic scrolling: first text visible promptly, then move fully off the left edge. */
 .cdd-announcement-viewport{min-width:0;flex:1;overflow:hidden;position:relative;height:37px}
 .cdd-announcement-runner{position:absolute;top:50%;left:0;display:block;width:max-content;max-width:none;white-space:nowrap;padding:0;font-size:13px;font-weight:650;color:var(--ink);will-change:transform;animation:cddScroll var(--ticker-duration,25s) linear infinite}
@@ -455,6 +461,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         </div>
     </header>
 
+    <section id="cddReturnNoticePanel" class="cdd-return-panel" style="display:none" role="status" aria-live="polite"></section>
     <main class="content">
       <!-- ==================== PAGE: OVERVIEW ==================== -->
       <section class="page active" id="page-overview">
@@ -636,7 +643,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           </div>
           <div id="tickerSaveStatus" class="ticker-status" role="status" aria-live="polite">ยังไม่ได้ตรวจสอบข้อมูลประกาศบน Google Apps Script</div>
           <div class="ticker-status" style="margin-top:12px;border:1px solid var(--line-2)">
-            <b>🔌 ตรวจสอบ Apps Script ปลายทาง (V19)</b>
+            <b>🔌 ตรวจสอบ Apps Script ปลายทาง (V20)</b>
             <p style="margin:4px 0 8px">หากขึ้นว่าเป็นเวอร์ชันเก่า ให้คัดลอก URL เว็บแอปที่ Deploy ล่าสุดซึ่งลงท้ายด้วย /exec มาใส่ด้านล่าง แล้วกดตรวจสอบและเชื่อมต่อ</p>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <input class="inp" style="min-width:230px;flex:1" id="tickerGasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec" aria-label="URL Google Apps Script ที่ Deploy ล่าสุด">
@@ -731,6 +738,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 <button type="submit" class="btn btn-line" id="btnSaveLineRec" style="flex:1">💾 บันทึกไอดีไลน์</button>
                 <button type="button" class="btn btn-ghost" id="btnCancelEditLineRec" style="display:none" onclick="cancelEditLineRecipient()">ยกเลิกแก้ไข</button>
               </div>
+              <div id="lineRecipientSaveStatus" class="ticker-status" role="status" aria-live="polite">แก้ชื่อผู้รับแล้วกดบันทึก ระบบจะรอการยืนยันจาก Google Sheets</div>
             </form>
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
@@ -1014,6 +1022,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         <p id="rejectContext" style="margin-bottom:12px;font-weight:700"></p>
         <div class="form-group"><label for="rejectReason">เหตุผลที่ตีกลับ / รายการที่ต้องแก้ไข (จำเป็น)</label><textarea id="rejectReason" class="inp" rows="5" maxlength="1000" required placeholder="เช่น ข้อมูลในรายงานไม่ครบถ้วน กรุณาแก้ไขและส่งใหม่"></textarea></div>
         <div class="note lock" style="margin-bottom:14px">เมื่อยืนยัน สถานะเปลี่ยนเป็น “แก้ไข” และคะแนนเป็น 0 อำเภอจะเห็นเหตุผลทันทีเมื่อซิงค์ข้อมูล โดยยังส่งรายงานใหม่ได้</div>
+        <div id="rejectSaveStatus" class="ticker-status" style="margin-bottom:10px" role="status" aria-live="polite">กรอกเหตุผลแล้วกดยืนยันเพื่อแจ้งเตือนอำเภอบนหน้าเว็บไซต์</div>
         <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn btn-ghost" onclick="closeModal('rejectModal')">ยกเลิก</button><button type="submit" id="btnConfirmReject" class="btn btn-danger">↩️ ยืนยันตีกลับงาน</button></div>
       </form>
     </div>
@@ -1149,7 +1158,7 @@ const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V16';
 const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V16';
 const SCHEDULE_CACHE_KEY = 'CDD_UTHAI_SCHEDULES_V17';
 const TICKER_CACHE_KEY = 'CDD_UTHAI_TICKER_V17';
-const CDD_RELEASE = 'V19';
+const CDD_RELEASE = 'V20';
 let checkedBackendUrl = '';
 let checkedBackendAt = 0;
 
@@ -1183,6 +1192,9 @@ let tickerSaving = false;
 let tickerLastSavedAt = 0;
 let tickerLastFetchAt = 0;
 let tickerCloudUnsupported = false;
+let returnNotices = [];
+let returnNoticeSyncing = false;
+let lastNoticeFetchAt = 0;
 function escCDD(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function normalizeUTI07Name_() {
   // Keep credentials and all other account attributes intact.
@@ -1203,7 +1215,7 @@ function scheduleBadgeHtml(month, repId, rec = null) {
   return `<div class="cdd-deadline ${overdue?'overdue':soon?'upcoming':''}">${overdue?'🔴 เกินกำหนด':'🗓️ กำหนดส่ง'}: ${escCDD(formatReportDeadline(s.deadline))}${s.note ? ' • '+escCDD(s.note) : ''}</div>`;
 }
 function rejectionReasonHtml(rec) {
-  return rec?.rejectionReason ? `<div class="cdd-reject-reason">↩️ เหตุผลตีกลับครั้งล่าสุด: ${escCDD(rec.rejectionReason)}${rec.rejectedBy ? '<div>โดย '+escCDD(rec.rejectedBy)+'</div>' : ''}</div>` : '';
+  return rec?.status === 'แก้ไข' && rec?.rejectionReason ? `<div class="cdd-reject-reason">↩️ เหตุผลตีกลับครั้งล่าสุด: ${escCDD(rec.rejectionReason)}${rec.rejectedBy ? '<div>โดย '+escCDD(rec.rejectedBy)+'</div>' : ''}</div>` : '';
 }
 function setTickerStatus(message, state = '') {
   const element = document.getElementById('tickerSaveStatus');
@@ -1269,6 +1281,7 @@ function onTickerDraftChange(control) {
 function applyTickerConfigFromCloud(cloud, force = false) {
   if (!cloud || typeof cloud !== 'object' || tickerSaving) return false;
   if (!force && Date.now() - tickerLastSavedAt < 12000) return false;
+  if (tickerConfig.updatedAt && cloud.updatedAt && Date.parse(cloud.updatedAt) < Date.parse(tickerConfig.updatedAt)) return false;
   tickerConfig = {
     enabled: cloud.enabled === true,
     text: String(cloud.text || '').slice(0, 500),
@@ -1307,6 +1320,55 @@ async function refreshTickerFromCloud(notify = false) {
   if (notify) showToast('⚠️ ตรวจประกาศไม่สำเร็จ ดูคำอธิบายใต้ปุ่มบันทึก');
 }
 
+// ================== District notification of returned reports ==================
+async function refreshReturnNotices(force=false) {
+  if(!currentUser || returnNoticeSyncing || (!force && Date.now()-lastNoticeFetchAt<14000))return;
+  returnNoticeSyncing=true;
+  try {
+    const distId=isAdmin()?'ALL':currentUser.distId;
+    const res=await callViaJsonp((gasConfig.url||DEFAULT_GAS_WEB_APP_URL).trim(),{action:'getReturnNotices',distId});
+    if(res?.ok && Array.isArray(res.returnNotices)) {
+      returnNotices=res.returnNotices;
+      lastNoticeFetchAt=Date.now();
+      renderDistrictReturnNotices();
+    }
+  }finally{returnNoticeSyncing=false;}
+}
+function renderDistrictReturnNotices() {
+  const box=document.getElementById('cddReturnNoticePanel');
+  if(!box)return;
+  if(!currentUser || isAdmin()) {box.style.display='none';box.innerHTML='';return;}
+  const unread=returnNotices.filter(n=>n.distId===currentUser.distId && !n.ackAt);
+  if(!unread.length){box.style.display='none';box.innerHTML='';return;}
+  box.style.display='block';
+  box.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between">'+
+    '<h3>↩️ มีรายงานถูกตีกลับให้แก้ไข '+unread.length+' รายการ</h3>'+
+    '<button class="btn btn-ghost btn-xs" onclick="refreshReturnNotices(true)">🔄 ตรวจแจ้งเตือน</button></div>'+
+    '<p style="font-size:12px;color:var(--ink-2)">สำนักงานพัฒนาชุมชนจังหวัดขอให้ตรวจสอบเหตุผล แก้ไขรายงาน และส่งใหม่ในหัวข้อเดิม</p>'+
+    unread.slice(0,8).map(n=>'<article class="return-alert-entry">'+
+       '<strong>'+escCDD(n.repName||n.repId)+'</strong>'+
+       '<div class="return-alert-meta">เดือน'+escCDD(n.month)+' • ตีกลับโดย '+escCDD(n.rejectedBy||'Admin')+' • '+escCDD(n.rejectedAt||'')+'</div>'+
+       '<p><b>เหตุผล:</b> '+escCDD(n.reason||'-')+'</p>'+
+       '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+       '<button class="btn btn-primary btn-xs" onclick="openReturnedNotice(&quot;'+escCDD(String(n.id))+'&quot;)">📤 ไปแก้ไขรายงาน</button>'+
+       '<button class="btn btn-ghost btn-xs" onclick="acknowledgeReturnNotice(&quot;'+escCDD(String(n.id))+'&quot;)">✓ รับทราบ</button></div></article>').join('')+
+    (unread.length>8?'<p style="margin-top:8px">และอีก '+(unread.length-8)+' รายการ กดรับทราบรายการก่อนหน้าเพื่อแสดงรายการถัดไป</p>':'');
+}
+function openReturnedNotice(id) {
+  const n=returnNotices.find(x=>String(x.id)===String(id));if(!n)return;
+  const g=WORKGROUPS.find(g=>g.reports.some(r=>r.id===n.repId));
+  if(MONTHS.includes(n.month))selectMonth(n.month);
+  if(g)switchPage(g.id);
+  const row=document.getElementById('wgTableWrap');if(row)row.scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function acknowledgeReturnNotice(id) {
+  const notice=returnNotices.find(n=>String(n.id)===String(id));
+  if(!notice || !currentUser)return;
+  const res=await sendToGoogleSheetDB({action:'ackReturnNotice',noticeId:String(id),userAuth:{username:currentUser.username,password:currentUser.pass}});
+  if(!confirmed(res)) {showToast('❌ รับทราบไม่ได้: '+(res?.error||'Cloud ไม่ตอบกลับ'));return;}
+  notice.ackAt=res.ackAt||new Date().toISOString();notice.ackBy=res.ackBy||currentUser.name;
+  renderDistrictReturnNotices();showToast('✅ บันทึกการรับทราบแล้ว');
+}
 function initScheduleControls() {
   const month = document.getElementById('deadlineMonth'), group = document.getElementById('deadlineGroup');
   if (month && !month.options.length) {
@@ -1415,6 +1477,7 @@ function openReturnReportModal(month,distId,repId) {
   document.getElementById('rejectRepId').value=repId;
   document.getElementById('rejectContext').textContent=`${month} • ${getDistrictLabel(distId)} • ${rep?.name||repId}`;
   document.getElementById('rejectReason').value='';
+  const rejectStatus=document.getElementById('rejectSaveStatus');if(rejectStatus){rejectStatus.className='ticker-status';rejectStatus.textContent='พร้อมตีกลับรายงาน — ต้องระบุเหตุผล';}
   document.getElementById('rejectModal').classList.add('on');
   document.getElementById('rejectReason').focus();
 }
@@ -1424,13 +1487,16 @@ async function confirmReturnReport(event) {
     repId=document.getElementById('rejectRepId').value, reason=document.getElementById('rejectReason').value.trim();
   if (!reason) {showToast('⚠️ ต้องระบุเหตุผลในการตีกลับ');return;}
   const btn=document.getElementById('btnConfirmReject');btn.disabled=true;
+  const statusBox=document.getElementById('rejectSaveStatus');if(statusBox){statusBox.textContent='กำลังบันทึกเหตุผลและสร้างแจ้งเตือนให้อำเภอ...';statusBox.className='ticker-status';}
   try {
     const res=await sendToGoogleSheetDB({action:'returnReport',month,distId,repId,reason,adminAuth:adminApiCredentials()});
-    if (!confirmed(res)) {showToast('❌ ตีกลับไม่สำเร็จ: '+(res?.error||'ยังไม่ได้รับการยืนยันจาก Cloud'));return;}
+    if (!confirmed(res)) {if(statusBox){statusBox.textContent='❌ ไม่สำเร็จ: '+(res?.error||'ยังไม่ได้รับการยืนยันจาก Cloud');statusBox.className='ticker-status err';}showToast('❌ ตีกลับไม่สำเร็จ: '+(res?.error||'ยังไม่ได้รับการยืนยันจาก Cloud'));return;}
     const rec=db[month]?.[distId]?.[repId];
     if (rec) {rec.status='แก้ไข';rec.score=0;rec.rejectionReason=reason;rec.rejectedBy=res.rejectedBy||currentUser.name;rec.rejectedAt=res.rejectedAt||'';}
-    saveDB();closeModal('rejectModal');renderAll();showToast('↩️ ตีกลับพร้อมบันทึกเหตุผลลง Google Sheets แล้ว');
-  } finally {btn.disabled=false;}
+    saveDB();closeModal('rejectModal');renderAll();showToast('↩️ ตีกลับแล้ว อำเภอจะเห็นแถบแจ้งเตือนบนหน้าเว็บ');
+    refreshReturnNotices(true);
+  } catch(e) {if(statusBox){statusBox.textContent='❌ ตีกลับผิดพลาด: '+String(e?.message||e);statusBox.className='ticker-status err';}showToast('❌ ตีกลับไม่สำเร็จ: '+String(e?.message||e));}
+  finally {btn.disabled=false;}
 }
 
 /* ================== 2. INDEXEDDB FOR UP TO 5MB FILE STORAGE ================== */
@@ -1705,7 +1771,7 @@ function callViaJsonp(url, queryParamsObj) {
     const timer = setTimeout(() => {
       cleanup();
       resolve(null);
-    }, 14000);
+    }, 25000);
 
     function cleanup() {
       clearTimeout(timer);
@@ -1768,10 +1834,11 @@ async function connectCurrentBackend() {
   pullStateFromGas(false,true);
 }
 async function encodeSignedAdminJsonp(payload) {
-  if (!isAdmin() || !currentUser?.pass) throw new Error('ต้องเข้าสู่ระบบด้วยบัญชี Admin ก่อน');
+  if (!currentUser?.pass) throw new Error('ต้องเข้าสู่ระบบก่อนบันทึกข้อมูล');
   if (!window.crypto?.subtle) throw new Error('เว็บต้องเปิดผ่าน HTTPS ของ GitHub Pages เพื่อยืนยันคำสั่ง');
   const req = {...payload};
   delete req.adminAuth;
+  delete req.userAuth;
   const body=JSON.stringify(req);
   const username = currentUser.username;
   const ts=String(Date.now());
@@ -1806,22 +1873,41 @@ async function sendToGoogleSheetDB(payload) {
   // GAS ContentService does not expose CORS response headers to GitHub Pages.
   // Authenticated, HMAC-signed JSONP returns the server result directly, instead
   // of opaque POST + cache polling that could appear to fail after a real write.
-  const confirmedActions=['upsertLineRecipient','deleteLineRecipient','saveScheduleEntry','deleteScheduleEntry','saveTickerConfig','returnReport'];
+  const confirmedActions=['upsertLineRecipient','deleteLineRecipient','saveScheduleEntry','deleteScheduleEntry','saveTickerConfig','returnReport','ackReturnNotice'];
   if (confirmedActions.includes(payload.action)) {
-    const probe = await verifyBackendVersion(targetUrl);
-    if (!probe.ok) {
-      updateBackendDiagnostic('❌ '+probe.error);
-      return {ok:false,error:probe.error+' (ตรวจสอบ URL /exec ในเมนูกำหนดส่งงานและข้อความวิ่ง)'};
-    }
+    const probe=await verifyBackendVersion(targetUrl);
+    if(!probe.ok){updateBackendDiagnostic('❌ '+probe.error);return {ok:false,error:probe.error};}
+    const requestId='cdd'+(window.crypto?.randomUUID?.() || String(Date.now())+'-'+Math.random().toString(36).slice(2));
+    const write={...payload,requestId};
+    // Prefer POST (not GET) for writes. Only POST contains passwords; the GET confirmation
+    // contains a high-entropy request ID, never a username/password.
+    let postError='';
     try {
-      const query=await encodeSignedAdminJsonp(payload);
-      const response=await callViaJsonp(targetUrl,query);
-      if (!response) return {ok:false,error:'Apps Script ไม่ได้ส่งผลการบันทึกกลับมา กรุณาตรวจ URL /exec และสิทธิ์ Web App'};
-      if (response.ok) updateBackendDiagnostic('✅ Google Apps Script '+CDD_RELEASE+' บันทึกคำสั่งสำเร็จ',true);
-      return response;
-    } catch(err) {
-      return {ok:false,error:String(err.message||err)};
+      await Promise.race([
+        fetch(targetUrl,{method:'POST',mode:'no-cors',redirect:'follow',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(write)}),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('POST timeout')),15000))
+      ]);
+    }catch(e){postError=String(e?.message||e);}
+    for(let attempt=0;attempt<12;attempt++) {
+      const status=await callViaJsonp(targetUrl,{action:'checkOperation',requestId});
+      if(status?.ready && status.response) {
+        const answer=status.response;
+        if(answer.ok)updateBackendDiagnostic('✅ ยืนยันการบันทึกจาก Apps Script '+CDD_RELEASE+' แล้ว',true);
+        return answer;
+      }
+      await new Promise(resolve=>setTimeout(resolve,1200));
     }
+    // Fallback for environments where a cross-origin POST cannot be delivered.
+    // Use the SAME requestId so a delayed POST and fallback cannot create two returns.
+    try {
+      const signed=await encodeSignedAdminJsonp(write);
+      const answer=await callViaJsonp(targetUrl,signed);
+      if(answer) {
+        if(answer.ok)updateBackendDiagnostic('✅ Apps Script ยืนยันผลการบันทึกแล้ว',true);
+        return answer;
+      }
+    }catch(e){postError += ' / '+String(e?.message||e);}
+    return {ok:false,error:'ยังไม่ได้รับผลยืนยันจาก Apps Script โปรดตรวจ /exec และสิทธิ์ Web App แล้วซิงค์ข้อมูลก่อนลองอีกครั้ง'+(postError?' ('+postError+')':'')};
   }
 
   if (payload.action === 'getInitialData' || payload.action === 'ping') {
@@ -2025,6 +2111,7 @@ function startAutoSyncTimer() {
     if (currentUser && !anyModalOpen && !(isConfigPage && isTypingInForm)) {
       pullStateFromGas(false, true);
     }
+    if(currentUser && !returnNoticeSyncing && Date.now()-lastNoticeFetchAt>15000)refreshReturnNotices();
     if (currentUser && !tickerCloudUnsupported && Date.now() - tickerLastFetchAt > 30000 && !tickerSaving && !(currentPage==='schedule' && tickerFormDirty)) {
       refreshTickerFromCloud(false);
     }
@@ -2115,14 +2202,17 @@ function handleLogin(e) {
   initFilters();
   initScheduleControls();
   switchPage('overview');
+  window.scrollTo(0,0); // District notices must be visible immediately after login.
   pullStateFromGas(false);
   startAutoSyncTimer();
   refreshTickerFromCloud(false); // Lightweight endpoint works even with large report databases.
+  refreshReturnNotices(true); // Separate alert feed for the district account.
   showToast('ยินดีต้อนรับเข้าสู่ CDD Uthai Report: ' + currentUser.name);
 }
 
 function handleLogout() {
   currentUser = null;
+  returnNotices=[];renderDistrictReturnNotices();
   if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
@@ -2227,6 +2317,7 @@ async function saveSingleAccountPassword(key) {
   }
 
   ACCOUNTS[key].pass = newPass;
+  if(currentUser?.username===key)currentUser.pass=newPass;
   if (newName) ACCOUNTS[key].name = newName;
   saveWorkgroupsAndVisibility(true);
   showToast(`✅ เปลี่ยนรหัสผ่านของ "${key}" (${ACCOUNTS[key].name}) และซิงค์ลง Cloud เรียบร้อยแล้ว!`);
@@ -2309,6 +2400,7 @@ function getVisibleDistricts() {
 
 function renderAll() {
   if (!currentUser) return;
+  renderDistrictReturnNotices();
   updateSidebarGroupCounts();
   updatePendingBadge();
   renderOverview();
@@ -3314,16 +3406,19 @@ async function addLineRecipient(e) {
   const recipient={id:editId||Date.now().toString(),distId:document.getElementById('lineRecDist').value,
     name:document.getElementById('lineRecName').value.trim(),lineId:document.getElementById('lineRecId').value.replace(/[\r\n\s]/g,'').trim()};
   if(!recipient.name||!recipient.lineId) {showToast('⚠️ กรุณากรอกชื่อผู้รับและ LINE ID');return;}
-  const btn=document.getElementById('btnSaveLineRec');btn.disabled=true;btn.textContent='⏳ กำลังบันทึกลง Cloud...';
+  const btn=document.getElementById('btnSaveLineRec'), status=document.getElementById('lineRecipientSaveStatus');btn.disabled=true;btn.textContent='⏳ กำลังบันทึกลง Cloud...';
+  if(status){status.textContent='กำลังตรวจสอบเวอร์ชันและรอการยืนยันการบันทึกชื่อจาก Google Sheets...';status.className='ticker-status';}
   try {
     const res=await sendToGoogleSheetDB({action:'upsertLineRecipient',recipient,adminAuth:adminApiCredentials()});
-    if(!confirmed(res)) {showToast('❌ ไม่สามารถบันทึก LINE: '+(res?.error||'ยังไม่ได้รับการยืนยันจาก Cloud'));return;}
+    if(!confirmed(res)) {if(status){status.textContent='❌ ไม่สำเร็จ: '+(res?.error||'ยังไม่ได้รับการยืนยันจาก Cloud');status.className='ticker-status err';}showToast('❌ ไม่สามารถบันทึก LINE: '+(res?.error||'ยังไม่ได้รับการยืนยันจาก Cloud'));return;}
     lineRecipients=Array.isArray(res.lineRecipients)?res.lineRecipients:lineRecipients;
     checkedLineRecipientIds.add(String(recipient.id));lastLocalConfigSavedAt=Date.now();
     localStorage.setItem(LINE_REC_KEY,JSON.stringify(lineRecipients));
     cancelEditLineRecipient();renderLinePage();
+    if(status){status.textContent='✅ บันทึกชื่อ “'+recipient.name+'” ลง Google Sheets และอ่านผลยืนยันสำเร็จ';status.className='ticker-status ok';}
     showToast('✅ บันทึกชื่อผู้รับ/กลุ่ม LINE ลง Google Sheets แล้ว');
-  } finally {btn.disabled=false;if(!document.getElementById('editLineRecItemId').value)btn.textContent='💾 บันทึกไอดีไลน์';}
+  } catch(e) {if(status){status.textContent='❌ บันทึกผิดพลาด: '+String(e?.message||e);status.className='ticker-status err';}showToast('❌ ไม่สามารถบันทึกชื่อ LINE ได้');}
+  finally {btn.disabled=false;if(!document.getElementById('editLineRecItemId').value)btn.textContent='💾 บันทึกไอดีไลน์';}
 }
 
 function openEditLineRecipient(id) {
@@ -3898,7 +3993,7 @@ async function testGasConnection() {
   const health=await verifyBackendVersion(curUrl,true);
   updateBackendDiagnostic(health.ok ? '✅ เชื่อมต่อ Apps Script '+health.version+' พร้อมบันทึกข้อความวิ่ง/ตีกลับ' : '❌ '+health.error,health.ok);
   if (res && res.ok && Array.isArray(res.records)) {
-    statusBox.innerHTML = `${health.ok ? '✅' : '⚠️'} <b>ฐานข้อมูลตอบกลับ (เวอร์ชัน ${res.version || 'ไม่ทราบ'})${health.ok ? ' และยืนยันระบบคำสั่ง V19 ได้' : ' แต่ยังไม่รองรับการบันทึกใหม่'}</b><br>${health.ok ? '' : escCDD(health.error)+'<br>'}พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
+    statusBox.innerHTML = `${health.ok ? '✅' : '⚠️'} <b>ฐานข้อมูลตอบกลับ (เวอร์ชัน ${res.version || 'ไม่ทราบ'})${health.ok ? ' และยืนยันระบบคำสั่ง V20 ได้' : ' แต่ยังไม่รองรับการบันทึกใหม่'}</b><br>${health.ok ? '' : escCDD(health.error)+'<br>'}พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
       (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
     updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ)`);
   } else {
