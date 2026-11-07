@@ -301,10 +301,16 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 .cdd-announcement{overflow:hidden;display:none;background:linear-gradient(90deg,rgba(79,70,229,.1),rgba(236,72,153,.1));border-radius:12px;border:1px solid var(--line);margin-top:10px;align-items:center;gap:12px;min-height:35px}
 .cdd-announcement.show{display:flex}
 .cdd-announcement-label{flex:none;padding:5px 10px;font-weight:800;color:var(--blue-600);font-size:12px}
-.cdd-announcement-viewport{min-width:0;flex:1;overflow:hidden}
-.cdd-announcement-runner{display:inline-block;white-space:nowrap;padding-left:100%;animation:cddScroll var(--ticker-duration,25s) linear infinite;will-change:transform;font-size:13px;font-weight:650;color:var(--ink)}
+/* Deterministic scrolling: first text visible promptly, then move fully off the left edge. */
+.cdd-announcement-viewport{min-width:0;flex:1;overflow:hidden;position:relative;height:37px}
+.cdd-announcement-runner{position:absolute;top:50%;left:0;display:block;width:max-content;max-width:none;white-space:nowrap;padding:0;font-size:13px;font-weight:650;color:var(--ink);will-change:transform;animation:cddScroll var(--ticker-duration,25s) linear infinite}
 .cdd-announcement:hover .cdd-announcement-runner{animation-play-state:paused}
-@keyframes cddScroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+@keyframes cddScroll{from{transform:translate3d(var(--ticker-start,800px),-50%,0)}to{transform:translate3d(var(--ticker-end,-600px),-50%,0)}}
+.ticker-preview{display:flex!important;min-height:42px;margin:12px 0 10px}
+.ticker-preview .cdd-announcement-label{color:var(--teal)}
+.ticker-status{padding:8px 11px;margin-top:10px;border-radius:9px;background:var(--surface-2);color:var(--muted);font-size:12px;line-height:1.5}
+.ticker-status.ok{color:#047857;background:rgba(16,185,129,.11)}
+.ticker-status.err{color:var(--danger);background:rgba(244,63,94,.09)}
 .cdd-reject-reason{padding:8px 10px;margin-top:6px;border-radius:8px;border-left:3px solid var(--danger);background:rgba(244,63,94,.08);color:var(--ink-2);font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
 .cdd-deadline{font-size:12px;color:var(--muted);margin-top:5px}
 .cdd-deadline.overdue{color:var(--danger);font-weight:750}
@@ -612,14 +618,23 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         </div>
         <div class="card">
           <div class="card-h"><div><h3>📣 ตั้งค่าข้อความวิ่งหน้าเว็บไซต์</h3><p>ข้อความที่ตั้งจะปรากฏใต้แถบเลือกเดือนของผู้ใช้งานทุกอำเภอ และบันทึกลง Cloud</p></div></div>
-          <div class="form-group"><label for="tickerTextInput">ข้อความประกาศ</label><textarea id="tickerTextInput" class="inp" rows="3" maxlength="500" placeholder="พิมพ์ประกาศที่ต้องการให้วิ่งหน้าเว็บไซต์ (สูงสุด 500 ตัวอักษร)"></textarea></div>
+          <div class="form-group"><label for="tickerTextInput">ข้อความประกาศ</label><textarea id="tickerTextInput" class="inp" rows="3" maxlength="500" oninput="onTickerDraftChange('text')" placeholder="พิมพ์ประกาศที่ต้องการให้วิ่งหน้าเว็บไซต์ (สูงสุด 500 ตัวอักษร)"></textarea></div>
           <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:15px">
-            <label style="font-weight:700"><input type="checkbox" id="tickerEnabledInput"> เปิดแสดงข้อความวิ่ง</label>
-            <label style="font-weight:700">ความเร็ว <select class="inp" style="width:auto;display:inline-block" id="tickerSpeedInput">
+            <label style="font-weight:700"><input type="checkbox" id="tickerEnabledInput" onchange="onTickerDraftChange('enabled')"> เปิดแสดงข้อความวิ่ง</label>
+            <label style="font-weight:700">ความเร็ว <select class="inp" style="width:auto;display:inline-block" id="tickerSpeedInput" onchange="onTickerDraftChange('speed')">
               <option value="15">เร็ว</option><option value="25">ปกติ</option><option value="45">ช้า</option><option value="65">ช้ามาก</option>
             </select></label>
           </div>
-          <button type="button" class="btn btn-primary" id="saveTickerBtn" onclick="saveTickerSettings()">💾 บันทึกข้อความวิ่งลง Cloud</button>
+          <div class="cdd-announcement ticker-preview" id="tickerPreview" aria-label="ตัวอย่างข้อความวิ่ง">
+            <span class="cdd-announcement-label">👁️ ตัวอย่าง</span>
+            <div class="cdd-announcement-viewport"><span class="cdd-announcement-runner" id="tickerPreviewText"></span></div>
+          </div>
+          <p id="tickerPreviewHint" style="font-size:12px;color:var(--muted);margin-bottom:12px">ข้อความตัวอย่างด้านบนยังไม่เผยแพร่จนกว่าจะกดบันทึก</p>
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+            <button type="button" class="btn btn-primary" id="saveTickerBtn" onclick="saveTickerSettings()">💾 บันทึกข้อความวิ่งลง Cloud</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="refreshTickerFromCloud(true)">🔄 ตรวจสอบข้อความที่เผยแพร่</button>
+          </div>
+          <div id="tickerSaveStatus" class="ticker-status" role="status" aria-live="polite">ยังไม่ได้ตรวจสอบข้อมูลประกาศบน Google Apps Script</div>
         </div>
       </section>
 
@@ -1150,6 +1165,12 @@ let stagedUploadFile = null;
 let autoSyncIntervalId = null;
 let reportSchedules = {};
 let tickerConfig = { enabled: false, text: '', speed: 25 };
+let tickerFormDirty = false;
+let tickerEnabledTouched = false;
+let tickerSaving = false;
+let tickerLastSavedAt = 0;
+let tickerLastFetchAt = 0;
+let tickerCloudUnsupported = false;
 function escCDD(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function adminApiCredentials() { return { username: currentUser?.username || '', password: currentUser?.pass || '' }; }
 function confirmed(res) { return Boolean(res && res.ok && !res.opaque); }
@@ -1167,13 +1188,107 @@ function scheduleBadgeHtml(month, repId, rec = null) {
 function rejectionReasonHtml(rec) {
   return rec?.rejectionReason ? `<div class="cdd-reject-reason">↩️ เหตุผลตีกลับครั้งล่าสุด: ${escCDD(rec.rejectionReason)}${rec.rejectedBy ? '<div>โดย '+escCDD(rec.rejectedBy)+'</div>' : ''}</div>` : '';
 }
-function renderTicker() {
-  const bar = document.getElementById('cddAnnouncement'), text = document.getElementById('cddAnnouncementText');
-  if (!bar || !text) return;
-  bar.classList.toggle('show', Boolean(tickerConfig.enabled && String(tickerConfig.text||'').trim()));
-  text.textContent = tickerConfig.text || '';
-  text.style.setProperty('--ticker-duration', String(Math.max(10,Math.min(90,Number(tickerConfig.speed)||25)))+'s');
+function setTickerStatus(message, state = '') {
+  const element = document.getElementById('tickerSaveStatus');
+  if (!element) return;
+  element.className = 'ticker-status' + (state ? ' ' + state : '');
+  element.textContent = message;
 }
+// Use actual viewport and message widths; CSS-only percent scrolling can remain off-screen.
+function animateTickerTrack(bar, track, durationSeconds) {
+  if (!bar || !track) return;
+  const viewport = bar.querySelector('.cdd-announcement-viewport');
+  if (!viewport) return;
+  const update = () => {
+    if (!viewport.isConnected || !track.isConnected || !viewport.clientWidth) return;
+    // Begin with the first words already visible; no long blank interval.
+    const start = Math.max(24, Math.round(viewport.clientWidth * 0.75));
+    const end = -(track.scrollWidth + 4);
+    const length = start - end;
+    // Speed selector is time for ~800px; scale long announcements to remain readable.
+    const duration = Math.max(7, Math.min(240, durationSeconds * length / 800));
+    track.style.animation = 'none';
+    track.style.setProperty('--ticker-start', start + 'px');
+    track.style.setProperty('--ticker-end', end + 'px');
+    track.style.setProperty('--ticker-duration', duration.toFixed(2) + 's');
+    // Read a layout property to restart animation after changing CSS variables.
+    void track.offsetWidth;
+    track.style.animation = '';
+  };
+  requestAnimationFrame(update);
+}
+function renderTicker() {
+  const bar = document.getElementById('cddAnnouncement'), track = document.getElementById('cddAnnouncementText');
+  if (!bar || !track) return;
+  const active = tickerConfig.enabled === true && Boolean(String(tickerConfig.text||'').trim());
+  bar.classList.toggle('show', active);
+  track.textContent = String(tickerConfig.text||'');
+  if (active) animateTickerTrack(bar, track, Math.max(10, Math.min(90, Number(tickerConfig.speed)||25)));
+}
+function renderTickerPreview() {
+  const bar = document.getElementById('tickerPreview');
+  const track = document.getElementById('tickerPreviewText');
+  if (!bar || !track) return;
+  const message = document.getElementById('tickerTextInput')?.value.trim() || '';
+  const enabled = Boolean(document.getElementById('tickerEnabledInput')?.checked);
+  const speed = Number(document.getElementById('tickerSpeedInput')?.value) || 25;
+  const hint = document.getElementById('tickerPreviewHint');
+  track.textContent = message || 'กรอกข้อความเพื่อดูตัวอย่างข้อความวิ่ง';
+  if (hint) hint.textContent = enabled && message
+    ? 'ตัวอย่างก่อนเผยแพร่ — กดบันทึกเพื่อให้ผู้ใช้ทุกอำเภอเห็นข้อความนี้'
+    : 'กำลังปิดแสดง หรือยังไม่มีข้อความ — กดเปิดแสดงและบันทึกก่อนเผยแพร่';
+  animateTickerTrack(bar, track, speed);
+}
+function onTickerDraftChange(control) {
+  if (!isAdmin()) return;
+  const text = document.getElementById('tickerTextInput');
+  const enabled = document.getElementById('tickerEnabledInput');
+  if (control === 'enabled') tickerEnabledTouched = true;
+  if (control === 'text' && text?.value.trim() && enabled && !tickerEnabledTouched) enabled.checked = true;
+  tickerFormDirty = true;
+  setTickerStatus('ยังไม่ได้บันทึกการแก้ไขล่าสุด — ข้อความในหน้าตัวอย่างยังไม่เผยแพร่');
+  renderTickerPreview();
+}
+function applyTickerConfigFromCloud(cloud, force = false) {
+  if (!cloud || typeof cloud !== 'object' || tickerSaving) return false;
+  if (!force && Date.now() - tickerLastSavedAt < 12000) return false;
+  tickerConfig = {
+    enabled: cloud.enabled === true,
+    text: String(cloud.text || '').slice(0, 500),
+    speed: Math.max(10, Math.min(90, Number(cloud.speed) || 25)),
+    updatedAt: String(cloud.updatedAt || '')
+  };
+  localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(tickerConfig));
+  renderTicker();
+  if (!tickerFormDirty || force) {tickerFormDirty=false; tickerEnabledTouched=false; renderTickerConfigForm();}
+  return true;
+}
+async function refreshTickerFromCloud(notify = false) {
+  if (tickerSaving) return;
+  const url = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
+  if (!url) { setTickerStatus('ไม่พบ URL ของ Google Apps Script โปรดตั้งค่าการเชื่อมต่อ','err'); return; }
+  setTickerStatus('กำลังตรวจสอบข้อความประกาศจาก Google Apps Script...');
+  const response = await callViaJsonp(url, {action: 'getTickerConfig'});
+  tickerLastFetchAt = Date.now();
+  if (response?.ok && response.tickerConfig && typeof response.tickerConfig === 'object') {
+    tickerCloudUnsupported = false;
+    // Explicit manual refresh may replace draft only if the user has not edited it.
+    const applied = applyTickerConfigFromCloud(response.tickerConfig, !tickerFormDirty && notify);
+    const on = response.tickerConfig.enabled && String(response.tickerConfig.text||'').trim();
+    setTickerStatus((on ? '✅ Cloud เปิดแสดงข้อความวิ่งแล้ว' : 'ℹ️ Cloud ปิดแสดงข้อความวิ่งอยู่') +
+      (applied ? ' — ข้อมูลตรงกับค่าที่เผยแพร่' : ' — ยังมีข้อความที่กำลังแก้ไขในฟอร์ม'), on ? 'ok' : '');
+    if (notify) showToast(on ? '✅ ตรวจพบประกาศที่เผยแพร่บน Cloud' : 'ℹ️ Cloud ยังปิดแสดงข้อความวิ่ง');
+    return;
+  }
+  if (response?.ok && !response.tickerConfig) {
+    tickerCloudUnsupported = true;
+    setTickerStatus('❌ Apps Script ปลายทางยังไม่มีระบบข้อความวิ่ง กรุณาอัปเดต Code.gs และ Deploy เป็นเวอร์ชันใหม่ จากนั้นรีเฟรชเว็บ', 'err');
+  } else {
+    setTickerStatus('❌ อ่านข้อมูลประกาศจาก Cloud ไม่สำเร็จ ตรวจ URL /exec และการอนุญาตเข้าถึง Web App', 'err');
+  }
+  if (notify) showToast('⚠️ ตรวจประกาศไม่สำเร็จ ดูคำอธิบายใต้ปุ่มบันทึก');
+}
+
 function initScheduleControls() {
   const month = document.getElementById('deadlineMonth'), group = document.getElementById('deadlineGroup');
   if (month && !month.options.length) {
@@ -1201,10 +1316,13 @@ function renderSchedulePage() {
   renderTickerConfigForm();
 }
 function renderTickerConfigForm() {
-  const t=document.getElementById('tickerTextInput'), e=document.getElementById('tickerEnabledInput'), s=document.getElementById('tickerSpeedInput');
-  if (t && document.activeElement!==t) t.value=tickerConfig.text||'';
-  if (e) e.checked=Boolean(tickerConfig.enabled);
-  if (s) s.value=String(tickerConfig.speed||25);
+  if (!tickerFormDirty) {
+    const t=document.getElementById('tickerTextInput'), e=document.getElementById('tickerEnabledInput'), s=document.getElementById('tickerSpeedInput');
+    if (t) t.value=tickerConfig.text||'';
+    if (e) e.checked=Boolean(tickerConfig.enabled);
+    if (s) s.value=String(tickerConfig.speed||25);
+  }
+  renderTickerPreview();
 }
 async function saveScheduleEntry(month,repId) {
   if (!isAdmin()) return;
@@ -1226,16 +1344,48 @@ async function deleteScheduleEntry(month,repId) {
   renderSchedulePage();renderAll();showToast('✅ ล้างกำหนดส่งแล้ว');
 }
 async function saveTickerSettings() {
-  if (!isAdmin()) return;
-  const next={enabled:document.getElementById('tickerEnabledInput').checked,
-    text:document.getElementById('tickerTextInput').value.trim().slice(0,500),
-    speed:Number(document.getElementById('tickerSpeedInput').value)||25};
-  if (next.enabled&&!next.text) {showToast('⚠️ กรุณาพิมพ์ข้อความประกาศ');return;}
-  const res=await sendToGoogleSheetDB({action:'saveTickerConfig',config:next,adminAuth:adminApiCredentials()});
-  if (!confirmed(res)) {showToast('❌ บันทึกข้อความวิ่งไม่สำเร็จ: '+(res?.error||'ยังไม่ได้รับการยืนยัน'));return;}
-  tickerConfig=next;lastLocalConfigSavedAt=Date.now();localStorage.setItem(TICKER_CACHE_KEY,JSON.stringify(tickerConfig));
-  renderTicker();showToast('✅ บันทึกข้อความวิ่งลง Cloud แล้ว');
+  if (!isAdmin() || tickerSaving) return;
+  const button = document.getElementById('saveTickerBtn');
+  const next = {
+    enabled: document.getElementById('tickerEnabledInput').checked,
+    text: document.getElementById('tickerTextInput').value.trim().slice(0,500),
+    speed: Number(document.getElementById('tickerSpeedInput').value)||25
+  };
+  if (next.enabled && !next.text) {
+    setTickerStatus('กรุณาพิมพ์ข้อความก่อนเปิดแสดง','err');
+    showToast('⚠️ กรุณาพิมพ์ข้อความประกาศ');return;
+  }
+  tickerSaving = true;
+  if (button) {button.disabled=true;button.textContent='⏳ กำลังบันทึกและตรวจสอบ...';}
+  setTickerStatus('กำลังบันทึกการเปลี่ยนแปลงลง Google Apps Script...');
+  try {
+    const res = await sendToGoogleSheetDB({action:'saveTickerConfig',config:next,adminAuth:adminApiCredentials()});
+    if (!confirmed(res)) {
+      setTickerStatus('❌ บันทึกไม่สำเร็จ: '+(res?.error||'ไม่ได้รับการยืนยันจาก Cloud')+'. ตรวจว่าอัปเดต Code.gs และ Deploy /exec แล้ว','err');
+      showToast('❌ บันทึกข้อความวิ่งไม่สำเร็จ กรุณาดูสถานะใต้ปุ่มบันทึก');
+      return;
+    }
+    tickerConfig = { ...next, ...(res.config || {}) };
+    tickerLastSavedAt = Date.now();
+    lastLocalConfigSavedAt = tickerLastSavedAt;
+    tickerFormDirty = false;
+    tickerEnabledTouched = false;
+    localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(tickerConfig));
+    renderTicker();
+    renderTickerConfigForm();
+    setTickerStatus(next.enabled
+      ? '✅ บันทึกลง Cloud แล้ว และเปิดข้อความวิ่งให้ผู้ใช้งานทุกอำเภอ (ใต้แถบเลือกเดือน)'
+      : '✅ บันทึกลง Cloud แล้ว แต่เลือก “ปิดแสดงข้อความวิ่ง” จึงไม่ปรากฏบนหน้าเว็บไซต์',next.enabled ? 'ok' : '');
+    showToast(next.enabled ? '✅ เปิดเผยแพร่ข้อความวิ่งสำเร็จ' : '✅ บันทึกแล้ว แต่ยังปิดแสดงข้อความวิ่ง');
+  } catch (error) {
+    setTickerStatus('❌ บันทึกข้อความวิ่งผิดพลาด: '+String(error),'err');
+    showToast('❌ บันทึกไม่สำเร็จ');
+  } finally {
+    tickerSaving = false;
+    if (button) {button.disabled=false;button.textContent='💾 บันทึกข้อความวิ่งลง Cloud';}
+  }
 }
+
 function openReturnReportModal(month,distId,repId) {
   if (!isAdmin()) return;
   const rec=db[month]?.[distId]?.[repId], rep=getAllReportsFlat(null,true).find(r=>r.id===repId);
@@ -1716,9 +1866,7 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
         localStorage.setItem(SCHEDULE_CACHE_KEY, JSON.stringify(reportSchedules));
       }
       if (res.tickerConfig && typeof res.tickerConfig === 'object') {
-        tickerConfig = {enabled:false,text:'',speed:25,...res.tickerConfig};
-        localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(tickerConfig));
-        renderTicker();
+        applyTickerConfigFromCloud(res.tickerConfig);
       }
 
     }
@@ -1786,6 +1934,9 @@ function startAutoSyncTimer() {
     const isConfigPage = ['passwords', 'line', 'topics', 'settings', 'schedule'].includes(currentPage);
     if (currentUser && !anyModalOpen && !(isConfigPage && isTypingInForm)) {
       pullStateFromGas(false, true);
+    }
+    if (currentUser && !tickerCloudUnsupported && Date.now() - tickerLastFetchAt > 30000 && !tickerSaving && !(currentPage==='schedule' && tickerFormDirty)) {
+      refreshTickerFromCloud(false);
     }
   }, 18000);
 }
@@ -1874,6 +2025,7 @@ function handleLogin(e) {
   switchPage('overview');
   pullStateFromGas(false);
   startAutoSyncTimer();
+  refreshTickerFromCloud(false); // Lightweight endpoint works even with large report databases.
   showToast('ยินดีต้อนรับเข้าสู่ CDD Uthai Report: ' + currentUser.name);
 }
 
@@ -3690,8 +3842,10 @@ window.addEventListener('DOMContentLoaded', () => {
     const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
     if (currentUser && !anyModalOpen && !isTypingInForm) {
       pullStateFromGas(false, true);
+      if (!tickerSaving && Date.now()-tickerLastFetchAt>30000) refreshTickerFromCloud(false);
     }
   });
+  window.addEventListener('resize', () => { renderTicker(); renderTickerPreview(); });
   const drop = document.getElementById('excelDropZone');
   if (drop) {
     drop.addEventListener('dragover', e => { e.preventDefault(); });
