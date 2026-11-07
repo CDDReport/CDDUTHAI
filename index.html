@@ -224,21 +224,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 .pill-pend{background:rgba(245,158,11,.15); color:#D97706}
 .pill-none{background:var(--surface-3); color:var(--muted)}
 .pill-rej{background:rgba(244,63,94,.14); color:#E11D48}
-.pill-sky{background:rgba(2,132,199,.13); color:#0284C7}
-
-/* Reject Reason Alert Box inside Table */
-.rej-reason-box{
-  margin-top:5px; padding:6px 10px; border-radius:8px;
-  background:rgba(244,63,94,.1); border:1px solid rgba(244,63,94,.3);
-  color:#E11D48; font-size:12px; font-weight:600; line-height:1.4;
-}
-
-/* Schedule Banner */
-.schedule-banner{
-  background:linear-gradient(135deg,rgba(79,70,229,.09) 0%,rgba(236,72,153,.09) 100%);
-  border:1.5px solid rgba(99,102,241,.28); border-radius:var(--r-lg);
-  padding:13px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-}
 
 /* Manual Score Buttons */
 .sc-grp{display:inline-flex; gap:3px; background:var(--surface-3); padding:2px; border-radius:8px}
@@ -367,7 +352,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         <span>📅 แดชบอร์ดรายเดือน (ม.ค.–ธ.ค.)</span>
       </button>
       <button class="nav-item" data-page="approval" id="navApproval" onclick="switchPage('approval')">
-        <span>✅ อนุมัติ / ตีกลับงาน & ให้คะแนน</span>
+        <span>✅ อนุมัติการส่งงาน & ให้คะแนน</span>
         <span class="b-cnt" id="badgePend">0</span>
       </button>
       <button class="nav-item" data-page="line" id="navLine" onclick="switchPage('line')">
@@ -392,10 +377,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         <span class="b-cnt" id="navCntG4">4 งาน</span>
       </button>
 
-      <div class="nav-label" id="navDataLabel">จัดการระบบ & กำหนดการ (เฉพาะ Admin)</div>
-      <button class="nav-item" data-page="schedule" id="navSchedule" onclick="switchPage('schedule')">
-        <span>⏰ กำหนดการส่งงาน (Admin)</span>
-      </button>
+      <div class="nav-label" id="navDataLabel">จัดการระบบ & รหัสผ่าน (เฉพาะ Admin)</div>
       <button class="nav-item" data-page="topics" id="navTopics" onclick="switchPage('topics')">
         <span>🗂️ จัดการหัวข้อรายงาน & ซ่อนรายเดือน</span>
       </button>
@@ -429,9 +411,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         <button class="btn btn-ok btn-sm" onclick="pullStateFromGas(true)" title="ดึงข้อมูลล่าสุดจากฐานข้อมูล Google Sheets ทันที">
           🔄 ซิงค์ข้อมูลล่าสุด
         </button>
-        <button class="btn btn-sky btn-sm" id="btnTopSchedule" onclick="switchPage('schedule')">
-          ⏰ กำหนดการส่งงาน
-        </button>
         <button class="btn btn-sky btn-sm" id="btnTopTopics" onclick="openAddTopicModal()">
           ➕ เพิ่ม/ซ่อนหัวข้อรายงาน
         </button>
@@ -451,15 +430,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
     </header>
 
     <main class="content">
-      <!-- แถบประกาศกำหนดการส่งงานประจำเดือน (แสดงทุกหน้าเพื่อให้ทุกอำเภอรับทราบ) -->
-      <div class="schedule-banner" id="globalScheduleBanner">
-        <div>
-          <span class="pill pill-sky" style="margin-right:6px">⏰ กำหนดการส่งงานประจำเดือน<span class="cur-month-lbl"></span></span>
-          <b id="globalScheduleText">ส่งรายงานภายในวันที่กำหนดของแต่ละหัวข้อ (เกณฑ์การประเมิน 1 รายงาน = 2 คะแนน)</b>
-        </div>
-        <button class="btn btn-ghost btn-xs" id="btnEditBannerSchedule" onclick="switchPage('schedule')">✏️ แก้ไขกำหนดการ</button>
-      </div>
-
       <!-- ==================== PAGE: OVERVIEW ==================== -->
       <section class="page active" id="page-overview">
         <div class="kpis" id="overviewKpis"></div>
@@ -523,16 +493,15 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         </div>
       </section>
 
-      <!-- ==================== PAGE: APPROVAL, REJECTION & MANUAL SCORING ==================== -->
+      <!-- ==================== PAGE: APPROVAL & MANUAL SCORING ==================== -->
       <section class="page" id="page-approval">
         <div class="card">
           <div class="card-h">
             <div>
-              <h3>ระบบอนุมัติการส่งงาน, ตีกลับงานพร้อมระบุเหตุผล & ให้คะแนนแบบแมนนวล</h3>
-              <p>แอดมินจังหวัดสามารถดาวน์โหลดไฟล์ ตรวจอนุมัติ หรือกดตีกลับงานพร้อมระบุเหตุผลให้อำเภอแก้ไขได้ทันที</p>
+              <h3>ระบบอนุมัติการส่งงาน, ดาวน์โหลดไฟล์งาน & ให้คะแนนแบบแมนนวล (Manual)</h3>
+              <p>แอดมินจังหวัดสามารถดาวน์โหลดไฟล์ ตรวจอนุมัติ ให้คะแนน หรือกดซ่อน/เพิ่มหัวข้อรายงานของเดือนที่เลือกได้ทันที</p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap" id="adminBulkActions">
-              <button class="btn btn-sky btn-sm" onclick="switchPage('schedule')">⏰ ตั้งกำหนดการส่งงาน</button>
               <button class="btn btn-sky btn-sm" onclick="openAddTopicModal()">➕ เพิ่มหัวข้อรายงานใหม่</button>
               <button class="btn btn-ok btn-sm" onclick="approveAllPendingInFilter()">✅ อนุมัติรายการรอตรวจทั้งหมด</button>
             </div>
@@ -559,8 +528,8 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 <option value="ALL">-- ทุกสถานะ --</option>
                 <option value="รอตรวจสอบ">⏳ รอตรวจสอบ (ส่งแล้ว)</option>
                 <option value="อนุมัติแล้ว">✅ อนุมัติแล้ว (ได้คะแนน)</option>
-                <option value="แก้ไข">⚠️ ตีกลับ/แจ้งแก้ไข</option>
                 <option value="ยังไม่ส่งรายงาน">⚪ ยังไม่ส่งรายงาน</option>
+                <option value="แก้ไข">⚠️ แจ้งแก้ไข</option>
               </select>
             </div>
           </div>
@@ -574,53 +543,10 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
           <div>
             <h4 style="font-size:14px;font-weight:800;margin-bottom:8px">
-              📑 ตารางตรวจสอบ, ดาวน์โหลดไฟล์งาน, อนุมัติ หรือ ตีกลับงานพร้อมระบุเหตุผล
+              📑 ตารางตรวจสอบ, ดาวน์โหลดไฟล์งานจาก Google Drive และอนุมัติการส่งรายงาน
             </h4>
             <div class="tbl-wrap" id="approvalListWrap"></div>
           </div>
-        </div>
-      </section>
-
-      <!-- ==================== PAGE: SUBMISSION SCHEDULE MANAGEMENT (ADMIN ONLY) ==================== -->
-      <section class="page" id="page-schedule">
-        <div class="card">
-          <div class="card-h">
-            <div>
-              <h3>⏰ จัดการกำหนดการในการส่งงานประจำเดือน (เฉพาะ Admin จังหวัด)</h3>
-              <p>ตั้งค่าวันครบกำหนดส่งงานของแต่ละหัวข้อรายงาน กำหนดการจะแสดงในตารางส่งงานของทุกอำเภอและส่งแจ้งเตือนเข้า LINE ได้ทันที</p>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-line btn-sm" onclick="sendScheduleLineAlert(false)">🤖 ส่งกำหนดการเดือนนี้เข้าบอท LINE</button>
-              <button class="btn btn-ghost btn-sm" onclick="sendScheduleLineAlert(true)">📲 แชร์กำหนดการผ่านแอป LINE</button>
-              <button class="btn btn-primary btn-sm" onclick="saveAllSchedulesFromPage()">💾 บันทึกกำหนดการทั้งหมดลง Cloud</button>
-            </div>
-          </div>
-
-          <!-- กล่องตั้งค่าประกาศกำหนดการภาพรวมประจำเดือน -->
-          <div class="line-selector-box" style="margin-bottom:16px">
-            <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-items:end">
-              <div>
-                <label style="font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:5px">
-                  📅 วันปิดรับรายงานภาพรวม ประจำเดือน<span class="cur-month-lbl"></span>:
-                </label>
-                <input type="date" id="schMonthCloseDate" class="inp" onchange="updateSchedulePreviewBanner()">
-              </div>
-              <div>
-                <label style="font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:5px">
-                  📢 ข้อความประกาศกำหนดการส่งงานประจำเดือน<span class="cur-month-lbl"></span> (แสดงบนหัวเว็บทุกหน้า):
-                </label>
-                <input type="text" id="schMonthBannerNote" class="inp" placeholder="เช่น ขอให้ทุกอำเภอส่งรายงานประจำเดือนภายในวันที่ 25 ของเดือน ก่อนเวลา 16.30 น.">
-              </div>
-              <div>
-                <button type="button" class="btn btn-primary" style="width:100%" onclick="saveAllSchedulesFromPage()">
-                  💾 บันทึกประกาศเดือนนี้
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="subtabs" id="scheduleGroupTabs"></div>
-          <div class="tbl-wrap" id="scheduleManagerTableWrap"></div>
         </div>
       </section>
 
@@ -673,6 +599,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
       <!-- ==================== PAGE: LINE NOTIFICATION & DISTRICT SELECTOR (ADMIN ONLY) ==================== -->
       <section class="page" id="page-line">
+        <!-- กล่องตั้งค่าและตรวจสอบสถานะบอท LINE OA โดยตรง -->
         <div class="card" style="margin-bottom:16px">
           <div class="card-h">
             <div>
@@ -699,11 +626,12 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <div id="lineBotDiagResult" class="note" style="margin-top:10px">
             <b>💡 วิธีให้บอท LINE ส่งแจ้งเตือนเข้ากลุ่มอำเภอได้จริง 100%:</b><br>
             1. วาง <b>Channel Access Token</b> ด้านบนแล้วกดปุ่ม <b>"🔍 ตรวจสอบบอท & บันทึก Token"</b> (ระบบจะแสดงชื่อบอทของคุณขึ้นมา)<br>
-            2. รหัสไอดีที่ใช้ส่งผ่านบอทต้องเป็นรหัส 33 ตัวอักษรที่ขึ้นต้นด้วย <b><code>U...</code></b> (บุคคล) หรือ <b><code>C...</code></b> (กลุ่มไลน์) เท่านั้น — เชิญบอทเข้ากลุ่มไลน์ของอำเภอแล้วพิมพ์คำว่า <b><code>id</code></b> ในกลุ่ม บอทจะตอบกลับรหัส <code>C...</code> ทันที!
+            2. รหัสไอดีที่ใช้ส่งผ่านบอทต้องเป็นรหัส 33 ตัวอักษรที่ขึ้นต้นด้วย <b><code>U...</code></b> (บุคคล) หรือ <b><code>C...</code></b> (กลุ่มไลน์) เท่านั้น — <b>วิธีดูรหัสง่ายๆ:</b> เชิญบอทเข้ากลุ่มไลน์ของอำเภอแล้วพิมพ์คำว่า <b><code>id</code></b> ในกลุ่ม บอทจะตอบกลับรหัส <code>C...</code> ทันทีและดึงเข้าตารางด้านล่างให้อัตโนมัติ!
           </div>
         </div>
 
         <div class="grid">
+          <!-- ซ้าย: ฟอร์มบันทึกไอดีไลน์ประจำอำเภอ -->
           <div class="card c5" style="margin-bottom:0">
             <div class="card-h">
               <div>
@@ -742,6 +670,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             <div class="tbl-wrap" id="lineRecipientTable"></div>
           </div>
 
+          <!-- ขวา: เมนูเลือกอำเภอที่จะส่งรายงาน & ตารางส่งรายหัวข้อ -->
           <div class="card c7" style="margin-bottom:0">
             <div class="card-h">
               <div>
@@ -750,6 +679,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
               </div>
             </div>
 
+            <!-- กล่องเมนูเลือกอำเภอและไอดีเป้าหมาย -->
             <div class="line-selector-box">
               <div style="margin-bottom:10px">
                 <label style="font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:6px">
@@ -774,13 +704,16 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 </div>
               </div>
 
+              <!-- ดรอปดาวน์ย่อยกรณีเลือกเจาะจง 1 ไอดี -->
               <div id="specificLineIdSelectWrap" style="display:none;margin-top:10px">
                 <label style="font-size:12px;font-weight:700;color:var(--blue-600)">📌 เลือกไอดีผู้รับที่ต้องการส่งให้โดยตรง:</label>
                 <select class="inp" id="lineSpecificRecSelect" onchange="renderLineTargetPreview()"></select>
               </div>
 
+              <!-- กล่องแสดงตัวอย่างไอดีปลายทางที่จะถูกส่งไป -->
               <div id="lineTargetPreviewBox" style="margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:12.5px"></div>
 
+              <!-- ปุ่มกดส่งรายงานสรุปตามอำเภอ/ไอดีที่เลือก -->
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
                 <button type="button" class="btn btn-line btn-sm" onclick="sendDistrictSummaryLine(false)">
                   🤖 ส่งสรุปผลงานอำเภอที่เลือก (ผ่านบอท LINE)
@@ -788,20 +721,17 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 <button type="button" class="btn btn-warn btn-sm" onclick="sendDistrictPendingAlertLine(false)">
                   ⚠️ ส่งแจ้งเตือนงานค้างส่งเฉพาะอำเภอที่เลือก
                 </button>
-                <button type="button" class="btn btn-sky btn-sm" onclick="sendScheduleLineAlert(false)">
-                  ⏰ ส่งตารางกำหนดการส่งงานเดือนนี้
-                </button>
                 <button type="button" class="btn btn-ghost btn-sm" onclick="sendDistrictSummaryLine(true)">
                   📲 แชร์สรุปผ่านแอป LINE
                 </button>
               </div>
             </div>
 
+            <!-- ตัวกรองสถานะของตารางรายงานด้านล่าง -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
               <h4 style="font-size:14px;font-weight:800" id="lineReportTableTitle">📑 รายการรายงานประจำเดือน</h4>
               <select class="inp" id="lineReportStatusFilter" style="width:auto;padding:6px 12px;font-size:12.5px" onchange="renderLineApprovedTable()">
                 <option value="อนุมัติแล้ว">✅ แสดงเฉพาะรายงานที่อนุมัติแล้ว</option>
-                <option value="แก้ไข">⚠️ แสดงเฉพาะรายงานที่ตีกลับ/แจ้งแก้ไข</option>
                 <option value="รอตรวจสอบ">⏳ แสดงเฉพาะรายงานที่รอตรวจสอบ</option>
                 <option value="ยังไม่ส่งรายงาน">⚪ แสดงเฉพาะรายงานที่ยังไม่ส่ง</option>
                 <option value="ALL">📋 แสดงทุกสถานะ</option>
@@ -827,7 +757,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 แสดงรายงานที่ซ่อนในเดือนนี้ด้วย
               </label>
               <button class="btn btn-sky btn-sm" onclick="openAddTopicModal(currentPage)">➕ เพิ่มหัวข้อในกลุ่มงานนี้</button>
-              <button class="btn btn-ghost btn-sm" onclick="switchPage('schedule')">⏰ ตั้งกำหนดการส่ง</button>
+              <button class="btn btn-ghost btn-sm" onclick="switchPage('topics')">🗂️ ตั้งค่าซ่อน/เปิดรายเดือน</button>
             </div>
           </div>
           <div class="tbl-wrap" id="wgTableWrap"></div>
@@ -902,52 +832,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
   </div>
 </div>
 
-<!-- ==================== MODAL: REJECT / RETURN REPORT WITH REASON (ADMIN ONLY) ==================== -->
-<div class="ov" id="rejectModal">
-  <div class="modal" style="max-width:540px">
-    <div class="modal-h">
-      <h3>↩️ ตีกลับงาน / แจ้งให้อำเภอแก้ไขรายงาน</h3>
-      <button class="btn btn-ghost btn-xs" onclick="closeModal('rejectModal')">✕</button>
-    </div>
-    <div class="modal-b">
-      <form onsubmit="confirmRejectReportSubmit(event)">
-        <input type="hidden" id="rejMonth">
-        <input type="hidden" id="rejDistId">
-        <input type="hidden" id="rejRepId">
-        <div class="form-group">
-          <label>หน่วยงาน / อำเภอ</label>
-          <input type="text" id="rejDistName" class="inp" readonly>
-        </div>
-        <div class="form-group">
-          <label>หัวข้อรายงานที่ต้องการตีกลับ</label>
-          <textarea id="rejRepName" class="inp" rows="2" readonly></textarea>
-        </div>
-        <div class="form-group">
-          <label>เลือกเหตุผลการตีกลับด่วน (คลิกเพื่อใส่ข้อความอัตโนมัติ)</label>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-            <button type="button" class="btn btn-ghost btn-xs" onclick="setQuickRejectReason('ไฟล์แนบไม่ถูกต้อง หรือไม่สามารถเปิดอ่านไฟล์ได้ กรุณาอัปโหลดใหม่')">📄 ไฟล์เปิดไม่ได้/ไม่ถูกต้อง</button>
-            <button type="button" class="btn btn-ghost btn-xs" onclick="setQuickRejectReason('ข้อมูลในรายงานไม่ครบถ้วนตามแบบฟอร์มที่จังหวัดกำหนด')">📋 ข้อมูลไม่ครบถ้วน</button>
-            <button type="button" class="btn btn-ghost btn-xs" onclick="setQuickRejectReason('แนบไฟล์หรือลิงก์ผิดหัวข้อรายงาน / ผิดเดือน')">🔄 ส่งผิดหัวข้อ/ผิดเดือน</button>
-            <button type="button" class="btn btn-ghost btn-xs" onclick="setQuickRejectReason('ลิงก์ประชาสัมพันธ์ไม่สามารถเข้าถึงได้ (ตั้งค่าเป็นส่วนตัว)')">🔗 ลิงก์เปิดดูไม่ได้</button>
-          </div>
-          <label for="rejReasonInput" style="color:var(--danger)">ระบุเหตุผลที่ตีกลับ / รายละเอียดที่ต้องการให้อำเภอแก้ไข *</label>
-          <textarea id="rejReasonInput" class="inp" rows="3" placeholder="ระบุสาเหตุที่ตีกลับงาน เพื่อให้เจ้าหน้าที่อำเภอทราบและดำเนินการแก้ไข..." required></textarea>
-        </div>
-        <div class="form-group" style="background:var(--surface-2);padding:10px 14px;border-radius:12px;border:1px solid var(--line)">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-size:13px">
-            <input type="checkbox" id="rejSendLineChk" checked style="width:16px;height:16px">
-            <span>📲 ส่งแจ้งเตือนการตีกลับงานพร้อมเหตุผลเข้า LINE ของอำเภอนี้ทันที</span>
-          </label>
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-          <button type="button" class="btn btn-ghost" onclick="closeModal('rejectModal')">ยกเลิก</button>
-          <button type="submit" class="btn btn-danger">↩️ ยืนยันการตีกลับงาน (0 คะแนน)</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
 <!-- ==================== MODAL: ADD / EDIT REPORT TOPIC (ADMIN ONLY) ==================== -->
 <div class="ov" id="topicModal">
   <div class="modal">
@@ -970,10 +854,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         <div class="form-group">
           <label for="topicNameInput">ชื่อหัวข้อการรายงาน</label>
           <textarea id="topicNameInput" name="repName" class="inp" rows="2" placeholder="เช่น 6. รายงานผลการดำเนินงานโครงการพิเศษ..." required></textarea>
-        </div>
-        <div class="form-group">
-          <label for="topicDeadlineInput">⏰ กำหนดการส่งงานมาตรฐานของหัวข้อนี้</label>
-          <input type="text" id="topicDeadlineInput" class="inp" placeholder="เช่น ภายในวันที่ 25 ของทุกเดือน / ทุกวันศุกร์" value="ภายในวันที่ 25 ของทุกเดือน">
         </div>
         <div class="form-group" id="topicScopeBox">
           <label>กำหนดเดือนที่ต้องส่งรายงานหัวข้อนี้</label>
@@ -1001,9 +881,6 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="btn btn-ghost btn-xs" onclick="closeModal('submitModal')">✕</button>
     </div>
     <div class="modal-b">
-      <!-- กล่องแจ้งเตือนกรณีงานถูกตีกลับให้แก้ไข -->
-      <div id="subModalRejectAlert" class="rej-reason-box" style="display:none;margin-bottom:14px;font-size:13px;padding:10px 14px"></div>
-
       <form id="reportSubmitForm" onsubmit="confirmSubmitReport(event)">
         <input type="hidden" id="subMonth" name="ประจำเดือน">
         <input type="hidden" id="subDistId" name="รหัสอำเภอ">
@@ -1013,7 +890,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <input type="text" id="subDistName" name="อำเภอ" class="inp" readonly>
         </div>
         <div class="form-group">
-          <label>หัวข้อรายงาน <span id="subModalDeadlineBadge" class="pill pill-sky" style="margin-left:6px"></span></label>
+          <label>หัวข้อรายงาน</label>
           <textarea id="subRepName" name="หัวข้อรายงาน" class="inp" rows="2" readonly></textarea>
         </div>
 
@@ -1123,11 +1000,11 @@ const DEFAULT_WORKGROUPS = [
     name: '1. กลุ่มงานประสานและสนับสนุนการบริหารงานพัฒนาชุมชน',
     short: '1. กลุ่มงานประสานฯ',
     reports: [
-      { id: 'G1-R1', name: '1. รายงานวันลาข้าราชการ', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G1-R2', name: '2. ค่าเช่าบ้าน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G1-R3', name: '3. ค่าใช้จ่ายในการเดินทางไปราชการ', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G1-R4', name: '4. รายงานการประชุมสำนักงานพัฒนาชุมชนอำเภอประจำเดือน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G1-R5', name: '5. รายงานมาตรการประหยัดพลังงาน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' }
+      { id: 'G1-R1', name: '1. รายงานวันลาข้าราชการ' },
+      { id: 'G1-R2', name: '2. ค่าเช่าบ้าน' },
+      { id: 'G1-R3', name: '3. ค่าใช้จ่ายในการเดินทางไปราชการ' },
+      { id: 'G1-R4', name: '4. รายงานการประชุมสำนักงานพัฒนาชุมชนอำเภอประจำเดือน' },
+      { id: 'G1-R5', name: '5. รายงานมาตรการประหยัดพลังงาน' }
     ]
   },
   {
@@ -1135,15 +1012,15 @@ const DEFAULT_WORKGROUPS = [
     name: '2. กลุ่มงานส่งเสริมการพัฒนาชุมชน',
     short: '2. กลุ่มงานส่งเสริมฯ',
     reports: [
-      { id: 'G2-R1', name: '1. รายงานยอดจำหน่ายสินค้า OTOP (ระบบ online)', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R2', name: '2. รายงานตลาดนัดคนไทยยิ้มได้ (ในระบบ online)', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R3', name: '3. รายงานผลการขับเคลื่อนกิจกรรมตามภารกิจองค์กรสตรี', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R4', name: '4. รายงานผลการดำเนินงานกิจกรรมผ้าไทยใส่ให้สนุก ตามพระราชดำริฯ พร้อมส่งลิ้งค์การเผยแพร่ประชาสัมพันธ์ผ่านสื่อสังคม online (ผ่านทางไลน์กลุ่ม : รง.ผ้าไทย อน.)', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R5', name: '5. รายงานโครงการวัด ประชารัฐ สร้างสุข เฉลิมพระเกียรติ ข่าวประชาสัมพันธ์ และกิจกรรมจิตอาสา', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R6', name: '6. รายงานการประชาสัมพันธ์ชุมชนท่องเที่ยวของจังหวัดอุทัยธานี (ผ่านช่องทางไลน์กลุ่ม : จนท.นวัตวิถี อน.)', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R7', name: '7. รายงานผลการดำเนินกิจกรรมตัวชี้วัด OTOP PLUS', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R8', name: '8. รายงานปฏิบัติการ "Quick Win" 90 วัน ปลูกผักสวนครัวเพื่อสร้างความมั่นคงทางอาหาร', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G2-R9', name: '9. รายงานผู้ผลิต ผู้ประกอบการ OTOP ที่เข้าร่วมโครงการไทยช่วยไทย พลัส', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' }
+      { id: 'G2-R1', name: '1. รายงานยอดจำหน่ายสินค้า OTOP (ระบบ online)' },
+      { id: 'G2-R2', name: '2. รายงานตลาดนัดคนไทยยิ้มได้ (ในระบบ online)' },
+      { id: 'G2-R3', name: '3. รายงานผลการขับเคลื่อนกิจกรรมตามภารกิจองค์กรสตรี' },
+      { id: 'G2-R4', name: '4. รายงานผลการดำเนินงานกิจกรรมผ้าไทยใส่ให้สนุก ตามพระราชดำริฯ พร้อมส่งลิ้งค์การเผยแพร่ประชาสัมพันธ์ผ่านสื่อสังคม online (ผ่านทางไลน์กลุ่ม : รง.ผ้าไทย อน.)' },
+      { id: 'G2-R5', name: '5. รายงานโครงการวัด ประชารัฐ สร้างสุข เฉลิมพระเกียรติ ข่าวประชาสัมพันธ์ และกิจกรรมจิตอาสา' },
+      { id: 'G2-R6', name: '6. รายงานการประชาสัมพันธ์ชุมชนท่องเที่ยวของจังหวัดอุทัยธานี (ผ่านช่องทางไลน์กลุ่ม : จนท.นวัตวิถี อน.)' },
+      { id: 'G2-R7', name: '7. รายงานผลการดำเนินกิจกรรมตัวชี้วัด OTOP PLUS' },
+      { id: 'G2-R8', name: '8. รายงานปฏิบัติการ "Quick Win" 90 วัน ปลูกผักสวนครัวเพื่อสร้างความมั่นคงทางอาหาร' },
+      { id: 'G2-R9', name: '9. รายงานผู้ผลิต ผู้ประกอบการ OTOP ที่เข้าร่วมโครงการไทยช่วยไทย พลัส' }
     ]
   },
   {
@@ -1151,13 +1028,13 @@ const DEFAULT_WORKGROUPS = [
     name: '3. กลุ่มงานสารสนเทศการพัฒนาชุมชน',
     short: '3. กลุ่มงานสารสนเทศฯ',
     reports: [
-      { id: 'G3-R1', name: '1. รายงานข่าวประชาสัมพันธ์งานพัฒนาชุมชน 5 ช่องทาง', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G3-R2', name: '2. รายงานการใช้ประโยชน์ Click ชุมชน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G3-R3', name: '3. รายงาน CDD AI', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G3-R4', name: '4. รายงานผลการดำเนินงานกองทุนแม่ของแผ่นดิน 128 สืบสานปณิธานกองทุนแม่ของแผ่นดิน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G3-R5', name: '5. รายงานผลการดำเนินงานกิจกรรมขับเคลื่อนพัฒนาครัวเรือนยากจน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G3-R6', name: '6. รายงานการรักษาสิ่งแวดล้อมในที่ทำงาน 5 ส.', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G3-R7', name: '7. รายงานผลประเด็นเน้นย้ำของอธิบดีกรมการพัฒนาชุมชน 5+1 เรื่อง การส่งเสริมการใช้ประโยชน์ข้อมูลความจำเป็นพื้นฐาน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' }
+      { id: 'G3-R1', name: '1. รายงานข่าวประชาสัมพันธ์งานพัฒนาชุมชน 5 ช่องทาง' },
+      { id: 'G3-R2', name: '2. รายงานการใช้ประโยชน์ Click ชุมชน' },
+      { id: 'G3-R3', name: '3. รายงาน CDD AI' },
+      { id: 'G3-R4', name: '4. รายงานผลการดำเนินงานกองทุนแม่ของแผ่นดิน 128 สืบสานปณิธานกองทุนแม่ของแผ่นดิน' },
+      { id: 'G3-R5', name: '5. รายงานผลการดำเนินงานกิจกรรมขับเคลื่อนพัฒนาครัวเรือนยากจน' },
+      { id: 'G3-R6', name: '6. รายงานการรักษาสิ่งแวดล้อมในที่ทำงาน 5 ส.' },
+      { id: 'G3-R7', name: '7. รายงานผลประเด็นเน้นย้ำของอธิบดีกรมการพัฒนาชุมชน 5+1 เรื่อง การส่งเสริมการใช้ประโยชน์ข้อมูลความจำเป็นพื้นฐาน' }
     ]
   },
   {
@@ -1165,31 +1042,28 @@ const DEFAULT_WORKGROUPS = [
     name: '4. กลุ่มงานยุทธศาสตร์การพัฒนาชุมชน',
     short: '4. กลุ่มงานยุทธศาสตร์ฯ',
     reports: [
-      { id: 'G4-R1', name: '1. รายงานผลการบริหารงบประมาณและการเบิกจ่ายประจำเดือน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G4-R2', name: '2. รายงานผลการดำเนินงานตามแผนปฏิบัติราชการประจำปี', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G4-R3', name: '3. รายงานผลการติดตามและประเมินผลโครงการพัฒนาชุมชน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' },
-      { id: 'G4-R4', name: '4. รายงานสรุปผลการขับเคลื่อนงานยุทธศาสตร์กรมการพัฒนาชุมชน', deadline: 'ภายในวันที่ 25 ของเดือน', priority: 'ปกติ' }
+      { id: 'G4-R1', name: '1. รายงานผลการบริหารงบประมาณและการเบิกจ่ายประจำเดือน' },
+      { id: 'G4-R2', name: '2. รายงานผลการดำเนินงานตามแผนปฏิบัติราชการประจำปี' },
+      { id: 'G4-R3', name: '3. รายงานผลการติดตามและประเมินผลโครงการพัฒนาชุมชน' },
+      { id: 'G4-R4', name: '4. รายงานสรุปผลการขับเคลื่อนงานยุทธศาสตร์กรมการพัฒนาชุมชน' }
     ]
   }
 ];
 
-const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V17';
-const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V17';
-const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V17';
-const ACCOUNTS_CFG_KEY = 'CDD_UTHAI_ACCOUNTS_CFG_V17';
-const SCHEDULES_CFG_KEY = 'CDD_UTHAI_SCHEDULES_CFG_V17';
-const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V17';
-const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V17';
+const STORAGE_KEY = 'CDD_UTHAI_REPORT_DB_V16';
+const WORKGROUPS_CFG_KEY = 'CDD_UTHAI_WORKGROUPS_CFG_V16';
+const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V16';
+const ACCOUNTS_CFG_KEY = 'CDD_UTHAI_ACCOUNTS_CFG_V16';
+const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V16';
+const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V16';
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
-let schedulesByMonth = {}; // { 'มกราคม': { closeDate: '', bannerNote: '', items: { 'G1-R1': { dueDate: '', note: '' } } } }
 let currentUser = null;
 let currentMonth = MONTHS[new Date().getMonth()];
 let currentPage = 'overview';
 let selectedApprovalGroup = 'ALL';
 let selectedTopicGroup = 'ALL';
-let selectedScheduleGroup = 'ALL';
 let selectedLineDistrict = 'ALL';
 let showPasswordsPlain = false;
 let db = {};
@@ -1273,8 +1147,7 @@ function createEmptyRecord() {
     driveDownloadUrl: '',
     sender: '',
     submittedAt: '',
-    note: '',
-    rejectReason: ''
+    note: ''
   };
 }
 
@@ -1298,18 +1171,12 @@ function ensureDBStructure() {
   MONTHS.forEach(m => {
     if (!db[m]) db[m] = {};
     if (!Array.isArray(hiddenReportsByMonth[m])) hiddenReportsByMonth[m] = [];
-    if (!schedulesByMonth[m]) schedulesByMonth[m] = { closeDate: '', bannerNote: '', items: {} };
-    if (!schedulesByMonth[m].items) schedulesByMonth[m].items = {};
     DISTRICTS.forEach(d => {
       if (!db[m][d.id]) db[m][d.id] = {};
       WORKGROUPS.forEach(g => {
         g.reports.forEach(r => {
-          if (!r.deadline) r.deadline = 'ภายในวันที่ 25 ของเดือน';
-          if (!r.priority) r.priority = 'ปกติ';
           if (!db[m][d.id][r.id]) {
             db[m][d.id][r.id] = createEmptyRecord();
-          } else if (typeof db[m][d.id][r.id].rejectReason === 'undefined') {
-            db[m][d.id][r.id].rejectReason = '';
           }
         });
       });
@@ -1349,7 +1216,7 @@ function toggleQuickTokenVisibility() {
 
 function loadState() {
   try {
-    const accRaw = localStorage.getItem(ACCOUNTS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_ACCOUNTS_CFG_V16');
+    const accRaw = localStorage.getItem(ACCOUNTS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_ACCOUNTS_CFG_V15');
     if (accRaw) {
       ACCOUNTS = { ...JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS)), ...JSON.parse(accRaw) };
     }
@@ -1357,25 +1224,19 @@ function loadState() {
     ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
   }
   try {
-    const wgRaw = localStorage.getItem(WORKGROUPS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_WORKGROUPS_CFG_V16');
+    const wgRaw = localStorage.getItem(WORKGROUPS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_WORKGROUPS_CFG_V15');
     WORKGROUPS = wgRaw ? JSON.parse(wgRaw) : JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
   } catch (e) {
     WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
   }
   try {
-    const hidRaw = localStorage.getItem(HIDDEN_REPORTS_KEY) || localStorage.getItem('CDD_UTHAI_HIDDEN_REPORTS_V16');
+    const hidRaw = localStorage.getItem(HIDDEN_REPORTS_KEY) || localStorage.getItem('CDD_UTHAI_HIDDEN_REPORTS_V15');
     hiddenReportsByMonth = hidRaw ? JSON.parse(hidRaw) : {};
   } catch (e) {
     hiddenReportsByMonth = {};
   }
   try {
-    const schRaw = localStorage.getItem(SCHEDULES_CFG_KEY);
-    schedulesByMonth = schRaw ? JSON.parse(schRaw) : {};
-  } catch (e) {
-    schedulesByMonth = {};
-  }
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('CDD_UTHAI_REPORT_DB_V16');
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('CDD_UTHAI_REPORT_DB_V15');
     db = raw ? JSON.parse(raw) : createEmptyDB();
   } catch (e) {
     db = createEmptyDB();
@@ -1383,14 +1244,14 @@ function loadState() {
   ensureDBStructure();
 
   try {
-    const lr = localStorage.getItem(LINE_REC_KEY) || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V16') || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V15');
+    const lr = localStorage.getItem(LINE_REC_KEY) || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V15') || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V14');
     lineRecipients = lr ? JSON.parse(lr) : [];
     lineRecipients.forEach(r => checkedLineRecipientIds.add(String(r.id)));
   } catch (e) {
     lineRecipients = [];
   }
   try {
-    const gc = localStorage.getItem(GAS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_GAS_CFG_V16') || localStorage.getItem('CDD_UTHAI_GAS_CFG_V15');
+    const gc = localStorage.getItem(GAS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_GAS_CFG_V15') || localStorage.getItem('CDD_UTHAI_GAS_CFG_V14');
     if (gc) {
       const parsed = JSON.parse(gc);
       const cleanUrl = (!parsed.url || parsed.url.endsWith('/dev')) ? DEFAULT_GAS_WEB_APP_URL : parsed.url;
@@ -1419,7 +1280,6 @@ function saveWorkgroupsAndVisibility(syncToCloud = true) {
   lastLocalConfigSavedAt = Date.now();
   localStorage.setItem(WORKGROUPS_CFG_KEY, JSON.stringify(WORKGROUPS));
   localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
-  localStorage.setItem(SCHEDULES_CFG_KEY, JSON.stringify(schedulesByMonth));
   localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
   localStorage.setItem(ACCOUNTS_CFG_KEY, JSON.stringify(ACCOUNTS));
   localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
@@ -1432,13 +1292,6 @@ function saveWorkgroupsAndVisibility(syncToCloud = true) {
 
 function isReportHidden(month, repId) {
   return Array.isArray(hiddenReportsByMonth[month]) && hiddenReportsByMonth[month].includes(repId);
-}
-
-function getReportScheduleInfo(month, repObj) {
-  const mSch = schedulesByMonth[month]?.items?.[repObj.id];
-  const dlText = (mSch && mSch.dueDate) ? `กำหนดส่ง ${mSch.dueDate}` : (repObj.deadline || 'ภายในวันที่ 25 ของเดือน');
-  const prio = (mSch && mSch.priority) ? mSch.priority : (repObj.priority || 'ปกติ');
-  return { deadlineText: dlText, priority: prio };
 }
 
 function getAllReportsFlat(month = null, includeHidden = true) {
@@ -1580,7 +1433,6 @@ async function syncAllConfigToGas() {
   const enrichedHidden = {
     ...hiddenReportsByMonth,
     _meta_accounts: ACCOUNTS,
-    _meta_schedules: schedulesByMonth,
     _meta_lineRecipients: lineRecipients,
     _meta_gasConfig: {
       token: gasConfig.token || '',
@@ -1621,12 +1473,6 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
         localStorage.setItem(ACCOUNTS_CFG_KEY, JSON.stringify(ACCOUNTS));
       }
 
-      const cloudSchedules = res.schedules || hidObj._meta_schedules;
-      if (cloudSchedules && typeof cloudSchedules === 'object') {
-        schedulesByMonth = cloudSchedules;
-        localStorage.setItem(SCHEDULES_CFG_KEY, JSON.stringify(schedulesByMonth));
-      }
-
       if (hidObj._meta_gasConfig && typeof hidObj._meta_gasConfig === 'object') {
         if (hidObj._meta_gasConfig.token && !gasConfig.token) {
           gasConfig.token = hidObj._meta_gasConfig.token;
@@ -1649,11 +1495,13 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
         localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
       }
 
+      // ผสานรายการไอดีไลน์จาก Cloud (รวมไอดีที่ Webhook ดูดเข้ามาใหม่ด้วย)
       const cloudLineList = Array.isArray(res.lineRecipients) && res.lineRecipients.length > 0
         ? res.lineRecipients
         : (Array.isArray(hidObj._meta_lineRecipients) ? hidObj._meta_lineRecipients : null);
 
       if (Array.isArray(cloudLineList) && cloudLineList.length > 0) {
+        // รวมไอดีจาก Cloud กับไอดีในเครื่องโดยไม่ให้ซ้ำกัน
         const merged = [...cloudLineList];
         lineRecipients.forEach(localItem => {
           if (!merged.some(c => c.lineId === localItem.lineId && c.distId === localItem.distId)) {
@@ -1685,16 +1533,6 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
       const dId = r.distId;
       const rId = r.repId;
       if (db[m] && db[m][dId] && db[m][dId][rId]) {
-        // แยกเหตุผลการตีกลับในกรณีที่บันทึกพ่วงใน note หรือคอลัมน์ rejectReason
-        let extractedRej = r.rejectReason || '';
-        let cleanNote = r.note || '';
-        if (!extractedRej && cleanNote.startsWith('[ตีกลับ: ')) {
-          const endIdx = cleanNote.indexOf(']');
-          if (endIdx > 0) {
-            extractedRej = cleanNote.slice(9, endIdx);
-            cleanNote = cleanNote.slice(endIdx + 1).trim();
-          }
-        }
         db[m][dId][rId] = {
           status: r.status || 'ยังไม่ส่งรายงาน',
           score: Number(r.score || 0),
@@ -1706,8 +1544,7 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
           link: r.link || r.driveViewUrl || '',
           sender: r.sender || '',
           submittedAt: r.updatedAt || '',
-          note: cleanNote,
-          rejectReason: extractedRej
+          note: r.note || ''
         };
       }
     });
@@ -1720,7 +1557,7 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
       renderAll();
     }
     if (showNotification) {
-      showToast(`☁️ ซิงค์ข้อมูลสำเร็จ (รายงาน ${res.records.length} รายการ)`);
+      showToast(`☁️ ซิงค์ข้อมูลสำเร็จ (รายงาน ${res.records.length} รายการ • ไอดีไลน์ ${lineRecipients.length} รายการ)`);
     }
   } catch (err) {
     if (!silentBackground) {
@@ -1734,7 +1571,7 @@ function startAutoSyncTimer() {
   autoSyncIntervalId = setInterval(() => {
     const anyModalOpen = document.querySelector('.ov.on');
     const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
-    const isConfigPage = ['passwords', 'line', 'topics', 'schedule', 'settings'].includes(currentPage);
+    const isConfigPage = ['passwords', 'line', 'topics', 'settings'].includes(currentPage);
     if (currentUser && !anyModalOpen && !(isConfigPage && isTypingInForm)) {
       pullStateFromGas(false, true);
     }
@@ -1841,10 +1678,9 @@ function applyRolePermissions() {
   document.getElementById('uNameTxt').textContent = currentUser.name;
 
   const adminElements = [
-    'btnTopSchedule', 'btnTopTopics', 'btnTopPasswords', 'btnTopExcel', 'btnTopReset',
-    'navSchedule', 'navTopics', 'navPasswords', 'navExcel', 'navDataLabel', 'navLine',
-    'gasSettingsCard', 'adminBulkActions', 'wgAdminControls', 'btnOverviewManageTopics',
-    'btnEditBannerSchedule'
+    'btnTopTopics', 'btnTopPasswords', 'btnTopExcel', 'btnTopReset',
+    'navTopics', 'navPasswords', 'navExcel', 'navDataLabel', 'navLine',
+    'gasSettingsCard', 'adminBulkActions', 'wgAdminControls', 'btnOverviewManageTopics'
   ];
   adminElements.forEach(id => {
     const el = document.getElementById(id);
@@ -1852,260 +1688,7 @@ function applyRolePermissions() {
   });
 }
 
-/* ================== 7. SUBMISSION SCHEDULE MANAGEMENT (ADMIN) ================== */
-function renderGlobalScheduleBanner() {
-  ensureDBStructure();
-  const mSch = schedulesByMonth[currentMonth] || { closeDate: '', bannerNote: '' };
-  const bannerTxtEl = document.getElementById('globalScheduleText');
-  if (!bannerTxtEl) return;
-
-  let text = mSch.bannerNote || 'ส่งรายงานตามกำหนดของแต่ละหัวข้อ (เกณฑ์การประเมิน 1 รายงาน = 2 คะแนน)';
-  if (mSch.closeDate) {
-    const dStr = new Date(mSch.closeDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
-    text = `📌 ปิดรับรายงานประจำเดือน${currentMonth} ภายในวันที่ ${dStr} • ${text}`;
-  }
-  bannerTxtEl.textContent = text;
-}
-
-function updateSchedulePreviewBanner() {
-  if (!isAdmin()) return;
-  ensureDBStructure();
-  schedulesByMonth[currentMonth].closeDate = document.getElementById('schMonthCloseDate')?.value || '';
-  schedulesByMonth[currentMonth].bannerNote = document.getElementById('schMonthBannerNote')?.value.trim() || '';
-  renderGlobalScheduleBanner();
-}
-
-function renderScheduleGroupTabs() {
-  const tabs = [
-    { id: 'ALL', label: 'ทั้งหมด (4 กลุ่มงาน)' },
-    ...WORKGROUPS.map(g => ({ id: g.id, label: `${g.short} (${g.reports.length})` }))
-  ];
-  const wrap = document.getElementById('scheduleGroupTabs');
-  if (!wrap) return;
-  wrap.innerHTML = tabs.map(t =>
-    `<button class="stab ${selectedScheduleGroup === t.id ? 'active' : ''}" onclick="selectScheduleGroup('${t.id}')">${t.label}</button>`
-  ).join('');
-}
-
-function selectScheduleGroup(gId) {
-  selectedScheduleGroup = gId;
-  renderScheduleManagerPage();
-}
-
-function renderScheduleManagerPage() {
-  if (!isAdmin()) return;
-  ensureDBStructure();
-  renderScheduleGroupTabs();
-
-  const mSch = schedulesByMonth[currentMonth] || { closeDate: '', bannerNote: '', items: {} };
-  const closeInp = document.getElementById('schMonthCloseDate');
-  const noteInp = document.getElementById('schMonthBannerNote');
-  if (closeInp) closeInp.value = mSch.closeDate || '';
-  if (noteInp) noteInp.value = mSch.bannerNote || '';
-
-  const groups = selectedScheduleGroup === 'ALL' ? WORKGROUPS : WORKGROUPS.filter(g => g.id === selectedScheduleGroup);
-  let rows = '';
-
-  groups.forEach(g => {
-    g.reports.forEach(r => {
-      const isHid = isReportHidden(currentMonth, r.id);
-      const itemSch = mSch.items?.[r.id] || {};
-      const curPriority = itemSch.priority || r.priority || 'ปกติ';
-      const specDate = itemSch.dueDate || '';
-
-      rows += `<tr class="${isHid ? 'row-hidden-month' : ''}">
-        <td><span class="pill pill-none">${g.short}</span></td>
-        <td>
-          <b>${r.name}</b>
-          ${isHid ? `<span class="pill pill-rej" style="margin-left:5px">🙈 งดส่งเดือน${currentMonth}</span>` : ''}
-        </td>
-        <td>
-          <input type="text" class="inp" id="schDef_${r.id}" value="${r.deadline || 'ภายในวันที่ 25 ของเดือน'}" placeholder="เช่น ภายในวันที่ 25 ของเดือน" style="padding:7px 10px;font-size:13px">
-        </td>
-        <td>
-          <input type="text" class="inp" id="schMonthDate_${r.id}" value="${specDate}" placeholder="ระบุวันที่เฉพาะเดือน${currentMonth} (ถ้ามี)" style="padding:7px 10px;font-size:13px">
-        </td>
-        <td>
-          <select class="inp" id="schPrio_${r.id}" style="padding:7px 10px;font-size:13px">
-            <option value="ปกติ" ${curPriority === 'ปกติ' ? 'selected' : ''}>🟢 ปกติ</option>
-            <option value="เน้นย้ำ" ${curPriority === 'เน้นย้ำ' ? 'selected' : ''}>📌 เน้นย้ำ</option>
-            <option value="ด่วนที่สุด" ${curPriority === 'ด่วนที่สุด' ? 'selected' : ''}>🔥 ด่วนที่สุด</option>
-          </select>
-        </td>
-        <td class="center">
-          <button type="button" class="btn btn-primary btn-xs" onclick="saveSingleReportSchedule('${g.id}','${r.id}')">💾 บันทึก</button>
-        </td>
-      </tr>`;
-    });
-  });
-
-  document.getElementById('scheduleManagerTableWrap').innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>กลุ่มงาน</th>
-          <th>หัวข้อการรายงาน</th>
-          <th>กำหนดส่งมาตรฐาน (ทุกเดือน)</th>
-          <th>วันครบกำหนดเฉพาะเดือน${currentMonth}</th>
-          <th>ระดับความเร่งด่วน</th>
-          <th class="center">บันทึก</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-}
-
-function saveSingleReportSchedule(groupId, repId) {
-  if (!isAdmin()) return;
-  ensureDBStructure();
-  const grp = WORKGROUPS.find(g => g.id === groupId);
-  const rep = grp?.reports.find(r => r.id === repId);
-  if (!rep) return;
-
-  const defVal = document.getElementById('schDef_' + repId)?.value.trim() || 'ภายในวันที่ 25 ของเดือน';
-  const mDateVal = document.getElementById('schMonthDate_' + repId)?.value.trim() || '';
-  const prioVal = document.getElementById('schPrio_' + repId)?.value || 'ปกติ';
-
-  rep.deadline = defVal;
-  rep.priority = prioVal;
-  schedulesByMonth[currentMonth].items[repId] = {
-    dueDate: mDateVal,
-    priority: prioVal
-  };
-
-  saveWorkgroupsAndVisibility(true);
-  renderAll();
-  showToast(`✅ บันทึกกำหนดการส่งงานของ "${rep.name}" เรียบร้อยแล้ว`);
-}
-
-function saveAllSchedulesFromPage() {
-  if (!isAdmin()) return;
-  ensureDBStructure();
-  schedulesByMonth[currentMonth].closeDate = document.getElementById('schMonthCloseDate')?.value || '';
-  schedulesByMonth[currentMonth].bannerNote = document.getElementById('schMonthBannerNote')?.value.trim() || '';
-
-  WORKGROUPS.forEach(g => {
-    g.reports.forEach(r => {
-      const defEl = document.getElementById('schDef_' + r.id);
-      const mDateEl = document.getElementById('schMonthDate_' + r.id);
-      const prioEl = document.getElementById('schPrio_' + r.id);
-      if (defEl) r.deadline = defEl.value.trim() || 'ภายในวันที่ 25 ของเดือน';
-      if (prioEl) r.priority = prioEl.value;
-      if (mDateEl || prioEl) {
-        schedulesByMonth[currentMonth].items[r.id] = {
-          dueDate: mDateEl ? mDateEl.value.trim() : (schedulesByMonth[currentMonth].items[r.id]?.dueDate || ''),
-          priority: prioEl ? prioEl.value : (r.priority || 'ปกติ')
-        };
-      }
-    });
-  });
-
-  saveWorkgroupsAndVisibility(true);
-  renderAll();
-  showToast(`💾 บันทึกกำหนดการส่งงานประจำเดือน${currentMonth} ลง Cloud เรียบร้อยแล้ว!`);
-}
-
-function sendScheduleLineAlert(forceManualShare = false) {
-  if (!isAdmin()) return;
-  ensureDBStructure();
-  const mSch = schedulesByMonth[currentMonth] || { closeDate: '', bannerNote: '', items: {} };
-  const activeReps = getAllReportsFlat(currentMonth, false);
-  const targets = getResolvedTargetRecipients();
-
-  let lines = [
-    `⏰ [CDD Uthai Report - แจ้งกำหนดการส่งรายงานประจำเดือน${currentMonth}]`,
-    `สพจ.อุทัยธานี (จำนวนที่เปิดส่งในเดือนนี้ ${activeReps.length} หัวข้อ)`
-  ];
-  if (mSch.closeDate) {
-    const dStr = new Date(mSch.closeDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
-    lines.push(`📌 ปิดรับรายงานภาพรวม: ภายในวันที่ ${dStr}`);
-  }
-  if (mSch.bannerNote) {
-    lines.push(`📢 หมายเหตุ: ${mSch.bannerNote}`);
-  }
-
-  WORKGROUPS.forEach(g => {
-    const gReps = getGroupReportsForMonth(g.id, currentMonth, false);
-    if (gReps.length === 0) return;
-    lines.push(`\n📂 ${g.short} (${gReps.length} งาน):`);
-    gReps.forEach(r => {
-      const info = getReportScheduleInfo(currentMonth, r);
-      const prioTag = info.priority === 'ด่วนที่สุด' ? '🔥[ด่วนที่สุด] ' : (info.priority === 'เน้นย้ำ' ? '📌[เน้นย้ำ] ' : '');
-      lines.push(`• ${prioTag}${r.name} (${info.deadlineText})`);
-    });
-  });
-
-  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare, false);
-}
-
-/* ================== 8. REJECT / RETURN REPORT WORKFLOW (ADMIN ONLY) ================== */
-function openRejectModal(month, distId, repId) {
-  if (!isAdmin()) {
-    showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถตีกลับงานได้');
-    return;
-  }
-  const dist = DISTRICTS.find(d => d.id === distId);
-  const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
-  const rec = db[month]?.[distId]?.[repId] || createEmptyRecord();
-
-  document.getElementById('rejMonth').value = month;
-  document.getElementById('rejDistId').value = distId;
-  document.getElementById('rejRepId').value = repId;
-  document.getElementById('rejDistName').value = `${dist.name} • ประจำเดือน${month}`;
-  document.getElementById('rejRepName').value = rep.name;
-  document.getElementById('rejReasonInput').value = rec.rejectReason || '';
-  document.getElementById('rejSendLineChk').checked = true;
-
-  document.getElementById('rejectModal').classList.add('on');
-  setTimeout(() => document.getElementById('rejReasonInput').focus(), 80);
-}
-
-function setQuickRejectReason(text) {
-  const inp = document.getElementById('rejReasonInput');
-  if (!inp) return;
-  inp.value = text;
-  inp.focus();
-}
-
-async function confirmRejectReportSubmit(e) {
-  e.preventDefault();
-  if (!isAdmin()) return;
-
-  const m = document.getElementById('rejMonth').value;
-  const dId = document.getElementById('rejDistId').value;
-  const rId = document.getElementById('rejRepId').value;
-  const reason = document.getElementById('rejReasonInput').value.trim();
-  const sendLineNow = document.getElementById('rejSendLineChk').checked;
-
-  if (!reason) {
-    showToast('⚠️ กรุณาระบุเหตุผลในการตีกลับงาน');
-    return;
-  }
-
-  const rec = db[m][dId][rId];
-  rec.status = 'แก้ไข';
-  rec.score = 0;
-  rec.rejectReason = reason;
-  rec.submittedAt = new Date().toLocaleString('th-TH');
-
-  saveDB();
-  closeModal('rejectModal');
-  renderAll();
-
-  await syncRecordToGas('rejectReport', m, dId, rId);
-  showToast(`↩️ ตีกลับงานของ ${getDistrictLabel(dId)} พร้อมบันทึกเหตุผลเรียบร้อยแล้ว`);
-
-  if (sendLineNow) {
-    const dist = DISTRICTS.find(d => d.id === dId);
-    const rep = getAllReportsFlat(null, true).find(r => r.id === rId);
-    const msg = `⚠️ [CDD Uthai Report - แจ้งตีกลับงานเพื่อแก้ไข]\nประจำเดือน: ${m}\nหน่วยงาน: ${dist.name}\nกลุ่มงาน: ${rep.groupShort}\nหัวข้อรายงาน: ${rep.name}\nสถานะ: ⚠️ ตีกลับ/แจ้งแก้ไข (0 คะแนน)\n📌 เหตุผลที่ตีกลับ: "${reason}"\n\nขอให้เจ้าหน้าที่ดำเนินการแก้ไขและส่งรายงานใหม่อีกครั้งครับ`;
-    const targets = getResolvedTargetRecipients(dId);
-    await dispatchLineMessageToTargets(msg, targets, false, false);
-  }
-}
-
-/* ================== 9. ADMIN PASSWORD MANAGEMENT FOR DISTRICTS ================== */
+/* ================== 7. ADMIN PASSWORD MANAGEMENT FOR DISTRICTS ================== */
 function renderPasswordManagerPage() {
   if (!isAdmin()) return;
   const wrap = document.getElementById('passwordManagerTableWrap');
@@ -2223,7 +1806,7 @@ function resetPasswordsToDefault() {
   );
 }
 
-/* ================== 10. NAVIGATION & RENDERING ================== */
+/* ================== 8. NAVIGATION & RENDERING ================== */
 function initMonthBar() {
   const bar = document.getElementById('monthBar');
   bar.innerHTML = MONTHS.map(m =>
@@ -2242,7 +1825,7 @@ function selectMonth(m) {
 }
 
 function switchPage(pageId) {
-  if (['excel', 'line', 'topics', 'passwords', 'schedule'].includes(pageId) && !isAdmin()) {
+  if (['excel', 'line', 'topics', 'passwords'].includes(pageId) && !isAdmin()) {
     showToast('⛔ เมนูนี้สำหรับแอดมินระดับจังหวัดเท่านั้น');
     return;
   }
@@ -2268,7 +1851,6 @@ function getVisibleDistricts() {
 
 function renderAll() {
   if (!currentUser) return;
-  renderGlobalScheduleBanner();
   updateSidebarGroupCounts();
   updatePendingBadge();
   renderOverview();
@@ -2278,7 +1860,6 @@ function renderAll() {
     renderLinePage();
     renderTopicsManagerPage();
     renderPasswordManagerPage();
-    renderScheduleManagerPage();
   }
   if (['G1', 'G2', 'G3', 'G4'].includes(currentPage)) renderWorkgroupPage(currentPage);
 }
@@ -2297,7 +1878,7 @@ function updatePendingBadge() {
   document.getElementById('badgePend').textContent = pend;
 }
 
-/* ================== 11. OVERVIEW, CHARTS & ANNUAL DASHBOARD ================== */
+/* ================== 9. OVERVIEW, CHARTS & ANNUAL DASHBOARD ================== */
 function renderOverview() {
   const dists = getVisibleDistricts();
   const activeReports = getAllReportsFlat(currentMonth, false);
@@ -2342,10 +1923,10 @@ function renderOverview() {
       <div class="kpi-bar"><i style="width:${pct}%;background:var(--ok)"></i></div>
     </div>
     <div class="kpi">
-      <div class="kpi-lb">รอตรวจ / ตีกลับแก้ไข</div>
-      <div class="kpi-val" style="color:var(--warn)">${pendingCnt} <small style="font-size:13px">รอตรวจ</small> ${rejectCnt > 0 ? `<span style="color:var(--danger);font-size:16px">(${rejectCnt} ตีกลับ)</span>` : ''}</div>
-      <div class="kpi-sub">รอการตรวจอนุมัติหรือแก้ไข</div>
-      <div class="kpi-bar"><i style="width:${totalSlots ? ((pendingCnt+rejectCnt)/totalSlots)*100 : 0}%;background:var(--warn)"></i></div>
+      <div class="kpi-lb">ส่งแล้ว (รอแอดมินตรวจ)</div>
+      <div class="kpi-val" style="color:var(--warn)">${pendingCnt} <small style="font-size:13px">งาน</small></div>
+      <div class="kpi-sub">รอการกดอนุมัติจากจังหวัด</div>
+      <div class="kpi-bar"><i style="width:${totalSlots ? (pendingCnt/totalSlots)*100 : 0}%;background:var(--warn)"></i></div>
     </div>
     <div class="kpi">
       <div class="kpi-lb">ยังไม่ส่งรายงาน (เดือน${currentMonth})</div>
@@ -2359,14 +1940,13 @@ function renderOverview() {
   let barsHtml = '';
 
   dists.forEach((d, idx) => {
-    let dApp = 0, dPend = 0, dRej = 0, dScore = 0;
+    let dApp = 0, dPend = 0, dScore = 0;
     activeReports.forEach(r => {
       const rec = db[currentMonth]?.[d.id]?.[r.id];
       if (!rec) return;
       dScore += Number(rec.score || 0);
       if (rec.status === 'อนุมัติแล้ว') dApp++;
       else if (rec.status === 'รอตรวจสอบ') dPend++;
-      else if (rec.status === 'แก้ไข') dRej++;
     });
     const dPct = activeReports.length ? ((dApp / activeReports.length) * 100).toFixed(0) : '0';
     const barW = maxDScore ? Math.round((dScore / maxDScore) * 100) : 0;
@@ -2375,7 +1955,7 @@ function renderOverview() {
       <div style="margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
           <b>${d.name}</b>
-          <span><b>${dScore}</b> / ${maxDScore} คะแนน (${dApp}/${activeReports.length} งาน${dRej > 0 ? ` • ตีกลับ ${dRej}` : ''})</span>
+          <span><b>${dScore}</b> / ${maxDScore} คะแนน (${dApp}/${activeReports.length} งาน)</span>
         </div>
         <div style="height:10px;background:var(--surface-3);border-radius:99px;overflow:hidden">
           <div style="width:${barW}%;height:100%;background:linear-gradient(90deg,var(--blue-500),var(--acc-500));border-radius:99px;transition:width .4s"></div>
@@ -2387,7 +1967,7 @@ function renderOverview() {
       <td>${idx + 1}</td>
       <td><b>${d.name}</b></td>
       <td class="center"><span class="pill pill-ok">${dApp} / ${activeReports.length}</span></td>
-      <td class="center"><span class="pill pill-pend">${dPend}</span> ${dRej > 0 ? `<span class="pill pill-rej">ตีกลับ ${dRej}</span>` : ''}</td>
+      <td class="center"><span class="pill pill-pend">${dPend}</span></td>
       <td class="num"><b>${dScore}</b> / ${maxDScore}</td>
       <td class="num">${dPct}%</td>
     </tr>`;
@@ -2396,29 +1976,30 @@ function renderOverview() {
   document.getElementById('chartDistrictBar').innerHTML = barsHtml;
   document.getElementById('overviewDistrictTable').innerHTML = `
     <table>
-      <thead><tr><th>#</th><th>สำนักงานพัฒนาชุมชนอำเภอ</th><th class="center">อนุมัติแล้ว</th><th class="center">รอตรวจ / ตีกลับ</th><th class="num">คะแนนที่ได้</th><th class="num">ความสำเร็จ</th></tr></thead>
+      <thead><tr><th>#</th><th>สำนักงานพัฒนาชุมชนอำเภอ</th><th class="center">อนุมัติแล้ว</th><th class="center">รอตรวจ</th><th class="num">คะแนนที่ได้</th><th class="num">ความสำเร็จ</th></tr></thead>
       <tbody>${dRows}</tbody>
     </table>
   `;
 
   document.getElementById('chartStatusDonut').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-radius:12px;background:rgba(16,185,129,.1)">
+    <div style="display:flex;flex-direction:column;gap:10px;padding:6px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(16,185,129,.1)">
         <span style="font-weight:700;color:#059669">✅ อนุมัติแล้ว</span>
-        <b style="font-size:15px;color:#059669">${approvedCnt} งาน</b>
+        <b style="font-size:16px;color:#059669">${approvedCnt} งาน</b>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-radius:12px;background:rgba(245,158,11,.12)">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(245,158,11,.12)">
         <span style="font-weight:700;color:#D97706">⏳ รอตรวจสอบ</span>
-        <b style="font-size:15px;color:#D97706">${pendingCnt} งาน</b>
+        <b style="font-size:16px;color:#D97706">${pendingCnt} งาน</b>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-radius:12px;background:rgba(244,63,94,.1)">
-        <span style="font-weight:700;color:#E11D48">↩️ ตีกลับ/แจ้งแก้ไข</span>
-        <b style="font-size:15px;color:#E11D48">${rejectCnt} งาน</b>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-radius:12px;background:var(--surface-3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:var(--surface-3)">
         <span style="font-weight:700;color:var(--muted)">⚪ ยังไม่ส่งรายงาน</span>
-        <b style="font-size:15px;color:var(--ink)">${noneCnt} งาน</b>
+        <b style="font-size:16px;color:var(--ink)">${noneCnt} งาน</b>
       </div>
+      ${hiddenCount > 0 ? `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-radius:12px;background:rgba(244,63,94,.08)">
+        <span style="font-weight:700;color:var(--danger);font-size:12px">🙈 ซ่อน/งดส่งในเดือนนี้</span>
+        <b style="font-size:13px;color:var(--danger)">${hiddenCount} หัวข้อ</b>
+      </div>` : ''}
     </div>
   `;
 
@@ -2481,7 +2062,7 @@ function renderAnnual() {
   `;
 }
 
-/* ================== 12. MANAGE TOPICS & MONTHLY VISIBILITY (ADMIN ONLY) ================== */
+/* ================== 10. MANAGE TOPICS & MONTHLY VISIBILITY (ADMIN ONLY) ================== */
 function renderTopicGroupTabs() {
   const tabs = [
     { id: 'ALL', label: 'ทั้งหมด (4 กลุ่มงาน)' },
@@ -2509,7 +2090,6 @@ function renderTopicsManagerPage() {
   groups.forEach(g => {
     g.reports.forEach(r => {
       const hiddenThisMonth = isReportHidden(currentMonth, r.id);
-      const schInfo = getReportScheduleInfo(currentMonth, r);
       const monthChips = MONTHS.map(m => {
         const isHid = isReportHidden(m, r.id);
         return `<span class="m-chip ${isHid ? 'off' : 'on'}" onclick="toggleReportMonthVisibility('${m}','${r.id}')" title="คลิกเพื่อ ${isHid ? 'เปิดใช้งาน' : 'ซ่อน/งดส่ง'} ในเดือน${m}">${m.slice(0, 3)}</span>`;
@@ -2519,10 +2099,7 @@ function renderTopicsManagerPage() {
         <td><span class="pill pill-none">${g.short}</span></td>
         <td>
           <b>${r.name}</b>
-          <div style="margin-top:3px">
-            <span class="pill pill-sky">⏰ ${schInfo.deadlineText}</span>
-            ${hiddenThisMonth ? `<span class="pill pill-rej" style="margin-left:4px">🙈 ซ่อนในเดือน${currentMonth}</span>` : `<span class="pill pill-ok" style="margin-left:4px">✅ เปิดส่งเดือน${currentMonth}</span>`}
-          </div>
+          ${hiddenThisMonth ? `<span class="pill pill-rej" style="margin-left:6px">🙈 ซ่อนในเดือน${currentMonth}</span>` : `<span class="pill pill-ok" style="margin-left:6px">✅ เปิดส่งเดือน${currentMonth}</span>`}
         </td>
         <td class="center">
           <button class="btn ${hiddenThisMonth ? 'btn-ok' : 'btn-warn'} btn-xs" onclick="toggleReportMonthVisibility('${currentMonth}','${r.id}')">
@@ -2533,7 +2110,7 @@ function renderTopicsManagerPage() {
           <div style="display:flex;gap:4px;flex-wrap:wrap">${monthChips}</div>
         </td>
         <td class="center" style="white-space:nowrap">
-          <button class="btn btn-ghost btn-xs" onclick="openEditTopicModal('${g.id}','${r.id}')">✏️ แก้ไข</button>
+          <button class="btn btn-ghost btn-xs" onclick="openEditTopicModal('${g.id}','${r.id}')">✏️ แก้ไขชื่อ</button>
           <button class="btn btn-danger btn-xs" onclick="deleteReportTopic('${g.id}','${r.id}')">🗑️ ลบ</button>
         </td>
       </tr>`;
@@ -2545,7 +2122,7 @@ function renderTopicsManagerPage() {
       <thead>
         <tr>
           <th>กลุ่มงาน</th>
-          <th>หัวข้อการรายงาน & กำหนดส่ง</th>
+          <th>หัวข้อการรายงาน (สถานะเดือน${currentMonth})</th>
           <th class="center">ซ่อน/เปิด (เดือน${currentMonth})</th>
           <th>กำหนดการส่งรายเดือน (คลิกชื่อเดือนเพื่อ เปิด 🟢 / ซ่อน 🔴)</th>
           <th class="center">จัดการหัวข้อ</th>
@@ -2639,7 +2216,6 @@ function openAddTopicModal(defaultGroupId = null) {
   const grp = WORKGROUPS.find(g => g.id === gSel.value);
   const nextNo = grp ? grp.reports.length + 1 : 1;
   document.getElementById('topicNameInput').value = `${nextNo}. `;
-  document.getElementById('topicDeadlineInput').value = 'ภายในวันที่ 25 ของเดือน';
   setTopicModalMonths('ALL');
   document.getElementById('topicModal').classList.add('on');
   setTimeout(() => document.getElementById('topicNameInput').focus(), 80);
@@ -2651,13 +2227,12 @@ function openEditTopicModal(groupId, repId) {
   const rep = grp?.reports.find(r => r.id === repId);
   if (!rep) return;
 
-  document.getElementById('topicModalTitle').textContent = '✏️ แก้ไขหัวข้อการรายงาน & กำหนดการส่ง';
+  document.getElementById('topicModalTitle').textContent = '✏️ แก้ไขหัวข้อการรายงาน & เดือนที่เปิดส่ง';
   document.getElementById('editTopicRepId').value = repId;
   const gSel = document.getElementById('topicGroupSelect');
   gSel.value = groupId;
   gSel.disabled = true;
   document.getElementById('topicNameInput').value = rep.name;
-  document.getElementById('topicDeadlineInput').value = rep.deadline || 'ภายในวันที่ 25 ของเดือน';
 
   const activeMonths = MONTHS.filter(m => !isReportHidden(m, repId));
   renderTopicModalMonthChecks(activeMonths);
@@ -2671,7 +2246,6 @@ function saveTopicModalSubmit(e) {
   const editRepId = document.getElementById('editTopicRepId').value.trim();
   const groupId = document.getElementById('topicGroupSelect').value;
   const nameVal = document.getElementById('topicNameInput').value.trim();
-  const dlVal = document.getElementById('topicDeadlineInput').value.trim() || 'ภายในวันที่ 25 ของเดือน';
   if (!nameVal) return;
 
   const checkedMonths = Array.from(document.querySelectorAll('.topic-m-chk:checked')).map(el => el.value);
@@ -2682,13 +2256,10 @@ function saveTopicModalSubmit(e) {
 
   if (editRepId) {
     const rep = grp.reports.find(r => r.id === editRepId);
-    if (rep) {
-      rep.name = nameVal;
-      rep.deadline = dlVal;
-    }
+    if (rep) rep.name = nameVal;
   } else {
     targetRepId = `${groupId}-R${Date.now()}`;
-    grp.reports.push({ id: targetRepId, name: nameVal, deadline: dlVal, priority: 'ปกติ' });
+    grp.reports.push({ id: targetRepId, name: nameVal });
   }
 
   MONTHS.forEach(m => {
@@ -2729,7 +2300,7 @@ function deleteReportTopic(groupId, repId) {
   showToast('🗑️ ลบหัวข้อรายงานออกจากระบบเรียบร้อยแล้ว');
 }
 
-/* ================== 13. FILE UPLOAD (<= 5 MB) & ADMIN DOWNLOAD ================== */
+/* ================== 11. FILE UPLOAD (<= 5 MB) & ADMIN DOWNLOAD ================== */
 function buildFileCellHtml(month, distId, repId, rec) {
   const parts = [];
   if (rec.fileName) {
@@ -2832,7 +2403,7 @@ function clearSelectedReportFile() {
   document.getElementById('subFileErr').style.display = 'none';
 }
 
-/* ================== 14. WORKGROUP TABLE & SUBMISSION TO GOOGLE SHEETS ================== */
+/* ================== 12. WORKGROUP TABLE & SUBMISSION TO GOOGLE SHEETS ================== */
 function renderWorkgroupPage(gId) {
   const group = WORKGROUPS.find(g => g.id === gId);
   if (!group) return;
@@ -2851,19 +2422,10 @@ function renderWorkgroupPage(gId) {
 
   visibleReports.forEach(r => {
     const isHid = isReportHidden(currentMonth, r.id);
-    const schInfo = getReportScheduleInfo(currentMonth, r);
-    const prioBadge = schInfo.priority === 'ด่วนที่สุด'
-      ? `<span class="pill pill-rej">🔥 ด่วนที่สุด</span>`
-      : (schInfo.priority === 'เน้นย้ำ' ? `<span class="pill pill-pend">📌 เน้นย้ำ</span>` : '');
-
     dists.forEach(d => {
       const rec = db[currentMonth][d.id][r.id];
       const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none';
       const fileCellHtml = buildFileCellHtml(currentMonth, d.id, r.id, rec);
-
-      const rejectAlertHtml = (rec.status === 'แก้ไข' || rec.rejectReason)
-        ? `<div class="rej-reason-box">↩️ <b>เหตุผลที่ตีกลับ:</b> ${rec.rejectReason || 'กรุณาตรวจสอบและแก้ไขข้อมูล'}</div>`
-        : '';
 
       const adminTopicTools = admin ? `
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
@@ -2880,29 +2442,21 @@ function renderWorkgroupPage(gId) {
           <button class="sc-btn ${rec.score === 1 ? 'on-1' : ''}" onclick="setManualScore('${currentMonth}','${d.id}','${r.id}',1)">1</button>
           <button class="sc-btn ${rec.score === 0 ? 'on-0' : ''}" onclick="setManualScore('${currentMonth}','${d.id}','${r.id}',0)">0</button>
         </div>
-        <button class="btn btn-danger btn-xs" onclick="openRejectModal('${currentMonth}','${d.id}','${r.id}')" title="ตีกลับงานพร้อมระบุเหตุผล">↩️ ตีกลับ</button>
       ` : '';
 
       rows += `<tr class="${isHid ? 'row-hidden-month' : ''}">
         <td>
           <b>${r.name}</b>
-          <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
-            <span class="pill pill-sky">⏰ ${schInfo.deadlineText}</span>
-            ${prioBadge}
-            ${isHid ? `<span class="pill pill-rej">🙈 งดส่งในเดือน${currentMonth}</span>` : ''}
-          </div>
+          ${isHid ? `<span class="pill pill-rej" style="margin-left:5px">🙈 งดส่ง/ซ่อนในเดือน${currentMonth}</span>` : ''}
           ${adminTopicTools}
         </td>
         <td>${d.name}</td>
-        <td class="center">
-          <span class="pill ${pillCls}">${rec.status === 'แก้ไข' ? '⚠️ ตีกลับ/แก้ไข' : rec.status}</span>
-          ${rejectAlertHtml}
-        </td>
+        <td class="center"><span class="pill ${pillCls}">${rec.status}</span></td>
         <td class="center"><b>${rec.score}</b> / 2</td>
         <td class="center">${fileCellHtml}</td>
         <td>${rec.sender || '-'}</td>
-        <td class="center" style="white-space:nowrap">
-          ${!isHid ? `<button class="btn ${rec.status === 'แก้ไข' ? 'btn-warn' : 'btn-primary'} btn-xs" onclick="openSubmitModal('${currentMonth}','${d.id}','${r.id}')">${rec.status === 'แก้ไข' ? '📤 ส่งงานแก้ไขใหม่' : '📤 ส่งงาน/แนบไฟล์'}</button>` : '<span class="pill pill-none">งดส่งเดือนนี้</span>'}
+        <td class="center">
+          ${!isHid ? `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${currentMonth}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>` : '<span class="pill pill-none">งดส่งเดือนนี้</span>'}
           ${manualBtns}
         </td>
       </tr>`;
@@ -2913,13 +2467,13 @@ function renderWorkgroupPage(gId) {
     <table>
       <thead>
         <tr>
-          <th>หัวข้อรายงาน & กำหนดส่ง (${group.short})</th>
+          <th>หัวข้อรายงาน (${group.short})</th>
           <th>อำเภอ</th>
-          <th class="center">สถานะ / เหตุผลตีกลับ</th>
+          <th class="center">สถานะ</th>
           <th class="center">คะแนน</th>
           <th class="center">ไฟล์งาน (Google Drive) / ลิงก์</th>
           <th>ผู้ส่ง</th>
-          <th class="center">ส่งงาน ${admin ? '/ อนุมัติ / ตีกลับ' : ''}</th>
+          <th class="center">ส่งงาน ${admin ? '/ ให้คะแนนแมนนวล' : ''}</th>
         </tr>
       </thead>
       <tbody>${rows || `<tr><td colspan="7" class="center">ไม่มีหัวข้อรายงานที่ต้องส่งในเดือน${currentMonth}</td></tr>`}</tbody>
@@ -2931,22 +2485,10 @@ function openSubmitModal(month, distId, repId) {
   const dist = DISTRICTS.find(d => d.id === distId);
   const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
   const rec = db[month][distId][repId];
-  const schInfo = getReportScheduleInfo(month, rep);
 
   stagedUploadFile = null;
   document.getElementById('subFileInput').value = '';
   document.getElementById('subFileErr').style.display = 'none';
-
-  const rejAlertEl = document.getElementById('subModalRejectAlert');
-  if (rec.status === 'แก้ไข' || rec.rejectReason) {
-    rejAlertEl.style.display = 'block';
-    rejAlertEl.innerHTML = `⚠️ <b>รายการนี้ถูกตีกลับให้แก้ไข:</b> ${rec.rejectReason || 'กรุณาตรวจสอบไฟล์และส่งใหม่อีกครั้ง'}`;
-  } else {
-    rejAlertEl.style.display = 'none';
-  }
-
-  const dlBadge = document.getElementById('subModalDeadlineBadge');
-  if (dlBadge) dlBadge.textContent = `⏰ ${schInfo.deadlineText}`;
 
   if (rec.fileName) {
     document.getElementById('subFileNameTxt').textContent = `📎 ไฟล์เดิม: ${rec.fileName} (${formatBytes(rec.fileSize)})`;
@@ -2972,11 +2514,6 @@ async function syncRecordToGas(actionType, month, distId, repId, filePayload = n
   const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
   const rec = db[month][distId][repId];
 
-  // พ่วงเหตุผลการตีกลับไว้ทั้งในฟิลด์ rejectReason และใน note เพื่อรองรับชีตทุกเวอร์ชัน
-  const noteWithReject = rec.rejectReason
-    ? `[ตีกลับ: ${rec.rejectReason}] ${rec.note || ''}`.trim()
-    : (rec.note || '');
-
   const payload = {
     action: actionType,
     driveFolderId: gasConfig.driveFolderId || '',
@@ -2994,8 +2531,7 @@ async function syncRecordToGas(actionType, month, distId, repId, filePayload = n
       link: rec.link,
       fileName: rec.fileName || '',
       fileSize: rec.fileSize || 0,
-      note: noteWithReject,
-      rejectReason: rec.rejectReason || ''
+      note: rec.note || ''
     },
     filePayload: filePayload
   };
@@ -3026,8 +2562,7 @@ async function confirmSubmitReport(e) {
     driveDownloadUrl: prevRec.driveDownloadUrl || '',
     sender: document.getElementById('subSender').value.trim(),
     submittedAt: now,
-    note: document.getElementById('subNote').value.trim(),
-    rejectReason: '' // ล้างสถานะตีกลับเมื่อส่งงานแก้ไขใหม่แล้ว
+    note: document.getElementById('subNote').value.trim()
   };
 
   if (stagedUploadFile) {
@@ -3078,7 +2613,7 @@ async function confirmSubmitReport(e) {
   );
 }
 
-/* ================== 15. APPROVAL, REJECTION & MANUAL SCORING PAGE ================== */
+/* ================== 13. APPROVAL & MANUAL SCORING PAGE ================== */
 function initFilters() {
   const mSel = document.getElementById('apFilterMonth');
   mSel.innerHTML = MONTHS.map(m => `<option value="${m}" ${m === currentMonth ? 'selected' : ''}>${m}</option>`).join('');
@@ -3145,12 +2680,9 @@ function setManualScore(month, distId, repId, scoreVal) {
   const rec = db[month][distId][repId];
   rec.score = Number(scoreVal);
   rec.status = scoreVal > 0 ? 'อนุมัติแล้ว' : 'ยังไม่ส่งรายงาน';
-  if (scoreVal > 0) {
-    rec.rejectReason = '';
-    if (!rec.submittedAt) {
-      rec.submittedAt = new Date().toLocaleString('th-TH');
-      rec.sender = rec.sender || 'Admin (ให้คะแนนแมนนวล)';
-    }
+  if (scoreVal > 0 && !rec.submittedAt) {
+    rec.submittedAt = new Date().toLocaleString('th-TH');
+    rec.sender = rec.sender || 'Admin (ให้คะแนนแมนนวล)';
   }
   saveDB();
   syncRecordToGas('manualScore', month, distId, repId);
@@ -3174,17 +2706,16 @@ function renderApprovalPage() {
   const thDists = dists.map(d => `<th class="center">${d.short}</th>`).join('');
   let mRows = '';
   reports.forEach(r => {
-    const schInfo = getReportScheduleInfo(m, r);
     const cells = dists.map(d => {
       const rec = db[m][d.id][r.id];
       if (!admin) {
-        return `<td class="center"><span class="pill ${rec.score > 0 ? 'pill-ok' : (rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none')}">${rec.status === 'แก้ไข' ? 'ตีกลับ' : rec.score + ' คะแนน'}</span></td>`;
+        return `<td class="center"><span class="pill ${rec.score > 0 ? 'pill-ok' : 'pill-none'}">${rec.score} คะแนน</span></td>`;
       }
       return `<td class="center">
         <div class="sc-grp">
           <button class="sc-btn ${rec.score === 2 ? 'on-2' : ''}" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">2</button>
           <button class="sc-btn ${rec.score === 1 ? 'on-1' : ''}" onclick="setManualScore('${m}','${d.id}','${r.id}',1)">1</button>
-          <button class="sc-btn ${rec.score === 0 && rec.status !== 'แก้ไข' ? 'on-0' : ''}" onclick="setManualScore('${m}','${d.id}','${r.id}',0)">0</button>
+          <button class="sc-btn ${rec.score === 0 ? 'on-0' : ''}" onclick="setManualScore('${m}','${d.id}','${r.id}',0)">0</button>
         </div>
       </td>`;
     }).join('');
@@ -3192,9 +2723,7 @@ function renderApprovalPage() {
     const hideBtn = admin ? `<button class="btn btn-ghost btn-xs" style="margin-left:6px" onclick="toggleReportMonthVisibility('${m}','${r.id}')" title="ซ่อนรายงานนี้ในเดือน${m}">🙈 ซ่อนเดือน${m}</button>` : '';
     mRows += `<tr>
       <td>
-        <span style="font-size:11px;color:var(--blue-600);font-weight:700">[${r.groupShort}]</span>
-        <span class="pill pill-sky" style="margin-left:4px">⏰ ${schInfo.deadlineText}</span>
-        ${hideBtn}<br>
+        <span style="font-size:11px;color:var(--blue-600);font-weight:700">[${r.groupShort}]</span> ${hideBtn}<br>
         <b>${r.name}</b>
       </td>
       ${cells}
@@ -3209,34 +2738,23 @@ function renderApprovalPage() {
 
   let lRows = '';
   reports.forEach(r => {
-    const schInfo = getReportScheduleInfo(m, r);
     dists.forEach(d => {
       const rec = db[m][d.id][r.id];
       if (sFilter !== 'ALL' && rec.status !== sFilter) return;
       const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none';
       const fileCellHtml = buildFileCellHtml(m, d.id, r.id, rec);
 
-      const rejBox = (rec.status === 'แก้ไข' || rec.rejectReason)
-        ? `<div class="rej-reason-box">↩️ <b>เหตุผลที่ตีกลับ:</b> ${rec.rejectReason || 'กรุณาแก้ไขและส่งใหม่'}</div>`
-        : '';
-
       const actions = admin ? `
         <button class="btn btn-ok btn-xs" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">✅ อนุมัติ (+2)</button>
-        <button class="btn btn-danger btn-xs" onclick="openRejectModal('${m}','${d.id}','${r.id}')">↩️ ตีกลับ/แก้ไข</button>
-        <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)" title="ส่งเข้าไอดีของ ${d.short}">🤖 ส่ง LINE</button>
-      ` : `<button class="btn ${rec.status === 'แก้ไข' ? 'btn-warn' : 'btn-primary'} btn-xs" onclick="openSubmitModal('${m}','${d.id}','${r.id}')">${rec.status === 'แก้ไข' ? '📤 ส่งงานแก้ไขใหม่' : '📤 ส่งงาน/แนบไฟล์'}</button>`;
+        <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)" title="ส่งเข้าไอดีของ ${d.short}">🤖 ส่ง LINE (${d.short})</button>
+        <button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',true)">📲 แชร์</button>
+      ` : `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${m}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>`;
 
       lRows += `<tr>
         <td>${m}</td>
         <td><b>${d.name}</b></td>
-        <td>
-          <small style="color:var(--muted)">${r.groupShort} • ⏰ ${schInfo.deadlineText}</small><br>
-          <b>${r.name}</b>
-        </td>
-        <td class="center">
-          <span class="pill ${pillCls}">${rec.status === 'แก้ไข' ? '⚠️ ตีกลับ/แก้ไข' : rec.status}</span>
-          ${rejBox}
-        </td>
+        <td><small style="color:var(--muted)">${r.groupShort}</small><br><b>${r.name}</b></td>
+        <td class="center"><span class="pill ${pillCls}">${rec.status}</span></td>
         <td class="center"><b>${rec.score}</b></td>
         <td class="center">${fileCellHtml}</td>
         <td>${rec.sender || '-'}</td>
@@ -3246,7 +2764,7 @@ function renderApprovalPage() {
   });
   document.getElementById('approvalListWrap').innerHTML = `
     <table>
-      <thead><tr><th>เดือน</th><th>อำเภอ</th><th>หัวข้อรายงาน & กำหนดส่ง</th><th class="center">สถานะ / เหตุผลตีกลับ</th><th class="center">คะแนน</th><th class="center">ไฟล์แนบ (สำหรับ Admin ดาวน์โหลด)</th><th>ผู้ส่ง</th><th class="center">จัดการ (อนุมัติ / ตีกลับ)</th></tr></thead>
+      <thead><tr><th>เดือน</th><th>อำเภอ</th><th>หัวข้อรายงาน</th><th class="center">สถานะ</th><th class="center">คะแนน</th><th class="center">ไฟล์แนบ (สำหรับ Admin ดาวน์โหลด)</th><th>ผู้ส่ง</th><th class="center">จัดการ</th></tr></thead>
       <tbody>${lRows || '<tr><td colspan="8" class="center">ไม่พบรายการตามตัวกรองที่เลือก</td></tr>'}</tbody>
     </table>
   `;
@@ -3262,7 +2780,6 @@ function approveAllPendingInFilter() {
       if (db[m][d.id][r.id].status === 'รอตรวจสอบ') {
         db[m][d.id][r.id].status = 'อนุมัติแล้ว';
         db[m][d.id][r.id].score = 2;
-        db[m][d.id][r.id].rejectReason = '';
         syncRecordToGas('manualScore', m, d.id, r.id);
         count++;
       }
@@ -3273,7 +2790,7 @@ function approveAllPendingInFilter() {
   showToast(`✅ อนุมัติรายการที่รอตรวจทั้งหมด ${count} งาน และซิงค์ลง Google Sheets เรียบร้อยแล้ว`);
 }
 
-/* ================== 16. LINE BOT VERIFICATION & DISTRICT/ID SELECTOR (ADMIN ONLY) ================== */
+/* ================== 14. LINE BOT VERIFICATION & DISTRICT/ID SELECTOR (ADMIN ONLY) ================== */
 async function verifyAndSaveLineBotToken() {
   if (!isAdmin()) return;
   const tokenVal = (document.getElementById('quickLineTokenInput')?.value || document.getElementById('cfgLineToken')?.value || '').trim();
@@ -3303,10 +2820,15 @@ async function verifyAndSaveLineBotToken() {
     badge.textContent = `🟢 บอทพร้อมใช้งาน: ${res.botName}`;
     diagBox.innerHTML = `✅ <b>เชื่อมต่อบอท LINE OA สำเร็จ!</b> ชื่อบอทของคุณคือ: <b style="color:var(--blue-600)">${res.botName}</b> ${res.basicId ? `(${res.basicId})` : ''}<br>📌 ตอนนี้คุณสามารถเลือกอำเภอและกดส่งแจ้งเตือนผ่านบอท LINE ได้ทันที!`;
     showToast(`✅ เชื่อมต่อบอท "${res.botName}" สำเร็จ!`);
+  } else if (res && res.error && res.error.includes('Unknown action')) {
+    badge.className = 'pill pill-pend';
+    badge.textContent = '⚠️ รออัปเดต รหัส.gs เป็น V16';
+    diagBox.innerHTML = `⚠️ <b>บันทึก Token แล้ว แต่โค้ด <code>รหัส.gs</code> ใน Google Apps Script ของคุณยังไม่ได้อัปเดตเป็น V16:</b><br>กรุณานำโค้ด <code>รหัส.gs</code> ด้านบนไปวางทับใน Google Apps Script แล้วกด <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b> เพื่อให้บอทส่งข้อความได้ครับ`;
   } else {
     badge.className = 'pill pill-rej';
-    badge.textContent = '🔴 ตรวจสอบ Token / อัปเดต รหัส.gs';
-    diagBox.innerHTML = `⚠️ <b>แจ้งเตือน:</b> ${(res && res.error) ? res.error : 'กรุณาตรวจสอบว่าอัปเดตโค้ด รหัส.gs เป็น V17 และกด Deploy > New version แล้ว'}`;
+    badge.textContent = '🔴 Token ไม่ถูกต้อง';
+    diagBox.innerHTML = `❌ <b>ไม่สามารถเชื่อมต่อบอทได้:</b> ${(res && res.error) ? res.error : 'กรุณาตรวจสอบรหัส Channel Access Token จากหน้า LINE Developers'}`;
+    showToast('❌ รหัส LINE Channel Access Token ไม่ถูกต้อง');
   }
 }
 
@@ -3332,4 +2854,641 @@ async function addLineRecipient(e) {
     }
   } else {
     const newId = Date.now().toString();
-    lineRecipients.push({ id: newId
+    lineRecipients.push({ id: newId, name, lineId, distId });
+    checkedLineRecipientIds.add(newId);
+  }
+
+  saveWorkgroupsAndVisibility(true);
+  cancelEditLineRecipient();
+  renderLinePage();
+
+  btn.disabled = false;
+  btn.textContent = '💾 บันทึกไอดีไลน์';
+  showToast(`✅ บันทึกไอดีไลน์ "${name}" (${getDistrictLabel(distId)}) เรียบร้อยแล้ว!`);
+}
+
+function openEditLineRecipient(id) {
+  if (!isAdmin()) return;
+  const item = lineRecipients.find(x => String(x.id) === String(id));
+  if (!item) return;
+  document.getElementById('editLineRecItemId').value = item.id;
+  document.getElementById('lineRecDist').value = item.distId || 'ALL';
+  document.getElementById('lineRecName').value = item.name || '';
+  document.getElementById('lineRecId').value = item.lineId || '';
+  document.getElementById('lineFormHeaderTitle').textContent = '✏️ แก้ไขไอดีไลน์ประจำอำเภอ';
+  document.getElementById('btnSaveLineRec').textContent = '💾 บันทึกการแก้ไข';
+  document.getElementById('btnCancelEditLineRec').style.display = 'inline-flex';
+  document.getElementById('lineRecName').focus();
+}
+
+function cancelEditLineRecipient() {
+  document.getElementById('editLineRecItemId').value = '';
+  document.getElementById('lineRecName').value = '';
+  document.getElementById('lineRecId').value = '';
+  document.getElementById('lineFormHeaderTitle').textContent = '➕ บันทึกและผูกไอดีไลน์ประจำอำเภอ';
+  document.getElementById('btnSaveLineRec').textContent = '💾 บันทึกไอดีไลน์';
+  document.getElementById('btnCancelEditLineRec').style.display = 'none';
+}
+
+async function removeLineRecipient(id) {
+  if (!isAdmin()) return;
+  lineRecipients = lineRecipients.filter(x => String(x.id) !== String(id));
+  checkedLineRecipientIds.delete(String(id));
+  saveWorkgroupsAndVisibility(true);
+  renderLinePage();
+  showToast('🗑️ ลบไอดีไลน์เรียบร้อยแล้ว');
+}
+
+function toggleLineRecipientCheck(id, isChecked) {
+  if (isChecked) checkedLineRecipientIds.add(String(id));
+  else checkedLineRecipientIds.delete(String(id));
+  renderLineTargetPreview();
+}
+
+function toggleAllLineCheckboxes(checkAll) {
+  lineRecipients.forEach(r => {
+    if (checkAll) checkedLineRecipientIds.add(String(r.id));
+    else checkedLineRecipientIds.delete(String(r.id));
+  });
+  renderLinePage();
+}
+
+function selectLineQuickDistrict(distId) {
+  selectedLineDistrict = distId;
+  const sel = document.getElementById('lineSendDistSelect');
+  if (sel) sel.value = distId;
+  const modeSel = document.getElementById('lineSendTargetMode');
+  if (modeSel && modeSel.value !== 'BY_SPECIFIC_ID' && modeSel.value !== 'BY_CHECKED') {
+    modeSel.value = 'BY_DISTRICT';
+  }
+  renderLinePage();
+}
+
+function onLineSendDistChange() {
+  const sel = document.getElementById('lineSendDistSelect');
+  selectedLineDistrict = sel ? sel.value : 'ALL';
+  renderLinePage();
+}
+
+function onLineTargetModeChange() {
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const specWrap = document.getElementById('specificLineIdSelectWrap');
+  if (specWrap) {
+    specWrap.style.display = mode === 'BY_SPECIFIC_ID' ? 'block' : 'none';
+  }
+  renderLineTargetPreview();
+}
+
+function getResolvedTargetRecipients(overrideDistId = null) {
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const targetDist = overrideDistId || selectedLineDistrict || 'ALL';
+
+  if (mode === 'BROADCAST' && !overrideDistId) {
+    return [];
+  }
+  if (mode === 'BY_SPECIFIC_ID' && !overrideDistId) {
+    const specId = document.getElementById('lineSpecificRecSelect')?.value;
+    return lineRecipients.filter(r => String(r.id) === String(specId));
+  }
+  if (mode === 'BY_CHECKED' && !overrideDistId) {
+    return lineRecipients.filter(r => checkedLineRecipientIds.has(String(r.id)));
+  }
+
+  if (targetDist === 'ALL') {
+    return [...lineRecipients];
+  }
+  const exactDistMatches = lineRecipients.filter(r => r.distId === targetDist);
+  if (exactDistMatches.length > 0) {
+    return exactDistMatches;
+  }
+  return lineRecipients.filter(r => r.distId === 'ALL');
+}
+
+function renderLineTargetPreview() {
+  const box = document.getElementById('lineTargetPreviewBox');
+  if (!box) return;
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const distName = getDistrictLabel(selectedLineDistrict);
+
+  if (mode === 'BROADCAST') {
+    box.innerHTML = `📢 <b>เป้าหมายการส่ง:</b> ส่งผ่านบอทแบบ <b>Broadcast</b> เข้า LINE ของทุกคนที่เป็นเพื่อนกับบอท LINE OA (ข้อมูลของ: <b>${distName}</b>)`;
+    return;
+  }
+
+  const targets = getResolvedTargetRecipients();
+  if (targets.length === 0) {
+    box.innerHTML = `⚠️ <b>ยังไม่มีไอดีไลน์สำหรับ "${distName}" ในเงื่อนไขที่เลือก:</b> กรุณาเพิ่มไอดีไลน์ของ <b>${distName}</b> ในฟอร์มด้านซ้ายมือ (หรือหากกดส่งตอนนี้ บอทจะส่งแบบ Broadcast เข้า LINE ของทุกคนที่แอดเพื่อนบอทแทน)`;
+    return;
+  }
+
+  const pills = targets.map(t => {
+    const isPushOk = /^[UCR][0-9a-fA-F]{32}$/.test(t.lineId);
+    return `<span class="pill ${isPushOk ? 'pill-ok' : 'pill-pend'}" style="margin-right:4px;margin-top:3px">🎯 ${t.name} (${getDistrictLabel(t.distId)})</span>`;
+  }).join('');
+  box.innerHTML = `<div><b>🎯 ไอดีปลายทางที่จะได้รับรายงานของ "${distName}" (${targets.length} ไอดี):</b></div><div style="margin-top:4px">${pills}</div>`;
+}
+
+function renderLinePage() {
+  if (!isAdmin()) return;
+
+  const qTabsWrap = document.getElementById('lineDistrictQuickTabs');
+  if (qTabsWrap) {
+    const allTabs = [
+      { id: 'ALL', label: '🌐 ทุกอำเภอ' },
+      ...DISTRICTS.map(d => {
+        const cnt = lineRecipients.filter(r => r.distId === d.id).length;
+        return { id: d.id, label: `${d.short}${cnt > 0 ? ` (${cnt})` : ''}` };
+      })
+    ];
+    qTabsWrap.innerHTML = allTabs.map(t =>
+      `<button type="button" class="stab ${selectedLineDistrict === t.id ? 'active' : ''}" onclick="selectLineQuickDistrict('${t.id}')">${t.label}</button>`
+    ).join('');
+  }
+
+  const sendDistSel = document.getElementById('lineSendDistSelect');
+  if (sendDistSel && sendDistSel.value !== selectedLineDistrict) {
+    sendDistSel.value = selectedLineDistrict;
+  }
+
+  const specSel = document.getElementById('lineSpecificRecSelect');
+  if (specSel) {
+    const prevVal = specSel.value;
+    specSel.innerHTML = lineRecipients.length
+      ? lineRecipients.map(r => `<option value="${r.id}">${r.name} — [${getDistrictLabel(r.distId)}] (${r.lineId.slice(0, 10)}...)</option>`).join('')
+      : `<option value="">-- ยังไม่มีไอดีที่บันทึกไว้ --</option>`;
+    if (prevVal && lineRecipients.some(r => String(r.id) === String(prevVal))) {
+      specSel.value = prevVal;
+    }
+  }
+
+  const rRows = lineRecipients.map(r => {
+    const isChecked = checkedLineRecipientIds.has(String(r.id)) ? 'checked' : '';
+    const validApiId = /^[UCR][0-9a-fA-F]{32}$/.test(r.lineId);
+    const badge = validApiId
+      ? `<span class="pill pill-ok">🟢 รหัส U.../C... (ส่งตรงได้ 100%)</span>`
+      : `<span class="pill pill-rej" title="บอท LINE ต้องใช้รหัสที่ขึ้นต้นด้วย U หรือ C 33 ตัวอักษร">⚠️ ไม่ใช่รหัส U.../C... (จะส่งเป็น Broadcast แทน)</span>`;
+    return `
+      <tr>
+        <td class="center">
+          <input type="checkbox" ${isChecked} onchange="toggleLineRecipientCheck('${r.id}', this.checked)" style="width:16px;height:16px;cursor:pointer">
+        </td>
+        <td>
+          <b>${r.name}</b>
+          <div style="font-size:11px;color:var(--muted);word-break:break-all">ID: ${r.lineId}</div>
+          <div style="margin-top:3px">${badge}</div>
+        </td>
+        <td>
+          <span class="pill ${r.distId === 'ALL' ? 'pill-pend' : 'pill-ok'}" style="cursor:pointer" onclick="selectLineQuickDistrict('${r.distId}')" title="คลิกเพื่อเลือกส่งรายงานให้อำเภอนี้">
+            ${getDistrictLabel(r.distId)}
+          </span>
+        </td>
+        <td class="center" style="white-space:nowrap">
+          <button type="button" class="btn btn-line btn-xs" onclick="testSingleRecipientLine('${r.id}')" title="ทดสอบส่งเข้าไอดีนี้ทันที">🔔 ทดสอบส่ง</button>
+          <button type="button" class="btn btn-ghost btn-xs" onclick="openEditLineRecipient('${r.id}')" title="แก้ไข">✏️</button>
+          <button type="button" class="btn btn-danger btn-xs" onclick="removeLineRecipient('${r.id}')" title="ลบ">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('lineRecipientTable').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th class="center">เลือก</th>
+          <th>ชื่อผู้รับ / รหัส LINE ID</th>
+          <th>อำเภอที่ผูกไว้</th>
+          <th class="center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>${rRows || '<tr><td colspan="4" class="center">ยังไม่มีรายชื่อไอดีไลน์ กรุณาเพิ่มในฟอร์มด้านบน หรือพิมพ์ id ในแชทบอทแล้วกดปุ่มซิงค์</td></tr>'}</tbody>
+    </table>
+  `;
+
+  renderLineTargetPreview();
+  renderLineApprovedTable();
+}
+
+function renderLineApprovedTable() {
+  if (!isAdmin()) return;
+  const statusFilter = document.getElementById('lineReportStatusFilter')?.value || 'อนุมัติแล้ว';
+  const reports = getAllReportsFlat(currentMonth, false);
+  const dists = selectedLineDistrict === 'ALL' ? DISTRICTS : DISTRICTS.filter(d => d.id === selectedLineDistrict);
+
+  const titleEl = document.getElementById('lineReportTableTitle');
+  if (titleEl) {
+    titleEl.textContent = `📑 รายการรายงานประจำเดือน${currentMonth} — ${getDistrictLabel(selectedLineDistrict)}`;
+  }
+
+  let aRows = '';
+  dists.forEach(d => {
+    reports.forEach(r => {
+      const rec = db[currentMonth]?.[d.id]?.[r.id];
+      if (!rec) return;
+      if (statusFilter !== 'ALL' && rec.status !== statusFilter) return;
+
+      const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : 'pill-none';
+      aRows += `<tr>
+        <td><b>${d.short}</b></td>
+        <td><small style="color:var(--muted)">${r.groupShort}</small><br><b>${r.name}</b></td>
+        <td class="center"><span class="pill ${pillCls}">${rec.status} (${rec.score} คะแนน)</span></td>
+        <td class="center" style="white-space:nowrap">
+          <button type="button" class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${currentMonth}','${d.id}','${r.id}',false)">🤖 ส่งเข้าไอดี ${d.short}</button>
+          <button type="button" class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${currentMonth}','${d.id}','${r.id}',true)">📲 แชร์</button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('approvedForLineTable').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>อำเภอ</th>
+          <th>หัวข้อรายงาน (เดือน${currentMonth})</th>
+          <th class="center">สถานะ / คะแนน</th>
+          <th class="center">ส่งแจ้งเตือนเฉพาะรายการ</th>
+        </tr>
+      </thead>
+      <tbody>${aRows || `<tr><td colspan="4" class="center">ไม่พบรายการตามสถานะที่เลือกของ ${getDistrictLabel(selectedLineDistrict)}</td></tr>`}</tbody>
+    </table>
+  `;
+}
+
+async function testSingleRecipientLine(recId) {
+  const item = lineRecipients.find(x => String(x.id) === String(recId));
+  if (!item) return;
+  const msg = `🔔 [ทดสอบการแจ้งเตือน CDD Uthai Report]\nผู้รับ: ${item.name}\nหน่วยงานที่ผูกไว้: ${getDistrictLabel(item.distId)}\nรหัสไอดี: ${item.lineId}\nสถานะ: บอท LINE OA เชื่อมต่อพร้อมส่งรายงานประจำเดือน${currentMonth} เรียบร้อยแล้ว!`;
+  await dispatchLineMessageToTargets(msg, [item], false, false);
+}
+
+async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [], forceManualShare = false, isBroadcastMode = false) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถส่งแจ้งเตือน LINE ได้');
+    return;
+  }
+
+  if (forceManualShare) {
+    const shareUrl = 'https://line.me/R/msg/text/?' + encodeURIComponent(messageText);
+    window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    showToast('📲 เปิดหน้าต่างแชร์ข้อความไปยังแอป LINE เรียบร้อยแล้ว');
+    return;
+  }
+
+  const activeToken = (document.getElementById('quickLineTokenInput')?.value || document.getElementById('cfgLineToken')?.value || gasConfig.token || '').trim();
+  const fallbackTarget = (document.getElementById('cfgLineTarget')?.value || gasConfig.target || '').trim();
+  const diagBox = document.getElementById('lineBotDiagResult');
+
+  if (!activeToken) {
+    if (diagBox) {
+      diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ ไม่สามารถส่งผ่านบอทได้ เพราะคุณยังไม่ได้ใส่รหัส LINE Channel Access Token ในกล่องด้านบนสุดของหน้านี้ครับ</span>`;
+    }
+    showToast('⚠️ กรุณาวางรหัส LINE Channel Access Token ในช่องตั้งค่าบอทด้านบนก่อน');
+    return;
+  }
+
+  const cleanTargets = (targetRecipientObjs || []).filter(r => r && r.lineId);
+  const firstTargetId = cleanTargets.length === 1 ? cleanTargets[0].lineId.trim() : (cleanTargets.length === 0 ? fallbackTarget : '');
+
+  const targetNames = isBroadcastMode
+    ? 'Broadcast หาเพื่อนทุกคนของบอท'
+    : (cleanTargets.length > 0 ? cleanTargets.map(r => r.name).join(', ') : (fallbackTarget ? `ไอดีหลัก (${fallbackTarget.slice(0, 8)}...)` : 'Broadcast ทุกคน'));
+
+  showToast(`⏳ กำลังส่งข้อความผ่านบอท LINE ไปยัง: ${targetNames}...`);
+
+  const res = await sendToGoogleSheetDB({
+    action: 'sendLine',
+    message: messageText,
+    token: activeToken,
+    target: firstTargetId,
+    recipients: cleanTargets,
+    forceBroadcast: isBroadcastMode
+  });
+
+  if (res && res.ok) {
+    if (res.warning && diagBox) {
+      diagBox.innerHTML = `⚠️ <b>ส่งสำเร็จแบบ Broadcast:</b> ${res.warning}`;
+    } else if (diagBox) {
+      diagBox.innerHTML = `✅ <b>ส่งข้อความผ่านบอท LINE สำเร็จ!</b> เป้าหมาย: <b>${targetNames}</b> (${res.mode === 'push' ? `ส่งตรงเข้า ${res.sentCount} ไอดี` : 'ส่งแบบ Broadcast'})`;
+    }
+    showToast(`✅ บอท LINE ส่งข้อความไปยัง "${targetNames}" สำเร็จ!`);
+    return;
+  }
+
+  const errReason = (res && res.error) ? res.error : 'ตรวจสอบว่าอัปเดตโค้ด รหัส.gs เป็น V16 และกด Deploy > New version แล้ว';
+  if (diagBox) {
+    diagBox.innerHTML = `❌ <b>บอท LINE ส่งไม่ผ่าน:</b> <span style="color:var(--danger)">${errReason}</span>`;
+  }
+  showToast(`❌ บอทส่งไม่ผ่าน: ${errReason}`);
+}
+
+function sendSingleLineAlert(month, distId, repId, forceManualShare = false) {
+  const dist = DISTRICTS.find(d => d.id === distId);
+  const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
+  const rec = db[month][distId][repId];
+  const fileLine = rec.fileName ? `\nไฟล์แนบ: ${rec.fileName}` : '';
+  const msg = `📢 [CDD Uthai Report - แจ้งสถานะรายงาน]\nประจำเดือน: ${month}\nหน่วยงาน: ${dist.name}\nกลุ่มงาน: ${rep.groupShort}\nรายงาน: ${rep.name}${fileLine}\nสถานะ: ${rec.status} (${rec.score}/2 คะแนน)`;
+
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const isBcast = currentPage === 'line' && mode === 'BROADCAST';
+  const targets = currentPage === 'line'
+    ? getResolvedTargetRecipients(selectedLineDistrict === 'ALL' ? distId : null)
+    : getResolvedTargetRecipients(distId);
+
+  dispatchLineMessageToTargets(msg, targets, forceManualShare, isBcast);
+}
+
+function sendDistrictSummaryLine(forceManualShare = false) {
+  const reports = getAllReportsFlat(currentMonth, false);
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const isBcast = mode === 'BROADCAST';
+  const targets = getResolvedTargetRecipients();
+
+  if (selectedLineDistrict === 'ALL') {
+    let lines = [
+      `📊 [CDD Uthai Report] สรุปคะแนนประจำเดือน${currentMonth}`,
+      `สพจ.อุทัยธานี (เปิดส่ง ${reports.length} งาน • คะแนนเต็ม ${reports.length * 2} คะแนน)`
+    ];
+    DISTRICTS.forEach(d => {
+      let sc = 0, app = 0, pend = 0;
+      reports.forEach(r => {
+        const rec = db[currentMonth][d.id][r.id];
+        sc += Number(rec?.score || 0);
+        if (rec?.status === 'อนุมัติแล้ว') app++;
+        else if (rec?.status === 'รอตรวจสอบ') pend++;
+      });
+      lines.push(`• ${d.short}: ${sc}/${reports.length * 2} คะแนน (อนุมัติ ${app}/${reports.length}${pend > 0 ? ` รอตรวจ ${pend}` : ''})`);
+    });
+    dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare, isBcast);
+    return;
+  }
+
+  const dist = DISTRICTS.find(d => d.id === selectedLineDistrict);
+  if (!dist) return;
+
+  let sc = 0, appList = [], pendList = [], missList = [];
+  reports.forEach(r => {
+    const rec = db[currentMonth][dist.id][r.id];
+    sc += Number(rec?.score || 0);
+    if (rec?.status === 'อนุมัติแล้ว') appList.push(r.name);
+    else if (rec?.status === 'รอตรวจสอบ') pendList.push(r.name);
+    else missList.push(r.name);
+  });
+
+  let lines = [
+    `📊 [CDD Uthai Report - สรุปผลการส่งรายงาน]`,
+    `หน่วยงาน: ${dist.name}`,
+    `ประจำเดือน: ${currentMonth}`,
+    `คะแนนที่ได้: ${sc} / ${reports.length * 2} คะแนน`,
+    `✅ อนุมัติแล้ว: ${appList.length} งาน`,
+    `⏳ รอตรวจสอบ: ${pendList.length} งาน`,
+    `⚪ ยังไม่ส่ง: ${missList.length} งาน`
+  ];
+  if (missList.length > 0 && missList.length <= 10) {
+    lines.push(`\n📌 รายการที่ยังไม่ส่ง (${missList.length} งาน):`);
+    missList.forEach(name => lines.push(`- ${name}`));
+  }
+  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare, isBcast);
+}
+
+function sendDistrictPendingAlertLine(forceManualShare = false) {
+  const reports = getAllReportsFlat(currentMonth, false);
+  const mode = document.getElementById('lineSendTargetMode')?.value || 'BY_DISTRICT';
+  const isBcast = mode === 'BROADCAST';
+  const targets = getResolvedTargetRecipients();
+  const dists = selectedLineDistrict === 'ALL' ? DISTRICTS : DISTRICTS.filter(d => d.id === selectedLineDistrict);
+
+  let lines = [`⚠️ [CDD Uthai Report - แจ้งเตือนงานค้างส่ง ประจำเดือน${currentMonth}]`];
+  let totalMissing = 0;
+
+  dists.forEach(d => {
+    const missing = [];
+    reports.forEach(r => {
+      const rec = db[currentMonth][d.id][r.id];
+      if (!rec || rec.status === 'ยังไม่ส่งรายงาน' || rec.status === 'แก้ไข') {
+        missing.push(r.name);
+      }
+    });
+    totalMissing += missing.length;
+    if (selectedLineDistrict === 'ALL') {
+      lines.push(`• ${d.short}: ค้างส่ง ${missing.length} งาน`);
+    } else {
+      lines.push(`หน่วยงาน: ${d.name}`);
+      lines.push(`จำนวนที่ค้างส่ง: ${missing.length} / ${reports.length} งาน`);
+      missing.forEach(mName => lines.push(`- ${mName}`));
+    }
+  });
+
+  if (totalMissing === 0) {
+    lines.push(`🎉 ส่งรายงานครบทุกหัวข้อเรียบร้อยแล้ว!`);
+  }
+  dispatchLineMessageToTargets(lines.join('\n'), targets, forceManualShare, isBcast);
+}
+
+/* ================== 15. EXCEL / GOOGLE SHEETS IMPORT & EXPORT ================== */
+function buildTemplateRows(useCurrentData = false) {
+  const rows = [];
+  const reports = getAllReportsFlat(currentMonth, false);
+  DISTRICTS.forEach(d => {
+    reports.forEach(r => {
+      const rec = useCurrentData ? db[currentMonth][d.id][r.id] : {
+        status: 'ยังไม่ส่งรายงาน', score: 0, fileName: '', driveViewUrl: '', driveDownloadUrl: '', link: '', sender: '', submittedAt: '', note: ''
+      };
+      rows.push({
+        'ประจำเดือน': currentMonth,
+        'รหัสอำเภอ': d.id,
+        'อำเภอ': d.name,
+        'รหัสกลุ่มงาน': r.groupId,
+        'กลุ่มงาน': r.groupName,
+        'รหัสรายงาน': r.id,
+        'หัวข้อรายงาน': r.name,
+        'สถานะการส่งงาน': rec.status,
+        'คะแนน': rec.score,
+        'ชื่อไฟล์แนบ': rec.fileName || '',
+        'ลิงก์เปิดดูใน Google Drive': rec.driveViewUrl || rec.link || '',
+        'ลิงก์ดาวน์โหลดไฟล์': rec.driveDownloadUrl || rec.driveViewUrl || '',
+        'ผู้ส่งรายงาน': rec.sender || '',
+        'หมายเหตุ': rec.note || '',
+        'อัปเดตล่าสุด': rec.submittedAt || ''
+      });
+    });
+  });
+  return rows;
+}
+
+function downloadGoogleSheetTemplate() {
+  const rows = buildTemplateRows(false);
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'ฐานข้อมูลรวมทั้งหมด');
+  XLSX.writeFile(wb, `CDD_Uthai_Report_GoogleSheet_Template_${currentMonth}.xlsx`);
+  showToast('📥 ดาวน์โหลดไฟล์แม่แบบที่ตรงกับหัวตาราง Google Sheets เรียบร้อยแล้ว');
+}
+
+function exportCurrentToExcel() {
+  const rows = buildTemplateRows(true);
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `รายงาน_${currentMonth}`);
+  XLSX.writeFile(wb, `CDD_Uthai_Report_สรุปรายงาน_${currentMonth}.xlsx`);
+  showToast('📤 ส่งออกข้อมูลเป็นไฟล์ Excel เรียบร้อยแล้ว');
+}
+
+function handleExcelFileSelected(e) {
+  if (!isAdmin()) {
+    showToast('⛔ เฉพาะแอดมินระดับจังหวัดเท่านั้นที่สามารถนำเข้าข้อมูล Excel ได้');
+    return;
+  }
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const firstSheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      let importedCount = 0;
+      const allReps = getAllReportsFlat(null, true);
+      const batchForGas = [];
+
+      rows.forEach(row => {
+        const m = (row['ประจำเดือน'] || currentMonth).toString().trim();
+        if (!db[m]) return;
+        const dCode = (row['รหัสอำเภอ'] || '').toString().trim().toUpperCase();
+        const dName = (row['อำเภอ'] || '').toString().trim();
+        const dist = DISTRICTS.find(d => d.id === dCode || d.name.includes(dName) || (dName && d.short.includes(dName)));
+        if (!dist) return;
+
+        const rCode = (row['รหัสรายงาน'] || '').toString().trim().toUpperCase();
+        const rName = (row['หัวข้อรายงาน'] || '').toString().trim();
+        const rep = allReps.find(r => r.id === rCode || r.name === rName || (rName && r.name.includes(rName)));
+        if (!rep) return;
+
+        let st = (row['สถานะการส่งงาน'] || 'ยังไม่ส่งรายงาน').toString().trim();
+        let sc = row['คะแนน'] !== '' ? Number(row['คะแนน']) : (st === 'อนุมัติแล้ว' ? 2 : 0);
+        if (sc > 0 && st === 'ยังไม่ส่งรายงาน') st = 'อนุมัติแล้ว';
+
+        const viewUrl = (row['ลิงก์เปิดดูใน Google Drive'] || row['ลิงก์เอกสารแนบ'] || '').toString().trim();
+        const dlUrl = (row['ลิงก์ดาวน์โหลดไฟล์'] || row['ลิงก์ดาวน์โหลด Google Drive'] || viewUrl).toString().trim();
+        const recObj = {
+          status: st,
+          score: sc,
+          fileName: (row['ชื่อไฟล์แนบ'] || '').toString().trim(),
+          fileSize: 0,
+          mimeType: '',
+          driveViewUrl: viewUrl,
+          driveDownloadUrl: dlUrl,
+          link: viewUrl,
+          sender: (row['ผู้ส่งรายงาน'] || '').toString().trim(),
+          submittedAt: (row['อัปเดตล่าสุด'] || row['วันที่ส่ง'] || '').toString().trim(),
+          note: (row['หมายเหตุ'] || '').toString().trim()
+        };
+        db[m][dist.id][rep.id] = recObj;
+        batchForGas.push({
+          month: m,
+          distId: dist.id,
+          distName: dist.name,
+          groupId: rep.groupId,
+          groupName: rep.groupName,
+          repId: rep.id,
+          repName: rep.name,
+          ...recObj
+        });
+        importedCount++;
+      });
+
+      saveDB();
+      renderAll();
+      if (batchForGas.length > 0) {
+        await sendToGoogleSheetDB({ action: 'batchImport', records: batchForGas });
+      }
+      showToast(`✅ นำเข้าข้อมูลจากไฟล์ Excel และซิงค์ขึ้น Google Sheets สำเร็จ ${importedCount} รายการ`);
+    } catch (err) {
+      showToast('❌ รูปแบบไฟล์ไม่ถูกต้อง กรุณาใช้ไฟล์แม่แบบของระบบ');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ================== 16. UTILITIES & SETTINGS ================== */
+async function saveGasSettings() {
+  if (!isAdmin()) return;
+  gasConfig = {
+    url: document.getElementById('cfgGasUrl').value.trim() || DEFAULT_GAS_WEB_APP_URL,
+    driveFolderId: document.getElementById('cfgDriveFolderId').value.trim(),
+    token: document.getElementById('cfgLineToken').value.trim(),
+    target: document.getElementById('cfgLineTarget').value.trim()
+  };
+  document.getElementById('quickLineTokenInput').value = gasConfig.token;
+  saveWorkgroupsAndVisibility(true);
+  await testGasConnection();
+  showToast('💾 บันทึกการตั้งค่าและ LINE Token ลงฐานข้อมูลกลางเรียบร้อยแล้ว');
+}
+
+async function testGasConnection() {
+  const statusBox = document.getElementById('gasStatusBox');
+  statusBox.style.display = 'block';
+  const curUrl = (document.getElementById('cfgGasUrl').value || gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
+  gasConfig.url = curUrl;
+
+  statusBox.innerHTML = '⏳ กำลังตรวจสอบการเชื่อมต่อกับ Google Apps Script...';
+  const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
+
+  if (res && res.ok && Array.isArray(res.records)) {
+    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์ (เวอร์ชัน ${res.version || 'ล่าสุด'})!</b><br>พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
+      (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
+    updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ)`);
+  } else {
+    statusBox.innerHTML = '⚠️ ไม่สามารถอ่านค่าตอบกลับได้ กรุณาตรวจสอบลิงก์ /exec';
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('on');
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  document.getElementById('btnTheme').textContent = next === 'dark' ? '☀️ โหมดสว่าง' : '🌙 โหมดมืด';
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 4500);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  initMonthBar();
+  pullStateFromGas(false, true);
+  window.addEventListener('focus', () => {
+    const anyModalOpen = document.querySelector('.ov.on');
+    const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+    if (currentUser && !anyModalOpen && !isTypingInForm) {
+      pullStateFromGas(false, true);
+    }
+  });
+  const drop = document.getElementById('excelDropZone');
+  if (drop) {
+    drop.addEventListener('dragover', e => { e.preventDefault(); });
+    drop.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      requireAdminAndPin(
+        'ยืนยันรหัสความปลอดภัยแอดมินจังหวัด เพื่อนำเข้าไฟล์ ' + file.name,
+        () => handleExcelFileSelected({ target: { files: [file] } })
+      );
+    });
+  }
+});
+</script>
+</body>
+</html>
