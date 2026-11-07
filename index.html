@@ -635,6 +635,15 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             <button type="button" class="btn btn-ghost btn-sm" onclick="refreshTickerFromCloud(true)">🔄 ตรวจสอบข้อความที่เผยแพร่</button>
           </div>
           <div id="tickerSaveStatus" class="ticker-status" role="status" aria-live="polite">ยังไม่ได้ตรวจสอบข้อมูลประกาศบน Google Apps Script</div>
+          <div class="ticker-status" style="margin-top:12px;border:1px solid var(--line-2)">
+            <b>🔌 ตรวจสอบ Apps Script ปลายทาง (V19)</b>
+            <p style="margin:4px 0 8px">หากขึ้นว่าเป็นเวอร์ชันเก่า ให้คัดลอก URL เว็บแอปที่ Deploy ล่าสุดซึ่งลงท้ายด้วย /exec มาใส่ด้านล่าง แล้วกดตรวจสอบและเชื่อมต่อ</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input class="inp" style="min-width:230px;flex:1" id="tickerGasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec" aria-label="URL Google Apps Script ที่ Deploy ล่าสุด">
+              <button type="button" class="btn btn-sky btn-sm" onclick="connectCurrentBackend()">🔎 ตรวจสอบและเชื่อมต่อ</button>
+            </div>
+            <div id="tickerCloudVersionInfo" style="margin-top:8px;overflow-wrap:anywhere">รอการตรวจสอบเวอร์ชัน Apps Script</div>
+          </div>
         </div>
       </section>
 
@@ -1059,7 +1068,7 @@ const DEFAULT_ACCOUNTS = {
   'UTI04': { pass: '4444', role: 'district', name: '4. สำนักงานพัฒนาชุมชนอำเภอทัพทัน', distId: 'UTI04' },
   'UTI05': { pass: '5555', role: 'district', name: '5. สำนักงานพัฒนาชุมชนอำเภอสว่างอารมณ์', distId: 'UTI05' },
   'UTI06': { pass: '6666', role: 'district', name: '6. สำนักงานพัฒนาชุมชนอำเภอลานสัก (UTI06)', distId: 'UTI06' },
-  'UTI07': { pass: '7777', role: 'district', name: '7. สำนักงานพัฒนาชุมชนอำเภอลานสัก / ห้วยคต (UTI07)', distId: 'UTI07' },
+  'UTI07': { pass: '7777', role: 'district', name: '7. สพอ.ห้วยคต', distId: 'UTI07' },
   'UTI08': { pass: '8888', role: 'district', name: '8. สำนักงานพัฒนาชุมชนอำเภอบ้านไร่', distId: 'UTI08' }
 };
 
@@ -1072,7 +1081,7 @@ const DISTRICTS = [
   { id: 'UTI04', name: '4. สพอ.ทัพทัน', short: 'อ.ทัพทัน' },
   { id: 'UTI05', name: '5. สพอ.สว่างอารมณ์', short: 'อ.สว่างอารมณ์' },
   { id: 'UTI06', name: '6. สพอ.ลานสัก (UTI06)', short: 'อ.ลานสัก (06)' },
-  { id: 'UTI07', name: '7. สพอ.ลานสัก/ห้วยคต (UTI07)', short: 'อ.ห้วยคต (07)' },
+  { id: 'UTI07', name: '7. สพอ.ห้วยคต', short: 'อ.ห้วยคต' },
   { id: 'UTI08', name: '8. สพอ.บ้านไร่', short: 'อ.บ้านไร่' }
 ];
 
@@ -1140,6 +1149,9 @@ const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V16';
 const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V16';
 const SCHEDULE_CACHE_KEY = 'CDD_UTHAI_SCHEDULES_V17';
 const TICKER_CACHE_KEY = 'CDD_UTHAI_TICKER_V17';
+const CDD_RELEASE = 'V19';
+let checkedBackendUrl = '';
+let checkedBackendAt = 0;
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
@@ -1172,6 +1184,11 @@ let tickerLastSavedAt = 0;
 let tickerLastFetchAt = 0;
 let tickerCloudUnsupported = false;
 function escCDD(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function normalizeUTI07Name_() {
+  // Keep credentials and all other account attributes intact.
+  if (ACCOUNTS && ACCOUNTS.UTI07) ACCOUNTS.UTI07.name = '7. สพอ.ห้วยคต';
+  if (currentUser && currentUser.distId === 'UTI07') currentUser.name = '7. สพอ.ห้วยคต';
+}
 function adminApiCredentials() { return { username: currentUser?.username || '', password: currentUser?.pass || '' }; }
 function confirmed(res) { return Boolean(res && res.ok && !res.opaque); }
 function reportScheduleKey(month, repId) { return month + '__' + repId; }
@@ -1282,7 +1299,8 @@ async function refreshTickerFromCloud(notify = false) {
   }
   if (response?.ok && !response.tickerConfig) {
     tickerCloudUnsupported = true;
-    setTickerStatus('❌ Apps Script ปลายทางยังไม่มีระบบข้อความวิ่ง กรุณาอัปเดต Code.gs และ Deploy เป็นเวอร์ชันใหม่ จากนั้นรีเฟรชเว็บ', 'err');
+    setTickerStatus('❌ URL /exec ที่เว็บไซต์ใช้งานยังเป็น Apps Script เก่า หรือชี้ไปผิด Deployment ให้ตรวจสอบ URL /exec ใต้ฟอร์ม แล้วกดเชื่อมต่อ', 'err');
+    updateBackendDiagnostic('❌ ปลายทางไม่รองรับข้อความวิ่ง ให้ใส่ URL /exec จาก Deploy ล่าสุด แล้วกด ตรวจสอบและเชื่อมต่อ');
   } else {
     setTickerStatus('❌ อ่านข้อมูลประกาศจาก Cloud ไม่สำเร็จ ตรวจ URL /exec และการอนุญาตเข้าถึง Web App', 'err');
   }
@@ -1313,6 +1331,8 @@ function renderSchedulePage() {
     <td class="center"><div style="display:flex;gap:5px;justify-content:center"><button class="btn btn-primary btn-xs" onclick="saveScheduleEntry('${month}','${r.id}')">💾 บันทึก</button><button class="btn btn-ghost btn-xs" onclick="deleteScheduleEntry('${month}','${r.id}')">🗑️ ล้าง</button></div></td></tr>`;
   }).join('');
   wrap.innerHTML = `<table><thead><tr><th>#</th><th>หัวข้อรายงาน</th><th>วันและเวลาที่ต้องส่ง</th><th>หมายเหตุ</th><th class="center">จัดการ</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="center">ไม่พบหัวข้อรายงาน</td></tr>'}</tbody></table>`;
+  const checkInput=document.getElementById('tickerGasUrlInput');
+  if(checkInput && document.activeElement!==checkInput) checkInput.value=gasConfig.url||DEFAULT_GAS_WEB_APP_URL;
   renderTickerConfigForm();
 }
 function renderTickerConfigForm() {
@@ -1600,10 +1620,13 @@ function loadState() {
     }
   } catch (e) {}
 
+  normalizeUTI07Name_();
   try { reportSchedules=JSON.parse(localStorage.getItem(SCHEDULE_CACHE_KEY)||'{}')||{}; } catch(e) {reportSchedules={};}
   try { tickerConfig={...tickerConfig,...JSON.parse(localStorage.getItem(TICKER_CACHE_KEY)||'{}')}; } catch(e) {}
   renderTicker();
   document.getElementById('cfgGasUrl').value = gasConfig.url || DEFAULT_GAS_WEB_APP_URL;
+  const diagInput=document.getElementById('tickerGasUrlInput');
+  if(diagInput) diagInput.value=gasConfig.url||DEFAULT_GAS_WEB_APP_URL;
   document.getElementById('cfgDriveFolderId').value = gasConfig.driveFolderId || '';
   document.getElementById('cfgLineToken').value = gasConfig.token || '';
   document.getElementById('quickLineTokenInput').value = gasConfig.token || '';
@@ -1706,6 +1729,73 @@ function callViaJsonp(url, queryParamsObj) {
   });
 }
 
+// Cross-origin GitHub Pages -> Apps Script: JSONP is used only after a
+// password-free HMAC proof. No admin password is inserted into a URL.
+async function verifyBackendVersion(url, force = false) {
+  const target = String(url || '').trim();
+  if (!target || !/^https:\/\/script\.google\.com\/macros\/s\/[^/?#]+\/exec(?:\?.*)?$/.test(target)) {
+    return {ok:false,error:'URL ต้องเป็น Web App ของ Apps Script ที่ลงท้ายด้วย /exec'};
+  }
+  if (!force && checkedBackendUrl === target && Date.now() - checkedBackendAt < 120000) {
+    return {ok:true,version:CDD_RELEASE,features:['signedAdminJsonp']};
+  }
+  const result = await callViaJsonp(target, {action:'health'});
+  if (!result?.ok || result.version !== CDD_RELEASE || !result.features?.includes('signedAdminJsonp')) {
+    return {ok:false,error:'Apps Script ที่ URL นี้' + (result?.version ? ' เป็น ' + result.version : ' ยังไม่ตอบกลับข้อมูลเวอร์ชัน') + ' ไม่ใช่ ' + CDD_RELEASE + ' กรุณาใช้ URL /exec ที่ Deploy โค้ดใหม่จริง',detectedVersion:result?.version||'ไม่ทราบ'};
+  }
+  checkedBackendUrl = target;
+  checkedBackendAt = Date.now();
+  return result;
+}
+function updateBackendDiagnostic(message, good = false) {
+  const field = document.getElementById('tickerCloudVersionInfo');
+  if (field) {field.textContent = message;field.style.color = good ? 'var(--ok)' : 'var(--danger)';}
+}
+async function connectCurrentBackend() {
+  const field = document.getElementById('tickerGasUrlInput');
+  const url = (field?.value||'').trim();
+  updateBackendDiagnostic('⏳ กำลังตรวจสอบว่า URL นี้เปิดใช้ '+CDD_RELEASE+' จริง...');
+  const probe = await verifyBackendVersion(url, true);
+  if (!probe.ok) {updateBackendDiagnostic('❌ '+probe.error);return;}
+  // Change the target only after proving the new endpoint supports writes.
+  gasConfig.url = url;
+  document.getElementById('cfgGasUrl').value=url;
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+  tickerCloudUnsupported=false;
+  updateBackendDiagnostic('✅ เชื่อมต่อ Apps Script '+probe.version+' แล้ว • URL นี้รองรับการบันทึกข้อความวิ่งและตีกลับ',true);
+  showToast('✅ เชื่อมต่อ Google Apps Script '+probe.version+' สำเร็จ');
+  await refreshTickerFromCloud(true);
+  pullStateFromGas(false,true);
+}
+async function encodeSignedAdminJsonp(payload) {
+  if (!isAdmin() || !currentUser?.pass) throw new Error('ต้องเข้าสู่ระบบด้วยบัญชี Admin ก่อน');
+  if (!window.crypto?.subtle) throw new Error('เว็บต้องเปิดผ่าน HTTPS ของ GitHub Pages เพื่อยืนยันคำสั่ง');
+  const req = {...payload};
+  delete req.adminAuth;
+  const body=JSON.stringify(req);
+  const username = currentUser.username;
+  const ts=String(Date.now());
+  const nonce=window.crypto.randomUUID ? window.crypto.randomUUID() : ts+'-'+Math.random().toString(36).slice(2);
+  const coder=new TextEncoder();
+  const key=await crypto.subtle.importKey('raw',coder.encode(String(currentUser.pass)),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const sig=await crypto.subtle.sign('HMAC',key,coder.encode(username+'\n'+ts+'\n'+nonce+'\n'+body));
+  const hex=Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  const query={authUser:username,authTs:ts,authNonce:nonce,authSig:hex};
+  // Gzip reduces long Thai messages so Google /exec doesn't receive oversized URLs.
+  if (typeof CompressionStream === 'function' && body.length > 200) {
+    try {
+      const stream=new Blob([body],{type:'application/json'}).stream().pipeThrough(new CompressionStream('gzip'));
+      const bytes=new Uint8Array(await new Response(stream).arrayBuffer());
+      let chars='';
+      for(let i=0;i<bytes.length;i++) chars+=String.fromCharCode(bytes[i]);
+      query.z=btoa(chars).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/g,'');
+      return query;
+    } catch(e) {} // Older browsers can send a plain JSONP payload.
+  }
+  query.payload=body;
+  return query;
+}
+
 async function sendToGoogleSheetDB(payload) {
   const targetUrl = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
   if (!targetUrl) return { ok: false, error: 'ไม่ได้ระบุ URL' };
@@ -1713,26 +1803,25 @@ async function sendToGoogleSheetDB(payload) {
   const hasLargeFile = Boolean(payload.filePayload && payload.filePayload.base64);
   const serialized = JSON.stringify(payload);
 
-  // Confirm new admin writes without putting admin credentials in URL query strings.
-  // POST is one-way (no-cors); a random request ID is polled independently via JSONP.
+  // GAS ContentService does not expose CORS response headers to GitHub Pages.
+  // Authenticated, HMAC-signed JSONP returns the server result directly, instead
+  // of opaque POST + cache polling that could appear to fail after a real write.
   const confirmedActions=['upsertLineRecipient','deleteLineRecipient','saveScheduleEntry','deleteScheduleEntry','saveTickerConfig','returnReport'];
-  if(confirmedActions.includes(payload.action)) {
-    const requestId = (window.crypto && typeof window.crypto.randomUUID === 'function')
-      ? window.crypto.randomUUID()
-      : (Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
-    try {
-      await fetch(targetUrl, {
-        method:'POST',mode:'no-cors',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({...payload,requestId})
-      });
-    } catch(e) { return {ok:false,error:'ส่งคำสั่งไป Google Apps Script ไม่ได้: '+String(e)}; }
-    for(let attempt=0;attempt<9;attempt++) {
-      await new Promise(resolve=>setTimeout(resolve,800));
-      const progress=await callViaJsonp(targetUrl,{action:'checkOperation',requestId});
-      if(progress?.ready && progress.response) return progress.response;
+  if (confirmedActions.includes(payload.action)) {
+    const probe = await verifyBackendVersion(targetUrl);
+    if (!probe.ok) {
+      updateBackendDiagnostic('❌ '+probe.error);
+      return {ok:false,error:probe.error+' (ตรวจสอบ URL /exec ในเมนูกำหนดส่งงานและข้อความวิ่ง)'};
     }
-    return {ok:false,error:'ไม่ได้รับการยืนยันผลจาก Google Apps Script กรุณาตรวจดูชีตหรือการ Deploy ก่อนกดบันทึกซ้ำ'};
+    try {
+      const query=await encodeSignedAdminJsonp(payload);
+      const response=await callViaJsonp(targetUrl,query);
+      if (!response) return {ok:false,error:'Apps Script ไม่ได้ส่งผลการบันทึกกลับมา กรุณาตรวจ URL /exec และสิทธิ์ Web App'};
+      if (response.ok) updateBackendDiagnostic('✅ Google Apps Script '+CDD_RELEASE+' บันทึกคำสั่งสำเร็จ',true);
+      return response;
+    } catch(err) {
+      return {ok:false,error:String(err.message||err)};
+    }
   }
 
   if (payload.action === 'getInitialData' || payload.action === 'ping') {
@@ -1830,6 +1919,7 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
       const cloudAccounts = res.accounts || hidObj._meta_accounts;
       if (cloudAccounts && typeof cloudAccounts === 'object') {
         ACCOUNTS = { ...JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS)), ...cloudAccounts };
+        normalizeUTI07Name_();
         localStorage.setItem(ACCOUNTS_CFG_KEY, JSON.stringify(ACCOUNTS));
       }
 
@@ -2009,6 +2099,7 @@ function handleLogin(e) {
   e.preventDefault();
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value.trim();
+  normalizeUTI07Name_();
   const matchedKey = Object.keys(ACCOUNTS).find(k => k.toLowerCase() === u.toLowerCase());
   const acc = matchedKey ? ACCOUNTS[matchedKey] : null;
 
@@ -2018,6 +2109,7 @@ function handleLogin(e) {
   }
   document.getElementById('loginErr').style.display = 'none';
   currentUser = { username: matchedKey, ...acc };
+  normalizeUTI07Name_();
   document.getElementById('loginScreen').classList.add('hidden');
   applyRolePermissions();
   initFilters();
@@ -3792,7 +3884,7 @@ async function saveGasSettings() {
   document.getElementById('quickLineTokenInput').value = gasConfig.token;
   saveWorkgroupsAndVisibility(true);
   await testGasConnection();
-  showToast('💾 บันทึกการตั้งค่าและ LINE Token ลงฐานข้อมูลกลางเรียบร้อยแล้ว');
+  showToast('ℹ️ จัดเก็บการตั้งค่าในเบราว์เซอร์แล้ว โปรดตรวจสถานะการเชื่อมต่อ Apps Script ก่อนใช้งาน');
 }
 
 async function testGasConnection() {
@@ -3803,9 +3895,10 @@ async function testGasConnection() {
 
   statusBox.innerHTML = '⏳ กำลังตรวจสอบการเชื่อมต่อกับ Google Apps Script...';
   const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
-
+  const health=await verifyBackendVersion(curUrl,true);
+  updateBackendDiagnostic(health.ok ? '✅ เชื่อมต่อ Apps Script '+health.version+' พร้อมบันทึกข้อความวิ่ง/ตีกลับ' : '❌ '+health.error,health.ok);
   if (res && res.ok && Array.isArray(res.records)) {
-    statusBox.innerHTML = `✅ <b>เชื่อมต่อฐานข้อมูลสำเร็จสมบูรณ์ (เวอร์ชัน ${res.version || 'ล่าสุด'})!</b><br>พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
+    statusBox.innerHTML = `${health.ok ? '✅' : '⚠️'} <b>ฐานข้อมูลตอบกลับ (เวอร์ชัน ${res.version || 'ไม่ทราบ'})${health.ok ? ' และยืนยันระบบคำสั่ง V19 ได้' : ' แต่ยังไม่รองรับการบันทึกใหม่'}</b><br>${health.ok ? '' : escCDD(health.error)+'<br>'}พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
       (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
     updateTopSyncIndicator('ok', `🟢 ซิงค์แล้ว (${res.records.length} รายการ)`);
   } else {
