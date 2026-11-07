@@ -381,6 +381,9 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
       <button class="nav-item" data-page="topics" id="navTopics" onclick="switchPage('topics')">
         <span>🗂️ จัดการหัวข้อรายงาน & ซ่อนรายเดือน</span>
       </button>
+      <button class="nav-item" data-page="schedules" id="navSchedules" onclick="switchPage('schedules')">
+        <span>🗓️ กำหนดวันส่งงาน / เส้นตาย (Admin)</span>
+      </button>
       <button class="nav-item" data-page="passwords" id="navPasswords" onclick="switchPage('passwords')">
         <span>🔑 จัดการรหัสผ่านอำเภอ (Admin)</span>
       </button>
@@ -529,7 +532,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
                 <option value="รอตรวจสอบ">⏳ รอตรวจสอบ (ส่งแล้ว)</option>
                 <option value="อนุมัติแล้ว">✅ อนุมัติแล้ว (ได้คะแนน)</option>
                 <option value="ยังไม่ส่งรายงาน">⚪ ยังไม่ส่งรายงาน</option>
-                <option value="แก้ไข">⚠️ แจ้งแก้ไข</option>
+                <option value="แก้ไข">↩️ ตีกลับ/รอแก้ไข</option>
               </select>
             </div>
           </div>
@@ -574,6 +577,34 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
         </div>
       </section>
 
+      <!-- ==================== PAGE: ADMIN SUBMISSION DEADLINES ==================== -->
+      <section class="page" id="page-schedules">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h3>🗓️ กำหนดการส่งงานและวันครบกำหนด (เฉพาะ Admin)</h3>
+              <p>เลือกปี เดือน กลุ่มงาน หรือหัวข้อเฉพาะ และวันที่ต้องส่ง ข้อมูลถูกบันทึกใน Google Sheets โดยตรง</p>
+            </div>
+          </div>
+          <form id="scheduleForm" onsubmit="saveSubmissionSchedule(event)">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+              <div class="form-group"><label>ปี พ.ศ.</label><input class="inp" id="scheduleYear" type="number" min="2567" max="2743" onchange="renderScheduleManager()" required></div>
+              <div class="form-group"><label>ประจำเดือน</label><select class="inp" id="scheduleMonth" onchange="renderScheduleManager()"></select></div>
+              <div class="form-group"><label>กลุ่มงาน</label><select class="inp" id="scheduleGroup" onchange="populateScheduleReportOptions()"></select></div>
+              <div class="form-group"><label>หัวข้อรายงาน</label><select class="inp" id="scheduleReport"></select></div>
+              <div class="form-group"><label>วันครบกำหนด</label><input class="inp" id="scheduleDueDate" type="date" required></div>
+            </div>
+            <div class="form-group"><label>คำชี้แจง/รายละเอียดเพิ่มเติม</label><textarea id="scheduleNote" class="inp" rows="2" maxlength="500" placeholder="เช่น ส่งภายใน 16.30 น. / กรุณาแนบหลักฐาน"></textarea></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+              <button class="btn btn-primary" type="submit" id="scheduleSaveButton">💾 บันทึกกำหนดส่งลง Google Sheets</button>
+              <button type="button" class="btn btn-ghost" onclick="resetScheduleForm()">➕ เพิ่มกำหนดส่งรายการใหม่</button>
+            </div>
+          </form>
+          <div class="note" style="margin-bottom:14px">กำหนดรายหัวข้อมีความสำคัญสูงกว่ากำหนดทั้งกลุ่มงาน และกำหนดกลุ่มงานมีความสำคัญสูงกว่ากำหนดทุกหัวข้อ ระบบแสดงสถานะ <b>เลยกำหนด</b> แต่ยังเปิดรับรายงานเพื่อให้แอดมินตรวจสอบย้อนหลังได้</div>
+          <div class="tbl-wrap" id="scheduleManagerTable"></div>
+        </div>
+      </section>
+
       <!-- ==================== PAGE: MANAGE PASSWORDS FOR DISTRICTS (ADMIN ONLY) ==================== -->
       <section class="page" id="page-passwords">
         <div class="card">
@@ -584,7 +615,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-ghost btn-sm" onclick="toggleShowAllPasswords()" id="btnToggleShowPass">👁️ แสดงรหัสผ่านเป็นตัวอักษร</button>
-              <button class="btn btn-warn btn-sm" onclick="resetPasswordsToDefault()">🔄 คืนค่ารหัสผ่านเริ่มต้น</button>
+              <button class="btn btn-ghost btn-sm" disabled title="ปิดใช้งานเพื่อป้องกันการใช้รหัสผ่านค่าเริ่มต้น">🔒 ปิดการคืนค่ารหัสผ่านเริ่มต้น</button>
               <button class="btn btn-primary btn-sm" onclick="saveAllPasswordsFromTable()">💾 บันทึกรหัสผ่านทั้งหมดลง Cloud</button>
             </div>
           </div>
@@ -894,6 +925,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <textarea id="subRepName" name="หัวข้อรายงาน" class="inp" rows="2" readonly></textarea>
         </div>
 
+        <div id="submitRejectionDetails" class="note lock" style="display:none;margin-bottom:14px"></div>
         <div class="form-group">
           <label>📎 อัปโหลดไฟล์รายงาน (รองรับทุกนามสกุล ขนาดไม่เกิน 5 MB — จัดเก็บลง Google Drive แยกตามกลุ่มงาน)</label>
           <div class="file-upload-box" onclick="document.getElementById('subFileInput').click()">
@@ -924,6 +956,24 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           <button type="button" class="btn btn-ghost" onclick="closeModal('submitModal')">ยกเลิก</button>
           <button type="submit" class="btn btn-primary" id="btnConfirmSubmit">📤 ยืนยันการส่งรายงาน</button>
         </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: RETURN REPORT WITH REASON ==================== -->
+<div class="ov" id="rejectModal">
+  <div class="modal">
+    <div class="modal-h"><h3>↩️ ตีกลับรายงานเพื่อแก้ไข</h3><button type="button" class="btn btn-ghost btn-xs" onclick="closeModal('rejectModal')">✕</button></div>
+    <div class="modal-b">
+      <div class="note lock" id="rejectReportInfo" style="margin-bottom:14px"></div>
+      <form onsubmit="submitRejectReport(event)">
+        <input type="hidden" id="rejectMonth"><input type="hidden" id="rejectDist"><input type="hidden" id="rejectRep">
+        <div class="form-group"><label>เหตุผลที่ตีกลับ / สิ่งที่ต้องแก้ไข <b style="color:var(--danger)">*</b></label>
+          <textarea id="rejectReason" class="inp" rows="5" minlength="5" maxlength="800" required placeholder="ระบุรายละเอียดให้ชัดเจน เช่น เอกสารไม่ครบ ต้องปรับยอดรวมในตาราง และแนบไฟล์ฉบับแก้ไข"></textarea>
+        </div>
+        <label style="display:flex;gap:9px;align-items:center;margin-bottom:14px"><input type="checkbox" id="rejectNotifyLine" checked> แจ้งเหตุผลไปยัง LINE ของอำเภอ (เฉพาะไอดีที่ผูกกับอำเภอนี้ ไม่ Broadcast)</label>
+        <div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn btn-ghost" onclick="closeModal('rejectModal')">ยกเลิก</button><button type="submit" class="btn btn-danger" id="rejectSubmitButton">↩️ ยืนยันตีกลับงาน</button></div>
       </form>
     </div>
   </div>
@@ -970,15 +1020,15 @@ const ADMIN_ACTION_PIN = '02102542';
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const DEFAULT_ACCOUNTS = {
-  'Admin': { pass: '9999', role: 'admin', name: 'แอดมินจังหวัด (สพจ.อุทัยธานี)', distId: 'ALL' },
-  'UTI01': { pass: '1111', role: 'district', name: '1. สำนักงานพัฒนาชุมชนอำเภอเมือง', distId: 'UTI01' },
-  'UTI02': { pass: '2222', role: 'district', name: '2. สำนักงานพัฒนาชุมชนอำเภอหนองขาหย่าง', distId: 'UTI02' },
-  'UTI03': { pass: '3333', role: 'district', name: '3. สำนักงานพัฒนาชุมชนอำเภอหนองฉาง', distId: 'UTI03' },
-  'UTI04': { pass: '4444', role: 'district', name: '4. สำนักงานพัฒนาชุมชนอำเภอทัพทัน', distId: 'UTI04' },
-  'UTI05': { pass: '5555', role: 'district', name: '5. สำนักงานพัฒนาชุมชนอำเภอสว่างอารมณ์', distId: 'UTI05' },
-  'UTI06': { pass: '6666', role: 'district', name: '6. สำนักงานพัฒนาชุมชนอำเภอลานสัก (UTI06)', distId: 'UTI06' },
-  'UTI07': { pass: '7777', role: 'district', name: '7. สำนักงานพัฒนาชุมชนอำเภอลานสัก / ห้วยคต (UTI07)', distId: 'UTI07' },
-  'UTI08': { pass: '8888', role: 'district', name: '8. สำนักงานพัฒนาชุมชนอำเภอบ้านไร่', distId: 'UTI08' }
+  'Admin': { pass: '', role: 'admin', name: 'แอดมินจังหวัด (สพจ.อุทัยธานี)', distId: 'ALL' },
+  'UTI01': { pass: '', role: 'district', name: '1. สำนักงานพัฒนาชุมชนอำเภอเมือง', distId: 'UTI01' },
+  'UTI02': { pass: '', role: 'district', name: '2. สำนักงานพัฒนาชุมชนอำเภอหนองขาหย่าง', distId: 'UTI02' },
+  'UTI03': { pass: '', role: 'district', name: '3. สำนักงานพัฒนาชุมชนอำเภอหนองฉาง', distId: 'UTI03' },
+  'UTI04': { pass: '', role: 'district', name: '4. สำนักงานพัฒนาชุมชนอำเภอทัพทัน', distId: 'UTI04' },
+  'UTI05': { pass: '', role: 'district', name: '5. สำนักงานพัฒนาชุมชนอำเภอสว่างอารมณ์', distId: 'UTI05' },
+  'UTI06': { pass: '', role: 'district', name: '6. สำนักงานพัฒนาชุมชนอำเภอลานสัก (UTI06)', distId: 'UTI06' },
+  'UTI07': { pass: '', role: 'district', name: '7. สำนักงานพัฒนาชุมชนอำเภอลานสัก / ห้วยคต (UTI07)', distId: 'UTI07' },
+  'UTI08': { pass: '', role: 'district', name: '8. สำนักงานพัฒนาชุมชนอำเภอบ้านไร่', distId: 'UTI08' }
 };
 
 let ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
@@ -1056,10 +1106,12 @@ const HIDDEN_REPORTS_KEY = 'CDD_UTHAI_HIDDEN_REPORTS_V16';
 const ACCOUNTS_CFG_KEY = 'CDD_UTHAI_ACCOUNTS_CFG_V16';
 const LINE_REC_KEY = 'CDD_UTHAI_LINE_RECIPIENTS_V16';
 const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V16';
+const SCHEDULE_CFG_KEY = 'CDD_UTHAI_DEADLINES_V17';
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
 let currentUser = null;
+let currentSession = '';
 let currentMonth = MONTHS[new Date().getMonth()];
 let currentPage = 'overview';
 let selectedApprovalGroup = 'ALL';
@@ -1068,6 +1120,7 @@ let selectedLineDistrict = 'ALL';
 let showPasswordsPlain = false;
 let db = {};
 let lineRecipients = [];
+let submissionSchedules = [];
 let checkedLineRecipientIds = new Set();
 let lastLocalConfigSavedAt = 0;
 let gasConfig = {
@@ -1147,7 +1200,8 @@ function createEmptyRecord() {
     driveDownloadUrl: '',
     sender: '',
     submittedAt: '',
-    note: ''
+    note: '',
+    rejectionReason: '', rejectedAt: '', rejectedBy: '', rejectionHistory: []
   };
 }
 
@@ -1242,6 +1296,8 @@ function loadState() {
     db = createEmptyDB();
   }
   ensureDBStructure();
+  try { submissionSchedules = JSON.parse(localStorage.getItem(SCHEDULE_CFG_KEY) || '[]'); }
+  catch(e) { submissionSchedules = []; }
 
   try {
     const lr = localStorage.getItem(LINE_REC_KEY) || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V15') || localStorage.getItem('CDD_UTHAI_LINE_RECIPIENTS_V14');
@@ -1371,13 +1427,27 @@ async function sendToGoogleSheetDB(payload) {
   const targetUrl = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
   if (!targetUrl) return { ok: false, error: 'ไม่ได้ระบุ URL' };
 
+  if (currentSession && !['login','ping'].includes(payload.action)) {
+    payload = {...payload, session:currentSession};
+  }
   const hasLargeFile = Boolean(payload.filePayload && payload.filePayload.base64);
   const serialized = JSON.stringify(payload);
+  if (['loginChallenge','login','logout'].includes(payload.action)) {
+    const confirmed = await callViaJsonp(targetUrl, {payload:serialized});
+    return confirmed || {ok:false,error:'ไม่สามารถติดต่อระบบยืนยันตัวตนได้'};
+  }
+  // GAS ContentService POST redirects and may fail CORS from GitHub Pages.
+  // For short, idempotent admin actions, JSONP gives a real response (not opaque success).
+  if (['upsertLineRecipient','deleteLineRecipient','saveSchedule','deleteSchedule','rejectReport','saveAccountsConfig','checkLineBot','saveLineConfig','sendLine'].includes(payload.action)) {
+    if (serialized.length > 5000) return {ok:false,error:'ข้อมูลยาวเกินไปสำหรับคำสั่งนี้'};
+    const confirmed = await callViaJsonp(targetUrl, {payload: serialized});
+    return confirmed || {ok:false,error:'ไม่สามารถอ่านผลตอบกลับจาก Google Apps Script ได้'};
+  }
 
   if (payload.action === 'getInitialData' || payload.action === 'ping') {
     try {
       const sep = targetUrl.includes('?') ? '&' : '?';
-      const getRes = await fetch(`${targetUrl}${sep}action=${encodeURIComponent(payload.action)}&_t=${Date.now()}`, {
+      const getRes = await fetch(`${targetUrl}${sep}action=${encodeURIComponent(payload.action)}&session=${encodeURIComponent(currentSession)}&_t=${Date.now()}`, {
         method: 'GET',
         redirect: 'follow',
         cache: 'no-store'
@@ -1385,7 +1455,7 @@ async function sendToGoogleSheetDB(payload) {
       const parsed = await getRes.json();
       if (parsed) return parsed;
     } catch (e) {
-      const jsonpData = await callViaJsonp(targetUrl, { action: payload.action });
+      const jsonpData = await callViaJsonp(targetUrl, { action: payload.action, session: currentSession });
       if (jsonpData) return jsonpData;
     }
   }
@@ -1418,8 +1488,8 @@ async function sendToGoogleSheetDB(payload) {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: serialized
       });
-      updateTopSyncIndicator('ok', '🟢 ส่งคำสั่งเข้า Google Sheets แล้ว');
-      return { ok: true, opaque: true };
+      updateTopSyncIndicator('pend', '⏳ ส่งข้อมูลแล้ว • รอตรวจสอบใน Cloud');
+      return { ok: true, opaque: true }; // Delivery unconfirmed: UI must not claim save was verified.
     } catch (e2) {
       updateTopSyncIndicator('err', '🔴 เชื่อมต่อไม่ได้');
       return { ok: false, error: String(e2) };
@@ -1432,10 +1502,7 @@ async function syncAllConfigToGas() {
   lastLocalConfigSavedAt = Date.now();
   const enrichedHidden = {
     ...hiddenReportsByMonth,
-    _meta_accounts: ACCOUNTS,
-    _meta_lineRecipients: lineRecipients,
     _meta_gasConfig: {
-      token: gasConfig.token || '',
       target: gasConfig.target || '',
       driveFolderId: gasConfig.driveFolderId || ''
     }
@@ -1443,8 +1510,7 @@ async function syncAllConfigToGas() {
   return await sendToGoogleSheetDB({
     action: 'saveTopicsConfig',
     workgroups: WORKGROUPS,
-    hiddenReportsByMonth: enrichedHidden,
-    lineRecipients: lineRecipients
+    hiddenReportsByMonth: enrichedHidden
   });
 }
 
@@ -1457,7 +1523,7 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
     const loginHint = document.getElementById('loginSyncHint');
 
     if (!res || !res.ok || res.opaque || !Array.isArray(res.records)) {
-      if (loginHint) loginHint.textContent = '🔒 สงวนสิทธิ์เฉพาะเจ้าหน้าที่พัฒนาชุมชนจังหวัดอุทัยธานี';
+      if (loginHint) loginHint.textContent = '🔒 ระบบข้อมูลจังหวัดอุทัยธานี';
       if (showNotification) showToast('ℹ️ อัปเดตสถานะเรียบร้อยแล้ว');
       return;
     }
@@ -1495,22 +1561,15 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
         localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
       }
 
-      // ผสานรายการไอดีไลน์จาก Cloud (รวมไอดีที่ Webhook ดูดเข้ามาใหม่ด้วย)
-      const cloudLineList = Array.isArray(res.lineRecipients) && res.lineRecipients.length > 0
-        ? res.lineRecipients
-        : (Array.isArray(hidObj._meta_lineRecipients) ? hidObj._meta_lineRecipients : null);
-
-      if (Array.isArray(cloudLineList) && cloudLineList.length > 0) {
-        // รวมไอดีจาก Cloud กับไอดีในเครื่องโดยไม่ให้ซ้ำกัน
-        const merged = [...cloudLineList];
-        lineRecipients.forEach(localItem => {
-          if (!merged.some(c => c.lineId === localItem.lineId && c.distId === localItem.distId)) {
-            merged.push(localItem);
-          }
-        });
-        lineRecipients = merged;
+      // Google Sheets authoritative: no merging with stale local records that undo edits/deletions.
+      if (Array.isArray(res.lineRecipients)) {
+        lineRecipients = res.lineRecipients;
         localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
-        lineRecipients.forEach(r => checkedLineRecipientIds.add(String(r.id)));
+        checkedLineRecipientIds = new Set(lineRecipients.map(r => String(r.id)));
+      }
+      if (Array.isArray(res.schedules)) {
+        submissionSchedules = res.schedules;
+        localStorage.setItem(SCHEDULE_CFG_KEY, JSON.stringify(submissionSchedules));
       }
     }
 
@@ -1544,7 +1603,11 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
           link: r.link || r.driveViewUrl || '',
           sender: r.sender || '',
           submittedAt: r.updatedAt || '',
-          note: r.note || ''
+          note: r.note || '',
+          rejectionReason: r.rejectionReason || '',
+          rejectedAt: r.rejectedAt || '',
+          rejectedBy: r.rejectedBy || '',
+          rejectionHistory: Array.isArray(r.rejectionHistory) ? r.rejectionHistory : []
         };
       }
     });
@@ -1571,7 +1634,7 @@ function startAutoSyncTimer() {
   autoSyncIntervalId = setInterval(() => {
     const anyModalOpen = document.querySelector('.ov.on');
     const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
-    const isConfigPage = ['passwords', 'line', 'topics', 'settings'].includes(currentPage);
+    const isConfigPage = ['passwords', 'line', 'topics', 'settings', 'schedules'].includes(currentPage);
     if (currentUser && !anyModalOpen && !(isConfigPage && isTypingInForm)) {
       pullStateFromGas(false, true);
     }
@@ -1642,33 +1705,42 @@ function triggerProtectedExcelPick() {
 }
 
 /* ================== 6. LOGIN & ROLE PERMISSIONS ================== */
-function handleLogin(e) {
+async function handleLogin(e) {
   e.preventDefault();
-  const u = document.getElementById('loginUser').value.trim();
-  const p = document.getElementById('loginPass').value.trim();
-  const matchedKey = Object.keys(ACCOUNTS).find(k => k.toLowerCase() === u.toLowerCase());
-  const acc = matchedKey ? ACCOUNTS[matchedKey] : null;
-
-  if (!acc || String(acc.pass) !== p) {
-    document.getElementById('loginErr').style.display = 'block';
-    return;
-  }
-  document.getElementById('loginErr').style.display = 'none';
-  currentUser = { username: matchedKey, ...acc };
-  document.getElementById('loginScreen').classList.add('hidden');
-  applyRolePermissions();
-  initFilters();
-  switchPage('overview');
-  pullStateFromGas(false);
-  startAutoSyncTimer();
-  showToast('ยินดีต้อนรับเข้าสู่ CDD Uthai Report: ' + currentUser.name);
+  const username=document.getElementById('loginUser').value.trim();
+  const password=document.getElementById('loginPass').value;
+  const submitBtn=document.querySelector('#loginForm button[type="submit"]');
+  submitBtn.disabled=true; submitBtn.textContent='⏳ ตรวจสอบบัญชีจาก Google Apps Script...';
+  try {
+    const challenge=await sendToGoogleSheetDB({action:'loginChallenge',username});
+    if(!challenge?.ok || !challenge.nonce) throw new Error(challenge?.error||'ไม่สามารถรับรหัสท้าทายได้');
+    // Password never appears in a GET URL: one-time HMAC challenge response.
+    const normalUser=username.toLowerCase();
+    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),
+      {name:'HMAC',hash:'SHA-256'},false,['sign']);
+    const hmac=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(challenge.nonce+':'+normalUser));
+    const proof=Array.from(new Uint8Array(hmac)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const result=await sendToGoogleSheetDB({action:'login',username,nonce:challenge.nonce,proof});
+    if(!result?.ok || !result.session || !result.user) throw new Error(result?.error||'เซิร์ฟเวอร์ไม่สามารถตรวจสอบบัญชีได้');
+    currentSession=result.session; currentUser=result.user;
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginErr').style.display='none';
+    document.getElementById('loginScreen').classList.add('hidden');
+    applyRolePermissions(); initFilters(); switchPage('overview');
+    await pullStateFromGas(false);
+    startAutoSyncTimer();
+    showToast('เข้าสู่ระบบสำเร็จ: '+currentUser.name);
+  } catch(err) {
+    const el=document.getElementById('loginErr');el.textContent='เข้าสู่ระบบไม่สำเร็จ: '+err.message;el.style.display='block';
+  } finally {submitBtn.disabled=false;submitBtn.textContent='เข้าสู่ระบบ';}
 }
 
 function handleLogout() {
-  currentUser = null;
-  if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
+  const session=currentSession; currentSession='';currentUser=null;
+  if(autoSyncIntervalId)clearInterval(autoSyncIntervalId);
+  if(session)sendToGoogleSheetDB({action:'logout',session});
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
@@ -1679,7 +1751,7 @@ function applyRolePermissions() {
 
   const adminElements = [
     'btnTopTopics', 'btnTopPasswords', 'btnTopExcel', 'btnTopReset',
-    'navTopics', 'navPasswords', 'navExcel', 'navDataLabel', 'navLine',
+    'navTopics', 'navSchedules', 'navPasswords', 'navExcel', 'navDataLabel', 'navLine',
     'gasSettingsCard', 'adminBulkActions', 'wgAdminControls', 'btnOverviewManageTopics'
   ];
   adminElements.forEach(id => {
@@ -1756,6 +1828,19 @@ function toggleSinglePassInput(inputId) {
   el.type = el.type === 'password' ? 'text' : 'password';
 }
 
+async function persistAccountsToCloud(previousAccounts) {
+  const res=await sendToGoogleSheetDB({action:'saveAccountsConfig',accounts:ACCOUNTS});
+  if (!res?.ok || res.opaque) {
+    ACCOUNTS=previousAccounts;
+    localStorage.setItem(ACCOUNTS_CFG_KEY,JSON.stringify(ACCOUNTS));
+    showToast('❌ ไม่สามารถยืนยันการบันทึกบัญชีบนเซิร์ฟเวอร์: '+(res?.error||'ไม่ทราบสาเหตุ'));
+    return false;
+  }
+  localStorage.setItem(ACCOUNTS_CFG_KEY,JSON.stringify(ACCOUNTS));
+  await pullStateFromGas(false,true);
+  return true;
+}
+
 async function saveSingleAccountPassword(key) {
   if (!isAdmin()) return;
   const passEl = document.getElementById('accPass_' + key);
@@ -1769,10 +1854,10 @@ async function saveSingleAccountPassword(key) {
     return;
   }
 
+  const snapshot=JSON.parse(JSON.stringify(ACCOUNTS));
   ACCOUNTS[key].pass = newPass;
   if (newName) ACCOUNTS[key].name = newName;
-  saveWorkgroupsAndVisibility(true);
-  showToast(`✅ เปลี่ยนรหัสผ่านของ "${key}" (${ACCOUNTS[key].name}) และซิงค์ลง Cloud เรียบร้อยแล้ว!`);
+  if (await persistAccountsToCloud(snapshot)) showToast(`✅ เปลี่ยนรหัสผ่านของ "${key}" บนเซิร์ฟเวอร์แล้ว`);
 }
 
 function saveAllPasswordsFromTable() {
@@ -1780,15 +1865,17 @@ function saveAllPasswordsFromTable() {
   requireAdminAndPin(
     'ยืนยันการบันทึกรหัสผ่านของทุกอำเภอลงฐานข้อมูล Cloud กรุณากรอกรหัสความปลอดภัยแอดมินจังหวัด',
     async () => {
+      const snapshot=JSON.parse(JSON.stringify(ACCOUNTS));
       Object.keys(ACCOUNTS).forEach(key => {
         const passEl = document.getElementById('accPass_' + key);
         const nameEl = document.getElementById('accName_' + key);
         if (passEl && passEl.value.trim()) ACCOUNTS[key].pass = passEl.value.trim();
         if (nameEl && nameEl.value.trim()) ACCOUNTS[key].name = nameEl.value.trim();
       });
-      saveWorkgroupsAndVisibility(true);
-      renderPasswordManagerPage();
-      showToast('✅ บันทึกรหัสผ่านของทุกอำเภอลงฐานข้อมูลเรียบร้อยแล้ว');
+      if (await persistAccountsToCloud(snapshot)) {
+        renderPasswordManagerPage();
+        showToast('✅ บันทึกรหัสผ่านทุกบัญชีลง Google Sheets และระบบยืนยันตัวตนแล้ว');
+      }
     }
   );
 }
@@ -1796,12 +1883,9 @@ function saveAllPasswordsFromTable() {
 function resetPasswordsToDefault() {
   if (!isAdmin()) return;
   requireAdminAndPin(
-    'ยืนยันการรีเซ็ตรหัสผ่านของทุกอำเภอกลับเป็นค่าเริ่มต้น (Admin=9999, UTI01=1111 ... UTI08=8888)',
+    'การคืนค่ารหัสผ่านอัตโนมัติถูกปิดเพื่อความปลอดภัย โปรดตั้งรหัสใหม่จากตาราง',
     async () => {
-      ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
-      saveWorkgroupsAndVisibility(true);
-      renderPasswordManagerPage();
-      showToast('🔄 คืนค่ารหัสผ่านเริ่มต้นให้ทุกอำเภอเรียบร้อยแล้ว');
+      showToast('⚠️ ปิดการคืนค่ารหัสผ่านอัตโนมัติเพื่อความปลอดภัย กรุณาตั้งรหัสใหม่ทีละบัญชีจากตาราง');
     }
   );
 }
@@ -1825,7 +1909,7 @@ function selectMonth(m) {
 }
 
 function switchPage(pageId) {
-  if (['excel', 'line', 'topics', 'passwords'].includes(pageId) && !isAdmin()) {
+  if (['excel', 'line', 'topics', 'passwords', 'schedules'].includes(pageId) && !isAdmin()) {
     showToast('⛔ เมนูนี้สำหรับแอดมินระดับจังหวัดเท่านั้น');
     return;
   }
@@ -1860,6 +1944,7 @@ function renderAll() {
     renderLinePage();
     renderTopicsManagerPage();
     renderPasswordManagerPage();
+    renderScheduleManager();
   }
   if (['G1', 'G2', 'G3', 'G4'].includes(currentPage)) renderWorkgroupPage(currentPage);
 }
@@ -1994,6 +2079,10 @@ function renderOverview() {
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:var(--surface-3)">
         <span style="font-weight:700;color:var(--muted)">⚪ ยังไม่ส่งรายงาน</span>
         <b style="font-size:16px;color:var(--ink)">${noneCnt} งาน</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(244,63,94,.09)">
+        <span style="font-weight:700;color:var(--danger)">↩️ ตีกลับรอแก้ไข</span>
+        <b style="font-size:16px;color:var(--danger)">${rejectCnt} งาน</b>
       </div>
       ${hiddenCount > 0 ? `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-radius:12px;background:rgba(244,63,94,.08)">
@@ -2307,19 +2396,19 @@ function buildFileCellHtml(month, distId, repId, rec) {
     const sizeStr = rec.fileSize ? ` (${formatBytes(rec.fileSize)})` : '';
     if (isAdmin()) {
       parts.push(`
-        <button class="btn btn-sky btn-xs" onclick="downloadSubmittedFile('${month}','${distId}','${repId}')" title="ดาวน์โหลดไฟล์ ${rec.fileName}">
-          ⬇️ ดาวน์โหลดไฟล์ (${rec.fileName}${sizeStr})
+        <button class="btn btn-sky btn-xs" onclick="downloadSubmittedFile('${month}','${distId}','${repId}')" title="ดาวน์โหลดไฟล์ ${escapeHtml(rec.fileName)}">
+          ⬇️ ดาวน์โหลดไฟล์ (${escapeHtml(rec.fileName)}${sizeStr})
         </button>
       `);
-      if (rec.driveViewUrl) {
-        parts.push(`<a href="${rec.driveViewUrl}" target="_blank" class="btn btn-ghost btn-xs" title="เปิดดูใน Google Drive">📁 Drive</a>`);
+      if (safeWebUrl(rec.driveViewUrl)) {
+        parts.push(`<a href="${safeWebUrl(rec.driveViewUrl)}" target="_blank" class="btn btn-ghost btn-xs" title="เปิดดูใน Google Drive">📁 Drive</a>`);
       }
     } else {
-      parts.push(`<span class="pill pill-ok">📎 ${rec.fileName}${sizeStr}</span>`);
+      parts.push(`<span class="pill pill-ok">📎 ${escapeHtml(rec.fileName)}${sizeStr}</span>`);
     }
   }
-  if (rec.link) {
-    parts.push(`<a href="${rec.link}" target="_blank" style="color:var(--blue-600);font-weight:700;font-size:12px">🔗 เปิดลิงก์แนบ</a>`);
+  if (safeWebUrl(rec.link)) {
+    parts.push(`<a href="${safeWebUrl(rec.link)}" target="_blank" style="color:var(--blue-600);font-weight:700;font-size:12px">🔗 เปิดลิงก์แนบ</a>`);
   }
   return parts.length ? `<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;align-items:center">${parts.join('')}</div>` : '-';
 }
@@ -2426,6 +2515,8 @@ function renderWorkgroupPage(gId) {
       const rec = db[currentMonth][d.id][r.id];
       const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none';
       const fileCellHtml = buildFileCellHtml(currentMonth, d.id, r.id, rec);
+      const dueTag = deadlineTag(currentMonth, r.groupId || group.id, r.id, rec);
+      const returnedNote = rec.status === 'แก้ไข' && rec.rejectionReason ? `<div class="note lock" style="font-size:12px;margin-top:5px"><b>↩️ ต้องแก้ไข:</b> ${escapeHtml(rec.rejectionReason)}${rec.rejectedAt ? ` <small>(${escapeHtml(rec.rejectedAt)})</small>` : ''}</div>` : '';
 
       const adminTopicTools = admin ? `
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
@@ -2449,12 +2540,13 @@ function renderWorkgroupPage(gId) {
           <b>${r.name}</b>
           ${isHid ? `<span class="pill pill-rej" style="margin-left:5px">🙈 งดส่ง/ซ่อนในเดือน${currentMonth}</span>` : ''}
           ${adminTopicTools}
+          ${dueTag}${returnedNote}
         </td>
         <td>${d.name}</td>
         <td class="center"><span class="pill ${pillCls}">${rec.status}</span></td>
         <td class="center"><b>${rec.score}</b> / 2</td>
         <td class="center">${fileCellHtml}</td>
-        <td>${rec.sender || '-'}</td>
+        <td>${escapeHtml(rec.sender || '-')}</td>
         <td class="center">
           ${!isHid ? `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${currentMonth}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>` : '<span class="pill pill-none">งดส่งเดือนนี้</span>'}
           ${manualBtns}
@@ -2485,7 +2577,15 @@ function openSubmitModal(month, distId, repId) {
   const dist = DISTRICTS.find(d => d.id === distId);
   const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
   const rec = db[month][distId][repId];
-
+  if (!isAdmin() && currentUser?.distId !== distId) { showToast('⛔ ไม่สามารถส่งรายงานแทนอำเภออื่น'); return; }
+  if (isReportHidden(month, repId)) { showToast('⛔ หัวข้อนี้ปิดรับงานในเดือนที่เลือก'); return; }
+  const rejectEl = document.getElementById('submitRejectionDetails');
+  if (rec.status === 'แก้ไข' && rec.rejectionReason) {
+    rejectEl.style.display = 'block';
+    rejectEl.innerHTML = `<b>↩️ รายงานนี้ถูกตีกลับให้แก้ไข</b><div>${escapeHtml(rec.rejectionReason)}</div><small>ผู้ตรวจ: ${escapeHtml(rec.rejectedBy || '-')} • ${escapeHtml(rec.rejectedAt || '-')}</small>`;
+  } else {
+    rejectEl.style.display = 'none'; rejectEl.textContent = '';
+  }
   stagedUploadFile = null;
   document.getElementById('subFileInput').value = '';
   document.getElementById('subFileErr').style.display = 'none';
@@ -2531,7 +2631,11 @@ async function syncRecordToGas(actionType, month, distId, repId, filePayload = n
       link: rec.link,
       fileName: rec.fileName || '',
       fileSize: rec.fileSize || 0,
-      note: rec.note || ''
+      note: rec.note || '',
+      rejectionReason: rec.rejectionReason || '',
+      rejectedAt: rec.rejectedAt || '',
+      rejectedBy: rec.rejectedBy || '',
+      rejectionHistory: rec.rejectionHistory || []
     },
     filePayload: filePayload
   };
@@ -2562,7 +2666,9 @@ async function confirmSubmitReport(e) {
     driveDownloadUrl: prevRec.driveDownloadUrl || '',
     sender: document.getElementById('subSender').value.trim(),
     submittedAt: now,
-    note: document.getElementById('subNote').value.trim()
+    note: document.getElementById('subNote').value.trim(),
+    rejectionReason: '', rejectedAt: '', rejectedBy: '',
+    rejectionHistory: Array.isArray(prevRec.rejectionHistory) ? prevRec.rejectionHistory : []
   };
 
   if (stagedUploadFile) {
@@ -2606,11 +2712,11 @@ async function confirmSubmitReport(e) {
   submitBtn.textContent = '📤 ยืนยันการส่งรายงาน';
   closeModal('submitModal');
   renderAll();
-  showToast(
-    stagedUploadFile
-      ? `✅ บันทึกลง Google Sheets และอัปโหลดไฟล์ "${stagedUploadFile.fileName}" เข้า Google Drive สำเร็จ!`
-      : `✅ ส่งข้อมูลบันทึกลงฐานข้อมูล Google Sheets สำเร็จ!`
-  );
+  showToast(gasResult?.opaque
+    ? '⏳ ส่งข้อมูลแล้ว แต่ยังไม่ได้รับการยืนยันจาก Google Sheets กรุณากดซิงค์เพื่อตรวจสอบ'
+    : gasResult?.ok
+      ? (stagedUploadFile ? `✅ อัปโหลดไฟล์ "${stagedUploadFile.fileName}" และบันทึกข้อมูลแล้ว` : '✅ ส่งข้อมูลเข้า Google Sheets แล้ว')
+      : '❌ ไม่สามารถยืนยันการส่งงาน: ' + (gasResult?.error || 'โปรดลองใหม่'));
 }
 
 /* ================== 13. APPROVAL & MANUAL SCORING PAGE ================== */
@@ -2638,6 +2744,7 @@ function initFilters() {
   }
 
   renderApprovalGroupTabs();
+  initScheduleControls();
   populateReportDropdown();
 }
 
@@ -2659,6 +2766,7 @@ function renderApprovalGroupTabs() {
 function selectApprovalGroup(gId) {
   selectedApprovalGroup = gId;
   renderApprovalGroupTabs();
+  initScheduleControls();
   populateReportDropdown();
   renderApprovalPage();
 }
@@ -2743,9 +2851,12 @@ function renderApprovalPage() {
       if (sFilter !== 'ALL' && rec.status !== sFilter) return;
       const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none';
       const fileCellHtml = buildFileCellHtml(m, d.id, r.id, rec);
+      const why = rec.rejectionReason ? `<div style="margin-top:4px;color:var(--danger);font-size:11px"><b>↩️ เหตุผล:</b> ${escapeHtml(rec.rejectionReason)}</div>` : '';
+      const historical = Array.isArray(rec.rejectionHistory) && rec.rejectionHistory.length ? `<details style="margin-top:4px;font-size:11px"><summary>ประวัติการตีกลับ ${rec.rejectionHistory.length} ครั้ง</summary>${rec.rejectionHistory.map(x => `<div>${escapeHtml(x.rejectedAt || '')}: ${escapeHtml(x.reason || '')}</div>`).join('')}</details>` : '';
 
       const actions = admin ? `
         <button class="btn btn-ok btn-xs" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">✅ อนุมัติ (+2)</button>
+        ${rec.status !== 'ยังไม่ส่งรายงาน' ? `<button class="btn btn-danger btn-xs" onclick="openRejectModal('${m}','${d.id}','${r.id}')">↩️ ตีกลับ</button>` : ''}
         <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)" title="ส่งเข้าไอดีของ ${d.short}">🤖 ส่ง LINE (${d.short})</button>
         <button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',true)">📲 แชร์</button>
       ` : `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${m}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>`;
@@ -2753,11 +2864,11 @@ function renderApprovalPage() {
       lRows += `<tr>
         <td>${m}</td>
         <td><b>${d.name}</b></td>
-        <td><small style="color:var(--muted)">${r.groupShort}</small><br><b>${r.name}</b></td>
-        <td class="center"><span class="pill ${pillCls}">${rec.status}</span></td>
+        <td><small style="color:var(--muted)">${r.groupShort}</small><br><b>${r.name}</b>${deadlineTag(m,r.groupId,r.id,rec)}</td>
+        <td class="center"><span class="pill ${pillCls}">${rec.status}</span>${why}${historical}</td>
         <td class="center"><b>${rec.score}</b></td>
         <td class="center">${fileCellHtml}</td>
-        <td>${rec.sender || '-'}</td>
+        <td>${escapeHtml(rec.sender || '-')}</td>
         <td class="center" style="white-space:nowrap">${actions}</td>
       </tr>`;
     });
@@ -2822,8 +2933,8 @@ async function verifyAndSaveLineBotToken() {
     showToast(`✅ เชื่อมต่อบอท "${res.botName}" สำเร็จ!`);
   } else if (res && res.error && res.error.includes('Unknown action')) {
     badge.className = 'pill pill-pend';
-    badge.textContent = '⚠️ รออัปเดต รหัส.gs เป็น V16';
-    diagBox.innerHTML = `⚠️ <b>บันทึก Token แล้ว แต่โค้ด <code>รหัส.gs</code> ใน Google Apps Script ของคุณยังไม่ได้อัปเดตเป็น V16:</b><br>กรุณานำโค้ด <code>รหัส.gs</code> ด้านบนไปวางทับใน Google Apps Script แล้วกด <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b> เพื่อให้บอทส่งข้อความได้ครับ`;
+    badge.textContent = '⚠️ รออัปเดต รหัส.gs เป็น V17.2';
+    diagBox.innerHTML = `⚠️ <b>บันทึก Token แล้ว แต่โค้ด <code>รหัส.gs</code> ใน Google Apps Script ของคุณยังไม่ได้อัปเดตเป็น V17.2:</b><br>กรุณานำโค้ด <code>รหัส.gs</code> ด้านบนไปวางทับใน Google Apps Script แล้วกด <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b> เพื่อให้บอทส่งข้อความได้ครับ`;
   } else {
     badge.className = 'pill pill-rej';
     badge.textContent = '🔴 Token ไม่ถูกต้อง';
@@ -2836,35 +2947,31 @@ async function addLineRecipient(e) {
   e.preventDefault();
   if (!isAdmin()) return;
   const editId = document.getElementById('editLineRecItemId').value.trim();
-  const distId = document.getElementById('lineRecDist').value;
-  const name = document.getElementById('lineRecName').value.trim();
-  const lineId = document.getElementById('lineRecId').value.replace(/[\r\n\s]/g, '').trim();
-  if (!name || !lineId) return;
-
-  const btn = document.getElementById('btnSaveLineRec');
-  btn.disabled = true;
-  btn.textContent = '⏳ กำลังบันทึก...';
-
-  if (editId) {
-    const item = lineRecipients.find(x => String(x.id) === String(editId));
-    if (item) {
-      item.distId = distId;
-      item.name = name;
-      item.lineId = lineId;
-    }
-  } else {
-    const newId = Date.now().toString();
-    lineRecipients.push({ id: newId, name, lineId, distId });
-    checkedLineRecipientIds.add(newId);
+  const recipient = {
+    id: editId || '',
+    distId: document.getElementById('lineRecDist').value,
+    name: document.getElementById('lineRecName').value.trim(),
+    lineId: document.getElementById('lineRecId').value.replace(/\s/g, '').trim()
+  };
+  if (!recipient.name || !/^[UCR][a-fA-F0-9]{32}$/.test(recipient.lineId)) {
+    showToast('⚠️ กรุณากรอกชื่อและรหัส LINE U/C/R ที่ถูกต้อง 33 ตัวอักษร'); return;
   }
-
-  saveWorkgroupsAndVisibility(true);
-  cancelEditLineRecipient();
-  renderLinePage();
-
-  btn.disabled = false;
-  btn.textContent = '💾 บันทึกไอดีไลน์';
-  showToast(`✅ บันทึกไอดีไลน์ "${name}" (${getDistrictLabel(distId)}) เรียบร้อยแล้ว!`);
+  const btn = document.getElementById('btnSaveLineRec');
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึกลง Google Sheets...';
+  try {
+    const result = await sendToGoogleSheetDB({action:'upsertLineRecipient',recipient});
+    if (!result?.ok || !result.recipient) throw new Error(result?.error || 'ไม่สามารถยืนยันการบันทึกจากเซิร์ฟเวอร์');
+    const saved = result.recipient;
+    lineRecipients = lineRecipients.filter(x => String(x.id) !== String(saved.id) && x.lineId !== saved.lineId);
+    lineRecipients.push(saved);
+    checkedLineRecipientIds.add(String(saved.id));
+    localStorage.setItem(LINE_REC_KEY,JSON.stringify(lineRecipients));
+    cancelEditLineRecipient(); renderLinePage();
+    showToast(`✅ บันทึกชื่อ LINE "${saved.name}" ลง Google Sheets แล้ว`);
+    // Verify the result comes back with the same name after refreshing from Sheets.
+    await pullStateFromGas(false, true);
+  } catch(err) { showToast('❌ บันทึกชื่อ LINE ไม่สำเร็จ: '+err.message); }
+  finally { btn.disabled = false; btn.textContent = '💾 บันทึกไอดีไลน์'; }
 }
 
 function openEditLineRecipient(id) {
@@ -2892,11 +2999,15 @@ function cancelEditLineRecipient() {
 
 async function removeLineRecipient(id) {
   if (!isAdmin()) return;
+  if (!confirm('ยืนยันการลบผู้รับ/กลุ่ม LINE รายการนี้ออกจากฐานข้อมูลกลางหรือไม่?')) return;
+  const response = await sendToGoogleSheetDB({action:'deleteLineRecipient',id:String(id)});
+  if (!response?.ok) { showToast('❌ ลบไม่สำเร็จ: '+(response?.error||'เซิร์ฟเวอร์ไม่ยืนยัน')); return; }
   lineRecipients = lineRecipients.filter(x => String(x.id) !== String(id));
   checkedLineRecipientIds.delete(String(id));
-  saveWorkgroupsAndVisibility(true);
+  localStorage.setItem(LINE_REC_KEY,JSON.stringify(lineRecipients));
   renderLinePage();
-  showToast('🗑️ ลบไอดีไลน์เรียบร้อยแล้ว');
+  await pullStateFromGas(false, true);
+  showToast('🗑️ ลบรายการจาก Google Sheets เรียบร้อยแล้ว');
 }
 
 function toggleLineRecipientCheck(id, isChecked) {
@@ -2977,13 +3088,13 @@ function renderLineTargetPreview() {
 
   const targets = getResolvedTargetRecipients();
   if (targets.length === 0) {
-    box.innerHTML = `⚠️ <b>ยังไม่มีไอดีไลน์สำหรับ "${distName}" ในเงื่อนไขที่เลือก:</b> กรุณาเพิ่มไอดีไลน์ของ <b>${distName}</b> ในฟอร์มด้านซ้ายมือ (หรือหากกดส่งตอนนี้ บอทจะส่งแบบ Broadcast เข้า LINE ของทุกคนที่แอดเพื่อนบอทแทน)`;
+    box.innerHTML = `⚠️ <b>ยังไม่มีไอดีไลน์สำหรับ "${distName}" ในเงื่อนไขที่เลือก:</b> กรุณาเพิ่มไอดีไลน์ของ <b>${distName}</b> ในฟอร์มด้านซ้ายมือ (ระบบจะไม่ส่ง Broadcast อัตโนมัติเพื่อป้องกันการแจ้งผิดกลุ่ม)`;
     return;
   }
 
   const pills = targets.map(t => {
     const isPushOk = /^[UCR][0-9a-fA-F]{32}$/.test(t.lineId);
-    return `<span class="pill ${isPushOk ? 'pill-ok' : 'pill-pend'}" style="margin-right:4px;margin-top:3px">🎯 ${t.name} (${getDistrictLabel(t.distId)})</span>`;
+    return `<span class="pill ${isPushOk ? 'pill-ok' : 'pill-pend'}" style="margin-right:4px;margin-top:3px">🎯 ${escapeHtml(t.name)} (${getDistrictLabel(t.distId)})</span>`;
   }).join('');
   box.innerHTML = `<div><b>🎯 ไอดีปลายทางที่จะได้รับรายงานของ "${distName}" (${targets.length} ไอดี):</b></div><div style="margin-top:4px">${pills}</div>`;
 }
@@ -3014,7 +3125,7 @@ function renderLinePage() {
   if (specSel) {
     const prevVal = specSel.value;
     specSel.innerHTML = lineRecipients.length
-      ? lineRecipients.map(r => `<option value="${r.id}">${r.name} — [${getDistrictLabel(r.distId)}] (${r.lineId.slice(0, 10)}...)</option>`).join('')
+      ? lineRecipients.map(r => `<option value="${r.id}">${escapeHtml(r.name)} — [${getDistrictLabel(r.distId)}] (${r.lineId.slice(0, 10)}...)</option>`).join('')
       : `<option value="">-- ยังไม่มีไอดีที่บันทึกไว้ --</option>`;
     if (prevVal && lineRecipients.some(r => String(r.id) === String(prevVal))) {
       specSel.value = prevVal;
@@ -3025,7 +3136,7 @@ function renderLinePage() {
     const isChecked = checkedLineRecipientIds.has(String(r.id)) ? 'checked' : '';
     const validApiId = /^[UCR][0-9a-fA-F]{32}$/.test(r.lineId);
     const badge = validApiId
-      ? `<span class="pill pill-ok">🟢 รหัส U.../C... (ส่งตรงได้ 100%)</span>`
+      ? `<span class="pill pill-ok">🟢 รหัส U.../C... (รูปแบบ LINE ID ถูกต้อง)</span>`
       : `<span class="pill pill-rej" title="บอท LINE ต้องใช้รหัสที่ขึ้นต้นด้วย U หรือ C 33 ตัวอักษร">⚠️ ไม่ใช่รหัส U.../C... (จะส่งเป็น Broadcast แทน)</span>`;
     return `
       <tr>
@@ -3033,8 +3144,8 @@ function renderLinePage() {
           <input type="checkbox" ${isChecked} onchange="toggleLineRecipientCheck('${r.id}', this.checked)" style="width:16px;height:16px;cursor:pointer">
         </td>
         <td>
-          <b>${r.name}</b>
-          <div style="font-size:11px;color:var(--muted);word-break:break-all">ID: ${r.lineId}</div>
+          <b>${escapeHtml(r.name)}</b>
+          <div style="font-size:11px;color:var(--muted);word-break:break-all">ID: ${escapeHtml(r.lineId)}</div>
           <div style="margin-top:3px">${badge}</div>
         </td>
         <td>
@@ -3139,13 +3250,7 @@ async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [
   const fallbackTarget = (document.getElementById('cfgLineTarget')?.value || gasConfig.target || '').trim();
   const diagBox = document.getElementById('lineBotDiagResult');
 
-  if (!activeToken) {
-    if (diagBox) {
-      diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ ไม่สามารถส่งผ่านบอทได้ เพราะคุณยังไม่ได้ใส่รหัส LINE Channel Access Token ในกล่องด้านบนสุดของหน้านี้ครับ</span>`;
-    }
-    showToast('⚠️ กรุณาวางรหัส LINE Channel Access Token ในช่องตั้งค่าบอทด้านบนก่อน');
-    return;
-  }
+  // Token is stored on the server. It need not be retyped on each administrator device.
 
   const cleanTargets = (targetRecipientObjs || []).filter(r => r && r.lineId);
   const firstTargetId = cleanTargets.length === 1 ? cleanTargets[0].lineId.trim() : (cleanTargets.length === 0 ? fallbackTarget : '');
@@ -3165,7 +3270,7 @@ async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [
     forceBroadcast: isBroadcastMode
   });
 
-  if (res && res.ok) {
+  if (res && res.ok && !res.opaque) {
     if (res.warning && diagBox) {
       diagBox.innerHTML = `⚠️ <b>ส่งสำเร็จแบบ Broadcast:</b> ${res.warning}`;
     } else if (diagBox) {
@@ -3175,7 +3280,7 @@ async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [
     return;
   }
 
-  const errReason = (res && res.error) ? res.error : 'ตรวจสอบว่าอัปเดตโค้ด รหัส.gs เป็น V16 และกด Deploy > New version แล้ว';
+  const errReason = res?.opaque ? 'ส่งคำสั่งแล้วแต่ยังไม่สามารถยืนยันผลการส่งได้ โปรดตรวจสอบใน LINE' : ((res && res.error) ? res.error : 'ตรวจสอบว่าอัปเดตโค้ด Code.gs เป็น V17.2 และกด Deploy > New version แล้ว');
   if (diagBox) {
     diagBox.innerHTML = `❌ <b>บอท LINE ส่งไม่ผ่าน:</b> <span style="color:var(--danger)">${errReason}</span>`;
   }
@@ -3411,6 +3516,145 @@ function handleExcelFileSelected(e) {
   reader.readAsArrayBuffer(file);
 }
 
+/* ================== 16. DEADLINES, REJECTION AUDIT ================== */
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function safeWebUrl(value) {
+  try {
+    const u=new URL(String(value || ''));
+    return ['https:','http:'].includes(u.protocol) ? escapeHtml(u.href) : '';
+  } catch(e) { return ''; }
+}
+function activeSchedule(year, month, groupId, repId) {
+  const choices = submissionSchedules.filter(x => x.year === year && x.month === month &&
+    (x.groupId === 'ALL' || x.groupId === groupId) && (x.repId === 'ALL' || x.repId === repId));
+  return choices.sort((a,b) => (Number(b.repId !== 'ALL')*2+Number(b.groupId !== 'ALL'))-
+    (Number(a.repId !== 'ALL')*2+Number(a.groupId !== 'ALL')))[0] || null;
+}
+function deadlineTag(month, groupId, repId, rec) {
+  const it = activeSchedule(new Date().getFullYear(),month,groupId,repId);
+  if (!it) return '';
+  const late = (new Date(Date.now()+7*60*60*1000).toISOString().slice(0,10)>it.dueDate) && rec.status !== 'อนุมัติแล้ว';
+  const [yyyy,mm,dd] = it.dueDate.split('-');
+  const dateText = `${dd}/${mm}/${Number(yyyy)+543}`;
+  return `<div style="margin-top:5px;font-size:11px"><span class="pill ${late?'pill-rej':'pill-pend'}">${late?'⚠️ เลยกำหนด':'🗓️ ส่งภายใน'} ${dateText}</span>${it.note?` <small title="${escapeHtml(it.note)}">${escapeHtml(it.note)}</small>`:''}</div>`;
+}
+function initScheduleControls() {
+  const year = document.getElementById('scheduleYear');
+  if (!year) return;
+  if (!year.value) year.value = new Date().getFullYear()+543;
+  const month = document.getElementById('scheduleMonth');
+  if (!month.options.length) { month.innerHTML=MONTHS.map(m => `<option value="${m}">${m}</option>`).join(''); month.value=currentMonth; }
+  if (!month.value) month.value=currentMonth;
+  const g=document.getElementById('scheduleGroup');
+  if (!g.options.length) g.innerHTML = `<option value="ALL">ทุกกลุ่มงาน</option>`+WORKGROUPS.map(x=>`<option value="${x.id}">${escapeHtml(x.short)}</option>`).join('');
+  populateScheduleReportOptions();
+}
+function populateScheduleReportOptions() {
+  const group=document.getElementById('scheduleGroup')?.value || 'ALL';
+  const reportSel=document.getElementById('scheduleReport');
+  if(!reportSel)return;
+  const prev=reportSel.value;
+  const reports = getAllReportsFlat(null,true).filter(x=>group==='ALL'||x.groupId===group);
+  reportSel.innerHTML = `<option value="ALL">ทุกหัวข้อที่เลือก</option>`+reports.map(x=>`<option value="${x.id}">${escapeHtml(x.name)}</option>`).join('');
+  if ([...reportSel.options].some(o=>o.value===prev)) reportSel.value=prev;
+}
+function renderScheduleManager(){
+  if(!isAdmin())return;
+  const table=document.getElementById('scheduleManagerTable'); if(!table)return;
+  const yr = Number(document.getElementById('scheduleYear')?.value||new Date().getFullYear()+543)-543;
+  const mo = document.getElementById('scheduleMonth')?.value || currentMonth;
+  const values = submissionSchedules.filter(x=>x.year===yr && x.month===mo);
+  const nameOfReport = id => id==='ALL' ? 'ทุกหัวข้อ' : (getAllReportsFlat(null,true).find(x=>x.id===id)?.name||id);
+  const rows=values.sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).map((x,i)=>`<tr>
+    <td>${i+1}</td><td>${escapeHtml(x.groupId==='ALL'?'ทุกกลุ่มงาน':WORKGROUPS.find(g=>g.id===x.groupId)?.short||x.groupId)}</td>
+    <td>${escapeHtml(nameOfReport(x.repId))}</td><td><b>${escapeHtml(x.dueDate)}</b></td><td>${escapeHtml(x.note||'-')}</td>
+    <td><button class="btn btn-sky btn-xs" onclick="editScheduleItem(${submissionSchedules.indexOf(x)})">✏️ แก้ไข</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteScheduleItem(${submissionSchedules.indexOf(x)})">🗑️ ลบ</button></td></tr>`).join('');
+  table.innerHTML=`<table><thead><tr><th>#</th><th>กลุ่มงาน</th><th>หัวข้อ</th><th>วันครบกำหนด (ค.ศ.)</th><th>หมายเหตุ</th><th>จัดการ</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="center">ยังไม่ได้ตั้งกำหนดส่งสำหรับเดือนและปีนี้</td></tr>'}</tbody></table>`;
+}
+function resetScheduleForm(){
+  document.getElementById('scheduleGroup').value='ALL'; populateScheduleReportOptions();
+  document.getElementById('scheduleReport').value='ALL';
+  document.getElementById('scheduleDueDate').value=''; document.getElementById('scheduleNote').value='';
+}
+function editScheduleItem(index) {
+  if(!isAdmin())return;
+  const x=submissionSchedules[index]; if(!x)return;
+  document.getElementById('scheduleYear').value=x.year+543;
+  document.getElementById('scheduleMonth').value=x.month;
+  document.getElementById('scheduleGroup').value=x.groupId;
+  populateScheduleReportOptions(); document.getElementById('scheduleReport').value=x.repId;
+  document.getElementById('scheduleDueDate').value=x.dueDate;
+  document.getElementById('scheduleNote').value=x.note||'';
+  document.getElementById('scheduleForm').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function saveSubmissionSchedule(e){
+  e.preventDefault(); if(!isAdmin())return;
+  const schedule={year:Number(document.getElementById('scheduleYear').value)-543,
+    month:document.getElementById('scheduleMonth').value,
+    groupId:document.getElementById('scheduleGroup').value,
+    repId:document.getElementById('scheduleReport').value,
+    dueDate:document.getElementById('scheduleDueDate').value,
+    note:document.getElementById('scheduleNote').value.trim()};
+  if(!schedule.dueDate || schedule.dueDate.slice(0,7)!==`${schedule.year}-${String(MONTHS.indexOf(schedule.month)+1).padStart(2,'0')}`){
+    showToast('⚠️ วันครบกำหนดต้องอยู่ในปีและเดือนที่เลือก');return;
+  }
+  const btn=document.getElementById('scheduleSaveButton'); btn.disabled=true;
+  const res=await sendToGoogleSheetDB({action:'saveSchedule',schedule});btn.disabled=false;
+  if(!res?.ok){showToast('❌ บันทึกกำหนดส่งไม่สำเร็จ: '+(res?.error||'ไม่ทราบสาเหตุ'));return;}
+  submissionSchedules=submissionSchedules.filter(x=>!(x.year===schedule.year&&x.month===schedule.month&&x.groupId===schedule.groupId&&x.repId===schedule.repId));
+  submissionSchedules.push(res.schedule); localStorage.setItem(SCHEDULE_CFG_KEY,JSON.stringify(submissionSchedules));
+  renderAll(); showToast('✅ บันทึกกำหนดส่งเข้า Google Sheets เรียบร้อยแล้ว');
+  await pullStateFromGas(false,true);
+}
+async function deleteScheduleItem(index){
+  if(!isAdmin())return;
+  const x=submissionSchedules[index]; if(!x||!confirm('ยืนยันลบกำหนดส่งนี้หรือไม่?'))return;
+  const res=await sendToGoogleSheetDB({action:'deleteSchedule',schedule:x});
+  if(!res?.ok){showToast('❌ ลบกำหนดส่งไม่สำเร็จ: '+(res?.error||'ไม่ทราบสาเหตุ'));return;}
+  submissionSchedules=submissionSchedules.filter((_,i)=>i!==index);
+  localStorage.setItem(SCHEDULE_CFG_KEY,JSON.stringify(submissionSchedules));
+  renderAll();showToast('✅ ลบกำหนดส่งจาก Google Sheets แล้ว');
+  await pullStateFromGas(false,true);
+}
+function openRejectModal(month,distId,repId){
+  if(!isAdmin())return;
+  const r=db[month]?.[distId]?.[repId];
+  if(!r||r.status==='ยังไม่ส่งรายงาน'){showToast('⚠️ ยังไม่มีรายงานที่ส่งมาให้ตีกลับ');return;}
+  const rep=getAllReportsFlat(null,true).find(x=>x.id===repId);
+  document.getElementById('rejectMonth').value=month;
+  document.getElementById('rejectDist').value=distId;
+  document.getElementById('rejectRep').value=repId;
+  document.getElementById('rejectReportInfo').innerHTML=`<b>อำเภอ:</b> ${escapeHtml(getDistrictLabel(distId))}<div><b>หัวข้อ:</b> ${escapeHtml(rep?.name||repId)}</div><small>เดือน${escapeHtml(month)} • สถานะล่าสุด ${escapeHtml(r.status)}</small>`;
+  document.getElementById('rejectReason').value=r.status==='แก้ไข'?(r.rejectionReason||''):'';
+  document.getElementById('rejectNotifyLine').checked=true;
+  document.getElementById('rejectModal').classList.add('on');
+}
+async function submitRejectReport(e){
+  e.preventDefault();if(!isAdmin())return;
+  const month=document.getElementById('rejectMonth').value,distId=document.getElementById('rejectDist').value,repId=document.getElementById('rejectRep').value;
+  const reason=document.getElementById('rejectReason').value.trim();
+  if(reason.length<5){showToast('⚠️ กรุณาระบุเหตุผลอย่างน้อย 5 ตัวอักษร');return;}
+  const btn=document.getElementById('rejectSubmitButton');btn.disabled=true;
+  const eventId=crypto.randomUUID ? crypto.randomUUID() : 'return-'+Date.now();
+  const response=await sendToGoogleSheetDB({action:'rejectReport',eventId,record:{month,distId,repId},reason,
+    rejectedBy:currentUser.name||currentUser.username,notifyLine:document.getElementById('rejectNotifyLine').checked});
+  btn.disabled=false;
+  if(!response?.ok){showToast('❌ ตีกลับไม่สำเร็จ: '+(response?.error||'ไม่มีการยืนยันจากเซิร์ฟเวอร์'));return;}
+  const record=db[month][distId][repId];
+  record.status='แก้ไข';record.score=0;
+  record.rejectionReason=response.record.rejectionReason;
+  record.rejectedAt=response.record.rejectedAt;
+  record.rejectedBy=response.record.rejectedBy;
+  record.rejectionHistory=response.record.rejectionHistory;
+  saveDB();closeModal('rejectModal');renderAll();
+  const n=response.notification||{};
+  showToast(n.error?'✅ ตีกลับแล้ว แต่ LINE แจ้งเตือนไม่สำเร็จ: '+n.error:'✅ ตีกลับรายงานพร้อมบันทึกเหตุผลแล้ว'+(n.sentCount?' • ส่ง LINE '+n.sentCount+' ราย':'') );
+  await pullStateFromGas(false,true);
+}
+
 /* ================== 16. UTILITIES & SETTINGS ================== */
 async function saveGasSettings() {
   if (!isAdmin()) return;
@@ -3422,8 +3666,11 @@ async function saveGasSettings() {
   };
   document.getElementById('quickLineTokenInput').value = gasConfig.token;
   saveWorkgroupsAndVisibility(true);
+  const saved = await sendToGoogleSheetDB({action:'saveLineConfig', token:gasConfig.token, target:gasConfig.target});
   await testGasConnection();
-  showToast('💾 บันทึกการตั้งค่าและ LINE Token ลงฐานข้อมูลกลางเรียบร้อยแล้ว');
+  showToast(saved?.ok && !saved?.opaque
+    ? '💾 บันทึกการตั้งค่าและ LINE Token ลงฐานข้อมูลกลางแล้ว'
+    : '⏳ ส่งการตั้งค่าแล้ว โปรดตรวจสอบสถานะบอทก่อนใช้งาน');
 }
 
 async function testGasConnection() {
@@ -3467,7 +3714,7 @@ function showToast(msg) {
 window.addEventListener('DOMContentLoaded', () => {
   loadState();
   initMonthBar();
-  pullStateFromGas(false, true);
+  document.getElementById('loginSyncHint').textContent = '🔐 ระบบตรวจสอบชื่อผู้ใช้และรหัสผ่านจาก Google Apps Script';
   window.addEventListener('focus', () => {
     const anyModalOpen = document.querySelector('.ov.on');
     const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
