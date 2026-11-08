@@ -307,11 +307,12 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 .cdd-return-panel .return-alert-entry{padding:11px 12px;margin-top:8px;border-radius:12px;background:rgba(244,63,94,.07);border:1px solid rgba(244,63,94,.2)}
 .cdd-return-panel .return-alert-entry p{margin:4px 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .cdd-return-panel .return-alert-meta{font-size:12px;color:var(--muted)}
-/* Deterministic scrolling: first text visible promptly, then move fully off the left edge. */
+/* Seamless marquee: two identical sequences, exactly one sequence per cycle. */
 .cdd-announcement-viewport{min-width:0;flex:1;overflow:hidden;position:relative;height:37px}
-.cdd-announcement-runner{position:absolute;top:50%;left:0;display:block;width:max-content;max-width:none;white-space:nowrap;padding:0;font-size:13px;font-weight:650;color:var(--ink);will-change:transform;animation:cddScroll var(--ticker-duration,25s) linear infinite}
-.cdd-announcement:hover .cdd-announcement-runner{animation-play-state:paused}
-@keyframes cddScroll{from{transform:translate3d(var(--ticker-start,800px),-50%,0)}to{transform:translate3d(var(--ticker-end,-600px),-50%,0)}}
+.cdd-announcement-runner{position:absolute;top:50%;left:0;display:flex;align-items:center;width:max-content;max-width:none;white-space:nowrap;padding:0;font-size:13px;font-weight:650;color:var(--ink);will-change:transform;animation:cddScroll var(--ticker-duration,25s) linear infinite}
+.cdd-announcement-segment{display:inline-flex;flex:none;align-items:center;white-space:nowrap}
+.cdd-announcement-copy{display:inline-block;flex:none;white-space:nowrap;padding-right:80px}
+@keyframes cddScroll{from{transform:translate3d(0,-50%,0)}to{transform:translate3d(var(--ticker-shift,-800px),-50%,0)}}
 .ticker-preview{display:flex!important;min-height:42px;margin:12px 0 10px}
 .ticker-preview .cdd-announcement-label{color:var(--teal)}
 .ticker-status{padding:8px 11px;margin-top:10px;border-radius:9px;background:var(--surface-2);color:var(--muted);font-size:12px;line-height:1.5}
@@ -1223,36 +1224,61 @@ function setTickerStatus(message, state = '') {
   element.className = 'ticker-status' + (state ? ' ' + state : '');
   element.textContent = message;
 }
-// Use actual viewport and message widths; CSS-only percent scrolling can remain off-screen.
-function animateTickerTrack(bar, track, durationSeconds) {
+// Seamless ticker: repeat the same message enough times to cover the viewport.
+// Two equal-width sequences scroll by exactly one sequence, with no jump on wrap.
+function animateTickerTrack(bar, track, durationSeconds, message) {
   if (!bar || !track) return;
   const viewport = bar.querySelector('.cdd-announcement-viewport');
-  if (!viewport) return;
-  const update = () => {
-    if (!viewport.isConnected || !track.isConnected || !viewport.clientWidth) return;
-    // Begin with the first words already visible; no long blank interval.
-    const start = Math.max(24, Math.round(viewport.clientWidth * 0.75));
-    const end = -(track.scrollWidth + 4);
-    const length = start - end;
-    // Speed selector is time for ~800px; scale long announcements to remain readable.
-    const duration = Math.max(7, Math.min(240, durationSeconds * length / 800));
-    track.style.animation = 'none';
-    track.style.setProperty('--ticker-start', start + 'px');
-    track.style.setProperty('--ticker-end', end + 'px');
-    track.style.setProperty('--ticker-duration', duration.toFixed(2) + 's');
-    // Read a layout property to restart animation after changing CSS variables.
-    void track.offsetWidth;
-    track.style.animation = '';
-  };
-  requestAnimationFrame(update);
+  if (!viewport || !viewport.clientWidth) return;
+  const text = String(message || '').trim();
+  const speedSetting = Math.max(10, Math.min(90, Number(durationSeconds) || 25));
+  const viewportWidth = viewport.clientWidth;
+  // Cloud sync re-renders this view often; never restart an unchanged animation.
+  if (track.dataset.tickerMessage === text &&
+      track.dataset.tickerSpeed === String(speedSetting) &&
+      track.dataset.tickerViewport === String(viewportWidth) &&
+      track.children.length === 2) return;
+
+  track.style.animation = 'none';
+  track.setAttribute('role', 'text');
+  track.setAttribute('aria-label', text);
+  const sample = document.createElement('span');
+  sample.className = 'cdd-announcement-copy';
+  sample.setAttribute('aria-hidden', 'true');
+  sample.textContent = text;
+  track.replaceChildren(sample);
+  const copyWidth = Math.max(1, sample.getBoundingClientRect().width);
+  const copiesPerSegment = Math.max(1, Math.ceil((viewportWidth + 80) / copyWidth));
+  const segment = document.createElement('span');
+  segment.className = 'cdd-announcement-segment';
+  for (let i = 0; i < copiesPerSegment; i++) {
+    const copy = sample.cloneNode(true);
+    segment.appendChild(copy);
+  }
+  track.replaceChildren(segment, segment.cloneNode(true));
+  const shift = segment.getBoundingClientRect().width;
+  // The speed menu remains calibrated to the old 800px reference distance.
+  const duration = Math.max(1, shift * speedSetting / 800);
+  track.style.setProperty('--ticker-shift', (-shift) + 'px');
+  track.style.setProperty('--ticker-duration', duration.toFixed(3) + 's');
+  track.dataset.tickerMessage = text;
+  track.dataset.tickerSpeed = String(speedSetting);
+  track.dataset.tickerViewport = String(viewportWidth);
+  void track.offsetWidth;
+  track.style.animation = '';
 }
 function renderTicker() {
   const bar = document.getElementById('cddAnnouncement'), track = document.getElementById('cddAnnouncementText');
   if (!bar || !track) return;
-  const active = tickerConfig.enabled === true && Boolean(String(tickerConfig.text||'').trim());
+  const message = String(tickerConfig.text || '').trim();
+  const active = tickerConfig.enabled === true && Boolean(message);
   bar.classList.toggle('show', active);
-  track.textContent = String(tickerConfig.text||'');
-  if (active) animateTickerTrack(bar, track, Math.max(10, Math.min(90, Number(tickerConfig.speed)||25)));
+  if (active) {
+    animateTickerTrack(bar, track, Number(tickerConfig.speed) || 25, message);
+  } else {
+    track.replaceChildren();
+    track.dataset.tickerMessage = '';
+  }
 }
 function renderTickerPreview() {
   const bar = document.getElementById('tickerPreview');
@@ -1262,11 +1288,10 @@ function renderTickerPreview() {
   const enabled = Boolean(document.getElementById('tickerEnabledInput')?.checked);
   const speed = Number(document.getElementById('tickerSpeedInput')?.value) || 25;
   const hint = document.getElementById('tickerPreviewHint');
-  track.textContent = message || 'กรอกข้อความเพื่อดูตัวอย่างข้อความวิ่ง';
   if (hint) hint.textContent = enabled && message
     ? 'ตัวอย่างก่อนเผยแพร่ — กดบันทึกเพื่อให้ผู้ใช้ทุกอำเภอเห็นข้อความนี้'
     : 'กำลังปิดแสดง หรือยังไม่มีข้อความ — กดเปิดแสดงและบันทึกก่อนเผยแพร่';
-  animateTickerTrack(bar, track, speed);
+  animateTickerTrack(bar, track, speed, message || 'กรอกข้อความเพื่อดูตัวอย่างข้อความวิ่ง');
 }
 function onTickerDraftChange(control) {
   if (!isAdmin()) return;
@@ -4025,6 +4050,15 @@ window.addEventListener('DOMContentLoaded', () => {
   loadState();
   initMonthBar();
   pullStateFromGas(false, true);
+  // Re-measure the ticker once the Thai webfont is ready, so the seam stays exact.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => {
+    ['cddAnnouncementText', 'tickerPreviewText'].forEach(id => {
+      const track = document.getElementById(id);
+      if (track) delete track.dataset.tickerViewport;
+    });
+    renderTicker();
+    renderTickerPreview();
+  }).catch(() => {});
   window.addEventListener('focus', () => {
     const anyModalOpen = document.querySelector('.ov.on');
     const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
