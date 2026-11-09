@@ -1162,6 +1162,10 @@ const TICKER_CACHE_KEY = 'CDD_UTHAI_TICKER_V17';
 const CDD_RELEASE = 'V20';
 let checkedBackendUrl = '';
 let checkedBackendAt = 0;
+let sharedBackendReady = Promise.resolve();
+let sharedBackendLastCheck = 0;
+let sharedBackendUrl = '';
+
 
 let WORKGROUPS = JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
 let hiddenReportsByMonth = {};
@@ -1305,8 +1309,8 @@ function onTickerDraftChange(control) {
 }
 function applyTickerConfigFromCloud(cloud, force = false) {
   if (!cloud || typeof cloud !== 'object' || tickerSaving) return false;
-  if (!force && Date.now() - tickerLastSavedAt < 12000) return false;
-  if (tickerConfig.updatedAt && cloud.updatedAt && Date.parse(cloud.updatedAt) < Date.parse(tickerConfig.updatedAt)) return false;
+  // Apps Script is authoritative across devices. A stale/future-dated local cache
+  // must never prevent a newer cloud announcement from being shown.
   tickerConfig = {
     enabled: cloud.enabled === true,
     text: String(cloud.text || '').slice(0, 500),
@@ -1319,11 +1323,13 @@ function applyTickerConfigFromCloud(cloud, force = false) {
   return true;
 }
 async function refreshTickerFromCloud(notify = false) {
+  await sharedBackendReady;
   if (tickerSaving) return;
   const url = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
   if (!url) { setTickerStatus('ไม่พบ URL ของ Google Apps Script โปรดตั้งค่าการเชื่อมต่อ','err'); return; }
   setTickerStatus('กำลังตรวจสอบข้อความประกาศจาก Google Apps Script...');
   const response = await callViaJsonp(url, {action: 'getTickerConfig'});
+  if (url !== (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim()) return; // switched Cloud while request was in flight
   tickerLastFetchAt = Date.now();
   if (response?.ok && response.tickerConfig && typeof response.tickerConfig === 'object') {
     tickerCloudUnsupported = false;
@@ -1347,11 +1353,14 @@ async function refreshTickerFromCloud(notify = false) {
 
 // ================== District notification of returned reports ==================
 async function refreshReturnNotices(force=false) {
+  await sharedBackendReady;
   if(!currentUser || returnNoticeSyncing || (!force && Date.now()-lastNoticeFetchAt<14000))return;
   returnNoticeSyncing=true;
   try {
     const distId=isAdmin()?'ALL':currentUser.distId;
-    const res=await callViaJsonp((gasConfig.url||DEFAULT_GAS_WEB_APP_URL).trim(),{action:'getReturnNotices',distId});
+    const sourceUrl=(gasConfig.url||DEFAULT_GAS_WEB_APP_URL).trim();
+    const res=await callViaJsonp(sourceUrl,{action:'getReturnNotices',distId});
+    if(sourceUrl !== (gasConfig.url||DEFAULT_GAS_WEB_APP_URL).trim()) return;
     if(res?.ok && Array.isArray(res.returnNotices)) {
       returnNotices=res.returnNotices;
       lastNoticeFetchAt=Date.now();
@@ -1496,7 +1505,7 @@ async function saveTickerSettings() {
 function openReturnReportModal(month,distId,repId) {
   if (!isAdmin()) return;
   const rec=db[month]?.[distId]?.[repId], rep=getAllReportsFlat(null,true).find(r=>r.id===repId);
-  if (!rec || !['รอตรวจสอบ','อนุมัติแล้ว'].includes(rec.status)) {showToast('⚠️ เลือกได้เฉพาะรายงานที่ส่งแล้ว');return;}
+  if (!rec || !['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status)) {showToast('⚠️ เลือกได้เฉพาะรายงานที่ส่งแล้ว');return;}
   document.getElementById('rejectMonth').value=month;
   document.getElementById('rejectDistId').value=distId;
   document.getElementById('rejectRepId').value=repId;
@@ -1789,6 +1798,49 @@ function formatBytes(bytes) {
 }
 
 /* ================== 4. CLOUD SYNC ENGINE ================== */
+// Shared GitHub Pages configuration: identical Apps Script endpoint on every device.
+// This file is NOT a place for passwords/tokens: only the published /exec URL.
+async function refreshSharedBackendConfig(force = false) {
+  const now = Date.now();
+  if (!force && now - sharedBackendLastCheck < 60000) return false;
+  sharedBackendLastCheck = now;
+  const configPath = new URL('./cdd-cloud-config.json', document.baseURI);
+  configPath.searchParams.set('_t', String(now));
+  let timeoutId;
+  const ctrl = new AbortController();
+  try {
+    timeoutId = setTimeout(() => ctrl.abort(), 7000);
+    const response = await fetch(configPath.href, { cache: 'no-store', signal: ctrl.signal });
+    if (!response.ok) return false; // Allows existing single-file deployments to keep working.
+    const config = await response.json();
+    const publicUrl = String(config?.webAppUrl || '').trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/?#]+\/exec(?:\?.*)?$/.test(publicUrl)) {
+      updateBackendDiagnostic('❌ cdd-cloud-config.json ต้องมี webAppUrl ที่เป็น URL Apps Script /exec ที่ถูกต้อง');
+      return false;
+    }
+    sharedBackendUrl = publicUrl;
+    if (gasConfig.url === publicUrl) return false;
+    // Override per-device localStorage after the common endpoint is verified from this site's configuration.
+    gasConfig.url = publicUrl;
+    checkedBackendUrl = '';
+    checkedBackendAt = 0;
+    tickerCloudUnsupported = false;
+    tickerLastFetchAt = 0;
+    lastNoticeFetchAt = 0;
+    localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+    const settingField = document.getElementById('cfgGasUrl');
+    const tickerField = document.getElementById('tickerGasUrlInput');
+    if (settingField && document.activeElement !== settingField) settingField.value = publicUrl;
+    if (tickerField && document.activeElement !== tickerField) tickerField.value = publicUrl;
+    updateBackendDiagnostic('🟢 ใช้ URL Cloud ส่วนกลางจาก cdd-cloud-config.json (ทุกเครื่องใช้ฐานข้อมูลเดียวกัน)', true);
+    return true;
+  } catch (error) {
+    return false; // Network unavailable: preserve last known endpoint, never destroy existing data.
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function callViaJsonp(url, queryParamsObj) {
   return new Promise((resolve) => {
     const cbName = 'gasCb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
@@ -1853,7 +1905,7 @@ async function connectCurrentBackend() {
   document.getElementById('cfgGasUrl').value=url;
   localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
   tickerCloudUnsupported=false;
-  updateBackendDiagnostic('✅ เชื่อมต่อ Apps Script '+probe.version+' แล้ว • URL นี้รองรับการบันทึกข้อความวิ่งและตีกลับ',true);
+  updateBackendDiagnostic('✅ เชื่อมต่อ Apps Script '+probe.version+' แล้ว • หากต้องการให้ทุกเครื่องใช้ URL นี้ ให้อัปเดต webAppUrl ในไฟล์ cdd-cloud-config.json บน GitHub',true);
   showToast('✅ เชื่อมต่อ Google Apps Script '+probe.version+' สำเร็จ');
   await refreshTickerFromCloud(true);
   pullStateFromGas(false,true);
@@ -1889,6 +1941,7 @@ async function encodeSignedAdminJsonp(payload) {
 }
 
 async function sendToGoogleSheetDB(payload) {
+  await sharedBackendReady; // Do not send to a device's stale Apps Script URL before bootstrap.
   const targetUrl = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
   if (!targetUrl) return { ok: false, error: 'ไม่ได้ระบุ URL' };
 
@@ -2130,6 +2183,13 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
 function startAutoSyncTimer() {
   if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
   autoSyncIntervalId = setInterval(() => {
+    refreshSharedBackendConfig(false).then(changed => {
+      if (changed) {
+        refreshTickerFromCloud(false);
+        refreshReturnNotices(true);
+        pullStateFromGas(false, true);
+      }
+    }).catch(() => {});
     const anyModalOpen = document.querySelector('.ov.on');
     const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
     const isConfigPage = ['passwords', 'line', 'topics', 'settings', 'schedule'].includes(currentPage);
@@ -3036,7 +3096,7 @@ function renderWorkgroupPage(gId) {
         <td class="center">
           ${!isHid ? `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${currentMonth}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>` : '<span class="pill pill-none">งดส่งเดือนนี้</span>'}
           ${manualBtns}
-          ${admin && ['รอตรวจสอบ','อนุมัติแล้ว'].includes(rec.status) ? `<button class="btn btn-danger btn-xs" onclick="openReturnReportModal('${currentMonth}','${d.id}','${r.id}')">↩️ ตีกลับ</button>` : ''}
+          ${admin && ['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status) ? `<button class="btn btn-danger btn-xs" onclick="openReturnReportModal('${currentMonth}','${d.id}','${r.id}')">↩️ ตีกลับ</button>` : ''}
         </td>
       </tr>`;
     });
@@ -3338,7 +3398,7 @@ function renderApprovalPage() {
 
       const actions = admin ? `
         <button class="btn btn-ok btn-xs" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">✅ อนุมัติ (+2)</button>
-        ${['รอตรวจสอบ','อนุมัติแล้ว'].includes(rec.status) ? `<button class="btn btn-danger btn-xs" onclick="openReturnReportModal('${m}','${d.id}','${r.id}')">↩️ ตีกลับ/ระบุเหตุผล</button>` : ''}
+        ${['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status) ? `<button class="btn btn-danger btn-xs" onclick="openReturnReportModal('${m}','${d.id}','${r.id}')">↩️ ตีกลับ/ระบุเหตุผล</button>` : ''}
         <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)" title="ส่งเข้าไอดีของ ${d.short}">🤖 ส่ง LINE (${d.short})</button>
         <button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',true)">📲 แชร์</button>
       ` : `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${m}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>`;
@@ -4049,7 +4109,12 @@ function showToast(msg) {
 window.addEventListener('DOMContentLoaded', () => {
   loadState();
   initMonthBar();
-  pullStateFromGas(false, true);
+  // Always discover the same backend from GitHub before the first database read.
+  sharedBackendReady = refreshSharedBackendConfig(true);
+  sharedBackendReady.then(() => {
+    pullStateFromGas(false, true);
+    refreshTickerFromCloud(false); // Show the announcement even before login.
+  }).catch(() => {});
   // Re-measure the ticker once the Thai webfont is ready, so the seam stays exact.
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => {
     ['cddAnnouncementText', 'tickerPreviewText'].forEach(id => {
@@ -4060,6 +4125,9 @@ window.addEventListener('DOMContentLoaded', () => {
     renderTickerPreview();
   }).catch(() => {});
   window.addEventListener('focus', () => {
+    refreshSharedBackendConfig(false).then(changed => {
+      if (changed) { refreshTickerFromCloud(false); pullStateFromGas(false, true); }
+    }).catch(() => {});
     const anyModalOpen = document.querySelector('.ov.on');
     const isTypingInForm = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
     if (currentUser && !anyModalOpen && !isTypingInForm) {
