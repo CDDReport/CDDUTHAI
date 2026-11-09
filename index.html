@@ -1060,7 +1060,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
 
 <script>
 /* ================== 1. DATA & PRODUCTION GOOGLE APPS SCRIPT URL (/exec) ================== */
-const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec';
+const DEFAULT_GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzdUoLQ6-0USQTbUjfiwUzOVSzKHnPGwlmpsp47oa5g640KIqqPLEw92qjdJu4_lUzv9g/exec';
 
 const MONTHS = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -1823,45 +1823,26 @@ function formatBytes(bytes) {
 // Shared GitHub Pages configuration: identical Apps Script endpoint on every device.
 // This file is NOT a place for passwords/tokens: only the published /exec URL.
 async function refreshSharedBackendConfig(force = false) {
-  const now = Date.now();
-  if (!force && now - sharedBackendLastCheck < 60000) return false;
-  sharedBackendLastCheck = now;
-  const configPath = new URL('./cdd-cloud-config.json', document.baseURI);
-  configPath.searchParams.set('_t', String(now));
-  let timeoutId;
-  const ctrl = new AbortController();
-  try {
-    timeoutId = setTimeout(() => ctrl.abort(), 7000);
-    const response = await fetch(configPath.href, { cache: 'no-store', signal: ctrl.signal });
-    if (!response.ok) return false; // Allows existing single-file deployments to keep working.
-    const config = await response.json();
-    const publicUrl = String(config?.webAppUrl || '').trim();
-    if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/?#]+\/exec(?:\?.*)?$/.test(publicUrl)) {
-      updateBackendDiagnostic('❌ cdd-cloud-config.json ต้องมี webAppUrl ที่เป็น URL Apps Script /exec ที่ถูกต้อง');
-      return false;
-    }
-    sharedBackendUrl = publicUrl;
-    if (gasConfig.url === publicUrl) return false;
-    tickerCloudRequestSequence++; // Discard an old Deployment's in-flight announcement.
-    // Override per-device localStorage after the common endpoint is verified from this site's configuration.
-    gasConfig.url = publicUrl;
-    checkedBackendUrl = '';
-    checkedBackendAt = 0;
-    tickerCloudUnsupported = false;
-    tickerLastFetchAt = 0;
-    lastNoticeFetchAt = 0;
-    localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
-    const settingField = document.getElementById('cfgGasUrl');
-    const tickerField = document.getElementById('tickerGasUrlInput');
-    if (settingField && document.activeElement !== settingField) settingField.value = publicUrl;
-    if (tickerField && document.activeElement !== tickerField) tickerField.value = publicUrl;
-    updateBackendDiagnostic('🟢 ใช้ URL Cloud ส่วนกลางจาก cdd-cloud-config.json (ทุกเครื่องใช้ฐานข้อมูลเดียวกัน)', true);
-    return true;
-  } catch (error) {
-    return false; // Network unavailable: preserve last known endpoint, never destroy existing data.
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  // V20.4: Use the published Apps Script URL embedded in this index.html.
+  // Do not allow an old browser setting or a stale cdd-cloud-config.json to override it.
+  const publicUrl = DEFAULT_GAS_WEB_APP_URL;
+  sharedBackendUrl = publicUrl;
+  sharedBackendLastCheck = Date.now();
+  if (gasConfig.url === publicUrl) return false;
+  tickerCloudRequestSequence++;
+  gasConfig.url = publicUrl;
+  checkedBackendUrl = '';
+  checkedBackendAt = 0;
+  tickerCloudUnsupported = false;
+  tickerLastFetchAt = 0;
+  lastNoticeFetchAt = 0;
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+  const settingField = document.getElementById('cfgGasUrl');
+  const tickerField = document.getElementById('tickerGasUrlInput');
+  if (settingField && document.activeElement !== settingField) settingField.value = publicUrl;
+  if (tickerField && document.activeElement !== tickerField) tickerField.value = publicUrl;
+  updateBackendDiagnostic('🟢 เชื่อมต่อ Apps Script ส่วนกลางที่ฝังใน index.html', true);
+  return true;
 }
 
 function callViaJsonp(url, queryParamsObj) {
