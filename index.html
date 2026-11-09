@@ -1191,6 +1191,10 @@ let stagedUploadFile = null;
 let autoSyncIntervalId = null;
 let reportSchedules = {};
 let tickerConfig = { enabled: false, text: '', speed: 25 };
+let publicTickerSyncInFlight = false;
+let publicTickerLastRequested = 0;
+let publicTickerPollHandle = null;
+let tickerCloudRequestSequence = 0;
 let tickerFormDirty = false;
 let tickerEnabledTouched = false;
 let tickerSaving = false;
@@ -1324,31 +1328,42 @@ function applyTickerConfigFromCloud(cloud, force = false) {
 }
 async function refreshTickerFromCloud(notify = false) {
   await sharedBackendReady;
-  if (tickerSaving) return;
+  if (tickerSaving || publicTickerSyncInFlight) return;
   const url = (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim();
-  if (!url) { setTickerStatus('ไม่พบ URL ของ Google Apps Script โปรดตั้งค่าการเชื่อมต่อ','err'); return; }
-  setTickerStatus('กำลังตรวจสอบข้อความประกาศจาก Google Apps Script...');
-  const response = await callViaJsonp(url, {action: 'getTickerConfig'});
-  if (url !== (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim()) return; // switched Cloud while request was in flight
-  tickerLastFetchAt = Date.now();
-  if (response?.ok && response.tickerConfig && typeof response.tickerConfig === 'object') {
-    tickerCloudUnsupported = false;
-    // Explicit manual refresh may replace draft only if the user has not edited it.
-    const applied = applyTickerConfigFromCloud(response.tickerConfig, !tickerFormDirty && notify);
-    const on = response.tickerConfig.enabled && String(response.tickerConfig.text||'').trim();
-    setTickerStatus((on ? '✅ Cloud เปิดแสดงข้อความวิ่งแล้ว' : 'ℹ️ Cloud ปิดแสดงข้อความวิ่งอยู่') +
-      (applied ? ' — ข้อมูลตรงกับค่าที่เผยแพร่' : ' — ยังมีข้อความที่กำลังแก้ไขในฟอร์ม'), on ? 'ok' : '');
-    if (notify) showToast(on ? '✅ ตรวจพบประกาศที่เผยแพร่บน Cloud' : 'ℹ️ Cloud ยังปิดแสดงข้อความวิ่ง');
-    return;
+  if (!url) { setTickerStatus('ไม่พบ URL Google Apps Script','err'); return; }
+  publicTickerSyncInFlight = true;
+  const sequence = ++tickerCloudRequestSequence;
+  publicTickerLastRequested = Date.now();
+  try {
+    const response = await callViaJsonp(url, {action:'getTickerConfig'});
+    if (sequence !== tickerCloudRequestSequence || url !== (gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim()) return;
+    tickerLastFetchAt = Date.now();
+    if (response?.ok && response.tickerConfig && typeof response.tickerConfig === 'object') {
+      tickerCloudUnsupported = false;
+      applyTickerConfigFromCloud(response.tickerConfig, !tickerFormDirty && notify);
+      const on = response.tickerConfig.enabled && String(response.tickerConfig.text||'').trim();
+      const version = String(response.tickerConfig.revision || response.tickerConfig.updatedAt || 'ไม่ระบุ');
+      const backendOld = response.storage !== 'google_sheets';
+      setTickerStatus((backendOld ? '⚠️ ยังเชื่อมต่อ Apps Script เวอร์ชันเก่า (ต้อง Deploy V20.3)' : (on ? '✅ กำลังเผยแพร่ประกาศออนไลน์' : 'ℹ️ ปิดแสดงประกาศออนไลน์')) +
+        ' • เลขรุ่น: ' + version + ' • ดึงข้อมูล: ' + new Date().toLocaleTimeString('th-TH'), backendOld ? 'err' : (on ? 'ok' : ''));
+      if (notify) showToast(on ? '✅ ดึงประกาศจาก Cloud สำเร็จ' : 'ℹ️ Cloud ปิดประกาศอยู่');
+      return;
+    }
+    if (response?.ok && !response.tickerConfig) tickerCloudUnsupported = true;
+    setTickerStatus('❌ เครื่องนี้ดึงประกาศจาก Apps Script ไม่ได้ โปรดตรวจ URL /exec และสิทธิ์ Anyone ของ Web App','err');
+    updateBackendDiagnostic('❌ ไม่ได้รับข้อมูลประกาศจาก Google Apps Script ที่ใช้งานจริง');
+  } catch (e) {
+    setTickerStatus('❌ อ่านประกาศออนไลน์ผิดพลาด: '+String(e?.message||e),'err');
+  } finally {
+    publicTickerSyncInFlight = false;
   }
-  if (response?.ok && !response.tickerConfig) {
-    tickerCloudUnsupported = true;
-    setTickerStatus('❌ URL /exec ที่เว็บไซต์ใช้งานยังเป็น Apps Script เก่า หรือชี้ไปผิด Deployment ให้ตรวจสอบ URL /exec ใต้ฟอร์ม แล้วกดเชื่อมต่อ', 'err');
-    updateBackendDiagnostic('❌ ปลายทางไม่รองรับข้อความวิ่ง ให้ใส่ URL /exec จาก Deploy ล่าสุด แล้วกด ตรวจสอบและเชื่อมต่อ');
-  } else {
-    setTickerStatus('❌ อ่านข้อมูลประกาศจาก Cloud ไม่สำเร็จ ตรวจ URL /exec และการอนุญาตเข้าถึง Web App', 'err');
-  }
-  if (notify) showToast('⚠️ ตรวจประกาศไม่สำเร็จ ดูคำอธิบายใต้ปุ่มบันทึก');
+}
+function startPublicTickerSync() {
+  if (publicTickerPollHandle) clearInterval(publicTickerPollHandle);
+  // Runs for every visitor, even before logging in. No local-device publication state.
+  publicTickerPollHandle = setInterval(() => {
+    if (!tickerSaving && Date.now()-publicTickerLastRequested>=12000) refreshTickerFromCloud(false);
+  }, 15000);
 }
 
 // ================== District notification of returned reports ==================
@@ -1473,15 +1488,22 @@ async function saveTickerSettings() {
   }
   tickerSaving = true;
   if (button) {button.disabled=true;button.textContent='⏳ กำลังบันทึกและตรวจสอบ...';}
-  setTickerStatus('กำลังบันทึกการเปลี่ยนแปลงลง Google Apps Script...');
+  setTickerStatus('กำลังตรวจสอบ Apps Script V20.3 และบันทึกลง Google Sheets...');
   try {
+    const health = await callViaJsonp((gasConfig.url || DEFAULT_GAS_WEB_APP_URL).trim(), {action:'health'});
+    if (!health?.ok || !health.features?.includes('announcementSheet')) {
+      setTickerStatus('❌ Apps Script ที่เชื่อมต่อยังไม่ใช่ V20.3 กรุณาอัปเดต Code.gs แล้ว Deploy → New version ก่อนบันทึกประกาศ','err');
+      return;
+    }
     const res = await sendToGoogleSheetDB({action:'saveTickerConfig',config:next,adminAuth:adminApiCredentials()});
     if (!confirmed(res)) {
       setTickerStatus('❌ บันทึกไม่สำเร็จ: '+(res?.error||'ไม่ได้รับการยืนยันจาก Cloud')+'. ตรวจว่าอัปเดต Code.gs และ Deploy /exec แล้ว','err');
       showToast('❌ บันทึกข้อความวิ่งไม่สำเร็จ กรุณาดูสถานะใต้ปุ่มบันทึก');
       return;
     }
+    tickerCloudRequestSequence++; // Reject a response started before this publication.
     tickerConfig = { ...next, ...(res.config || {}) };
+    tickerLastFetchAt = Date.now();
     tickerLastSavedAt = Date.now();
     lastLocalConfigSavedAt = tickerLastSavedAt;
     tickerFormDirty = false;
@@ -1820,6 +1842,7 @@ async function refreshSharedBackendConfig(force = false) {
     }
     sharedBackendUrl = publicUrl;
     if (gasConfig.url === publicUrl) return false;
+    tickerCloudRequestSequence++; // Discard an old Deployment's in-flight announcement.
     // Override per-device localStorage after the common endpoint is verified from this site's configuration.
     gasConfig.url = publicUrl;
     checkedBackendUrl = '';
@@ -4109,12 +4132,16 @@ function showToast(msg) {
 window.addEventListener('DOMContentLoaded', () => {
   loadState();
   initMonthBar();
-  // Always discover the same backend from GitHub before the first database read.
+  // V20.3: Never use a stale per-device Apps Script URL as the announcement source.
+  // The published URL in this website is the safe fallback if GitHub config is unavailable.
+  gasConfig.url = DEFAULT_GAS_WEB_APP_URL;
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
   sharedBackendReady = refreshSharedBackendConfig(true);
   sharedBackendReady.then(() => {
     pullStateFromGas(false, true);
-    refreshTickerFromCloud(false); // Show the announcement even before login.
-  }).catch(() => {});
+    refreshTickerFromCloud(false); // Google Sheets announcement, on every device.
+    startPublicTickerSync(); // Also run on the public login page.
+  }).catch(() => { startPublicTickerSync(); });
   // Re-measure the ticker once the Thai webfont is ready, so the seam stays exact.
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => {
     ['cddAnnouncementText', 'tickerPreviewText'].forEach(id => {
