@@ -702,6 +702,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
               <button type="button" class="btn btn-ghost btn-sm" onclick="toggleQuickTokenVisibility()">👁️ ดู/ซ่อน</button>
               <button type="button" class="btn btn-primary btn-sm" onclick="verifyAndSaveLineBotToken()">🔍 ตรวจสอบบอท & บันทึก Token</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="checkSavedLineBotToken()">☁️ ตรวจสอบ Token ที่บันทึกบน Cloud</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="openDeployedAppsScriptHealth()">🔌 ดูเวอร์ชัน Apps Script ที่เปิดใช้งานจริง</button>
               <button type="button" class="btn btn-sky btn-sm" onclick="pullStateFromGas(true)">🔄 ดึงไอดีที่ทักบอทเข้ามา</button>
             </div>
           </div>
@@ -890,7 +891,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
           </div>
           <div class="form-group">
             <label>Google Apps Script Web App URL (/exec)</label>
-            <input type="url" id="cfgGasUrl" class="inp" value="https://script.google.com/macros/s/AKfycbzJQ0CQ11TTFCAhZgVOlc32UvApVBHjjFPbKpvA97FKsaRP9BtDpOzDyGeXjB5IBZawHA/exec" placeholder="https://script.google.com/macros/s/.../exec">
+            <input type="url" id="cfgGasUrl" class="inp" value="https://script.google.com/macros/s/AKfycbzdUoLQ6-0USQTbUjfiwUzOVSzKHnPGwlmpsp47oa5g640KIqqPLEw92qjdJu4_lUzv9g/exec" placeholder="https://script.google.com/macros/s/.../exec">
           </div>
           <div class="form-group">
             <label>Google Drive Folder ID หลัก (เว้นว่างได้ ระบบจะสร้างโฟลเดอร์ CDD_Uthai_Report_Files_สพจ_อุทัยธานี แยก 4 กลุ่มงานให้อัตโนมัติ)</label>
@@ -909,6 +910,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             <button class="btn btn-sky btn-sm" onclick="testGasConnection()">🔌 ทดสอบการเชื่อมต่อ Google Sheets & Drive</button>
             <button class="btn btn-line btn-sm" onclick="verifyAndSaveLineBotToken()">🔍 ตรวจสอบบอท LINE & ทดสอบส่ง</button>
           </div>
+          <div id="lineTokenSaveStatus" class="note" style="display:none" role="status" aria-live="polite"></div>
           <div id="gasStatusBox" class="note" style="display:none"></div>
         </div>
       </section>
@@ -1166,6 +1168,7 @@ const GAS_CFG_KEY = 'CDD_UTHAI_GAS_CFG_V16';
 const SCHEDULE_CACHE_KEY = 'CDD_UTHAI_SCHEDULES_V17';
 const TICKER_CACHE_KEY = 'CDD_UTHAI_TICKER_V17';
 const CDD_RELEASE = 'V20';
+let checkedBackendInfo = null; // Keep the actual last confirmed health response; never fake capabilities.
 let checkedBackendUrl = '';
 let checkedBackendAt = 0;
 let sharedBackendReady = Promise.resolve();
@@ -1840,6 +1843,7 @@ async function refreshSharedBackendConfig(force = false) {
   gasConfig.url = publicUrl;
   checkedBackendUrl = '';
   checkedBackendAt = 0;
+  checkedBackendInfo = null;
   tickerCloudUnsupported = false;
   tickerLastFetchAt = 0;
   lastNoticeFetchAt = 0;
@@ -1885,22 +1889,41 @@ function callViaJsonp(url, queryParamsObj) {
 
 // Cross-origin GitHub Pages -> Apps Script: JSONP is used only after a
 // password-free HMAC proof. No admin password is inserted into a URL.
+
 async function verifyBackendVersion(url, force = false) {
-  const target = String(url || '').trim();
-  if (!target || !/^https:\/\/script\.google\.com\/macros\/s\/[^/?#]+\/exec(?:\?.*)?$/.test(target)) {
-    return {ok:false,error:'URL ต้องเป็น Web App ของ Apps Script ที่ลงท้ายด้วย /exec'};
+  const target=String(url||'').trim();
+  if(!target || !/^https:\/\/script\.google\.com\/macros\/s\/[^/?#]+\/exec(?:\?.*)?$/.test(target)) {
+    return {ok:false,error:'URL ต้องเป็น Apps Script Web App ที่ลงท้ายด้วย /exec'};
   }
-  if (!force && checkedBackendUrl === target && Date.now() - checkedBackendAt < 120000) {
-    return {ok:true,version:CDD_RELEASE,features:['signedAdminJsonp','reviewerAccounts','sharedLineToken']};
+  if(!force && checkedBackendUrl===target && Date.now()-checkedBackendAt<120000 && checkedBackendInfo) {
+    return checkedBackendInfo;
   }
-  const result = await callViaJsonp(target, {action:'health'});
-  if (!result?.ok || result.version !== CDD_RELEASE || !result.features?.includes('signedAdminJsonp') || !result.features?.includes('reviewerAccounts') || !result.features?.includes('sharedLineToken')) {
-    return {ok:false,error:'Apps Script ที่ URL นี้' + (result?.version ? ' เป็น ' + result.version : ' ยังไม่ตอบกลับข้อมูลเวอร์ชัน') + ' ยังไม่ได้ Deploy โค้ด V20.5 กรุณาเลือก New version แล้ว Deploy Code.gs ใหม่',detectedVersion:result?.version||'ไม่ทราบ'};
+  const result=await callViaJsonp(target,{action:'health'});
+  const required=['signedAdminJsonp','reviewerAccounts','sharedLineToken','lineTokenDiagnostics'];
+  const features=Array.isArray(result?.features)?result.features:[];
+  const missing=required.filter(item=>!features.includes(item));
+  if(result?.ok && result.version===CDD_RELEASE && missing.length===0) {
+    checkedBackendUrl=target;
+    checkedBackendAt=Date.now();
+    checkedBackendInfo=result;
+    return result;
   }
-  checkedBackendUrl = target;
-  checkedBackendAt = Date.now();
-  return result;
+  checkedBackendUrl='';
+  checkedBackendAt=0;
+  checkedBackendInfo=null;
+  if(!result) return {ok:false,error:'ไม่สามารถอ่านสถานะจาก Google Apps Script ได้ — ตรวจสิทธิ์ Web App และ URL /exec ก่อน'};
+  const deployed=String(result.build||result.version||'ไม่ทราบเวอร์ชัน');
+  const missingText=missing.length?' (ขาด: '+missing.join(', ')+')':'';
+  return {ok:false,detectedVersion:result.version||'',detectedBuild:result.build||'',
+    error:'เว็บไซต์ติดต่อ Apps Script ได้ แต่ Deployment ที่เปิดอยู่คือ '+deployed+missingText+
+      ' ยังไม่รองรับการบันทึก LINE Token ของ V20.6 ขึ้นไป โปรดเปิดโปรเจกต์ Apps Script เดิม นำ Code.gs ใหม่ไปวาง แล้ว Deploy → Manage deployments → Edit (ดินสอ) → New version → Deploy จากนั้นเปิด /exec?action=health ต้องเห็น build V20.7'};
 }
+
+function openDeployedAppsScriptHealth() {
+  const target=DEFAULT_GAS_WEB_APP_URL;
+  window.open(target+'?action=health&_t='+Date.now(),'_blank','noopener,noreferrer');
+}
+
 function updateBackendDiagnostic(message, good = false) {
   const field = document.getElementById('tickerCloudVersionInfo');
   if (field) {field.textContent = message;field.style.color = good ? 'var(--ok)' : 'var(--danger)';}
@@ -1916,7 +1939,7 @@ async function connectCurrentBackend() {
   document.getElementById('cfgGasUrl').value=url;
   localStorage.setItem(GAS_CFG_KEY, JSON.stringify({...gasConfig,token:''}));
   tickerCloudUnsupported=false;
-  updateBackendDiagnostic('✅ เชื่อมต่อ Apps Script '+probe.version+' แล้ว • หากต้องการให้ทุกเครื่องใช้ URL นี้ ให้อัปเดต webAppUrl ในไฟล์ cdd-cloud-config.json บน GitHub',true);
+  updateBackendDiagnostic('✅ เชื่อมต่อ Apps Script '+(probe.build||probe.version)+' แล้ว • เว็บไซต์ใช้ URL ที่ฝังอยู่ใน index.html เป็นค่ากลาง',true);
   showToast('✅ เชื่อมต่อ Google Apps Script '+probe.version+' สำเร็จ');
   await refreshTickerFromCloud(true);
   pullStateFromGas(false,true);
@@ -4134,9 +4157,18 @@ async function saveGasSettings() {
     target: document.getElementById('cfgLineTarget').value.trim()
   };
   const tokenInput=document.getElementById('cfgLineToken').value.trim();
+  const saveStatus=document.getElementById('lineTokenSaveStatus');
+  if(saveStatus) {saveStatus.style.display='none';saveStatus.textContent='';}
   if(tokenInput) {
+    if(saveStatus){saveStatus.style.display='block';saveStatus.textContent='⏳ กำลังตรวจสอบ Deployment และบันทึก Token บน Cloud...';}
     const res=await sendToGoogleSheetDB({action:'saveLineToken',token:tokenInput,target:gasConfig.target,adminAuth:adminApiCredentials()});
-    if(!confirmed(res)){showToast('❌ บันทึก LINE Token ไม่สำเร็จ: '+(res?.error||'Cloud ไม่ตอบกลับ'));return;}
+    if(!confirmed(res)){
+      const reason=res?.error||'Cloud ไม่ตอบกลับ';
+      if(saveStatus)saveStatus.textContent='❌ ยังไม่ได้บันทึก LINE Token: '+reason+' — ถ้าเป็น Deployment เก่า ให้เปิด /exec?action=health และ Deploy Code.gs V20.7 ก่อน';
+      showToast('❌ ไม่สามารถบันทึก LINE Token: '+reason);
+      return;
+    }
+    if(saveStatus)saveStatus.textContent='✅ LINE Token บันทึกใน Apps Script ส่วนกลางแล้ว — ชื่อบอท: '+String(res.botName||'LINE Bot');
     document.getElementById('cfgLineToken').value='';
     document.getElementById('quickLineTokenInput').value='';
   }
@@ -4154,7 +4186,7 @@ async function testGasConnection() {
   statusBox.innerHTML = '⏳ กำลังตรวจสอบการเชื่อมต่อกับ Google Apps Script...';
   const res = await sendToGoogleSheetDB({ action: 'getInitialData' });
   const health=await verifyBackendVersion(curUrl,true);
-  updateBackendDiagnostic(health.ok ? '✅ เชื่อมต่อ Apps Script '+health.version+' พร้อมบันทึกข้อความวิ่ง/ตีกลับ' : '❌ '+health.error,health.ok);
+  updateBackendDiagnostic(health.ok ? '✅ เชื่อมต่อ Apps Script '+(health.build||health.version)+' พร้อมบันทึกข้อความวิ่ง/ตีกลับ' : '❌ '+health.error,health.ok);
   if (res && res.ok && Array.isArray(res.records)) {
     statusBox.innerHTML = `${health.ok ? '✅' : '⚠️'} <b>ฐานข้อมูลตอบกลับ (เวอร์ชัน ${res.version || 'ไม่ทราบ'})${health.ok ? ' และยืนยันระบบคำสั่ง V20 ได้' : ' แต่ยังไม่รองรับการบันทึกใหม่'}</b><br>${health.ok ? '' : escCDD(health.error)+'<br>'}พบข้อมูลรายงาน <b>${res.records.length}</b> รายการ • ไอดีไลน์ที่บันทึกไว้ <b>${lineRecipients.length}</b> รายการ` +
       (res.sheetUrl ? `<br>📊 <a href="${res.sheetUrl}" target="_blank" style="color:var(--blue-600);font-weight:700">คลิกเปิดไฟล์ฐานข้อมูล Google Sheets (${res.sheetName || 'Database'})</a>` : '');
