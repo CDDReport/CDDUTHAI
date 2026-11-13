@@ -695,7 +695,8 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
               <label style="font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:4px">
                 🔑 LINE Channel Access Token (จากแท็บ Messaging API ใน LINE Developers):
               </label>
-              <input type="password" id="quickLineTokenInput" class="inp" placeholder="วางรหัส Channel Access Token ยาวๆ ที่นี่..." oninput="syncQuickTokenInput(this.value)">
+              <input type="password" id="quickLineTokenInput" class="inp" placeholder="กรอกเฉพาะเมื่อต้องการเปลี่ยน Token (บันทึกบน Cloud)" oninput="syncQuickTokenInput(this.value)">
+              <div id="lineCloudTokenStatus" class="note" style="margin-top:6px">กำลังตรวจสอบ Token ที่บันทึกไว้บน Cloud...</div>
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button type="button" class="btn btn-ghost btn-sm" onclick="toggleQuickTokenVisibility()">👁️ ดู/ซ่อน</button>
@@ -1079,7 +1080,11 @@ const DEFAULT_ACCOUNTS = {
   'UTI05': { pass: '5555', role: 'district', name: '5. สำนักงานพัฒนาชุมชนอำเภอสว่างอารมณ์', distId: 'UTI05' },
   'UTI06': { pass: '6666', role: 'district', name: '6. สำนักงานพัฒนาชุมชนอำเภอลานสัก (UTI06)', distId: 'UTI06' },
   'UTI07': { pass: '7777', role: 'district', name: '7. สพอ.ห้วยคต', distId: 'UTI07' },
-  'UTI08': { pass: '8888', role: 'district', name: '8. สำนักงานพัฒนาชุมชนอำเภอบ้านไร่', distId: 'UTI08' }
+  'UTI08': { pass: '8888', role: 'district', name: '8. สำนักงานพัฒนาชุมชนอำเภอบ้านไร่', distId: 'UTI08' },
+  'WG01': { pass: '', role: 'reviewer', groupId: 'G1', name: 'ผู้อนุมัติกลุ่มงานประสานและสนับสนุนฯ', distId: 'ALL' },
+  'WG02': { pass: '', role: 'reviewer', groupId: 'G2', name: 'ผู้อนุมัติกลุ่มงานส่งเสริมฯ', distId: 'ALL' },
+  'WG03': { pass: '', role: 'reviewer', groupId: 'G3', name: 'ผู้อนุมัติกลุ่มงานสารสนเทศฯ', distId: 'ALL' },
+  'WG04': { pass: '', role: 'reviewer', groupId: 'G4', name: 'ผู้อนุมัติกลุ่มงานยุทธศาสตร์ฯ', distId: 'ALL' }
 };
 
 let ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
@@ -1525,7 +1530,7 @@ async function saveTickerSettings() {
 }
 
 function openReturnReportModal(month,distId,repId) {
-  if (!isAdmin()) return;
+  if (!canReviewReport(repId)) {showToast('⛔ ไม่มีสิทธิ์ตีกลับหัวข้อนี้');return;}
   const rec=db[month]?.[distId]?.[repId], rep=getAllReportsFlat(null,true).find(r=>r.id===repId);
   if (!rec || !['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status)) {showToast('⚠️ เลือกได้เฉพาะรายงานที่ส่งแล้ว');return;}
   document.getElementById('rejectMonth').value=month;
@@ -1538,9 +1543,10 @@ function openReturnReportModal(month,distId,repId) {
   document.getElementById('rejectReason').focus();
 }
 async function confirmReturnReport(event) {
-  event.preventDefault();if(!isAdmin())return;
+  event.preventDefault();
   const month=document.getElementById('rejectMonth').value, distId=document.getElementById('rejectDistId').value,
     repId=document.getElementById('rejectRepId').value, reason=document.getElementById('rejectReason').value.trim();
+  if(!canReviewReport(repId)){showToast('⛔ ไม่มีสิทธิ์ตีกลับหัวข้อนี้');return;}
   if (!reason) {showToast('⚠️ ต้องระบุเหตุผลในการตีกลับ');return;}
   const btn=document.getElementById('btnConfirmReject');btn.disabled=true;
   const statusBox=document.getElementById('rejectSaveStatus');if(statusBox){statusBox.textContent='กำลังบันทึกเหตุผลและสร้างแจ้งเตือนให้อำเภอ...';statusBox.className='ticker-status';}
@@ -1675,13 +1681,11 @@ function updateTopSyncIndicator(state, text) {
 }
 
 function syncQuickTokenInput(val) {
-  gasConfig.token = val.trim();
   const sInp = document.getElementById('cfgLineToken');
   if (sInp && sInp.value !== val) sInp.value = val;
 }
 
 function syncSettingsTokenInput(val) {
-  gasConfig.token = val.trim();
   const qInp = document.getElementById('quickLineTokenInput');
   if (qInp && qInp.value !== val) qInp.value = val;
 }
@@ -1701,6 +1705,7 @@ function loadState() {
   } catch (e) {
     ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
   }
+  Object.keys(ACCOUNTS).forEach(id=>{if(ACCOUNTS[id].role==='reviewer')ACCOUNTS[id].pass='';});
   try {
     const wgRaw = localStorage.getItem(WORKGROUPS_CFG_KEY) || localStorage.getItem('CDD_UTHAI_WORKGROUPS_CFG_V15');
     WORKGROUPS = wgRaw ? JSON.parse(wgRaw) : JSON.parse(JSON.stringify(DEFAULT_WORKGROUPS));
@@ -1736,12 +1741,13 @@ function loadState() {
       gasConfig = {
         url: cleanUrl,
         driveFolderId: parsed.driveFolderId || '',
-        token: parsed.token || '',
+        token: '',
         target: parsed.target || ''
       };
     }
   } catch (e) {}
 
+  localStorage.setItem(GAS_CFG_KEY,JSON.stringify({...gasConfig,token:''}));
   normalizeUTI07Name_();
   try { reportSchedules=JSON.parse(localStorage.getItem(SCHEDULE_CACHE_KEY)||'{}')||{}; } catch(e) {reportSchedules={};}
   try { tickerConfig={...tickerConfig,...JSON.parse(localStorage.getItem(TICKER_CACHE_KEY)||'{}')}; } catch(e) {}
@@ -1750,8 +1756,8 @@ function loadState() {
   const diagInput=document.getElementById('tickerGasUrlInput');
   if(diagInput) diagInput.value=gasConfig.url||DEFAULT_GAS_WEB_APP_URL;
   document.getElementById('cfgDriveFolderId').value = gasConfig.driveFolderId || '';
-  document.getElementById('cfgLineToken').value = gasConfig.token || '';
-  document.getElementById('quickLineTokenInput').value = gasConfig.token || '';
+  document.getElementById('cfgLineToken').value = '';
+  document.getElementById('quickLineTokenInput').value = '';
   document.getElementById('cfgLineTarget').value = gasConfig.target || '';
 }
 
@@ -1766,7 +1772,7 @@ function saveWorkgroupsAndVisibility(syncToCloud = true) {
   localStorage.setItem(HIDDEN_REPORTS_KEY, JSON.stringify(hiddenReportsByMonth));
   localStorage.setItem(LINE_REC_KEY, JSON.stringify(lineRecipients));
   localStorage.setItem(ACCOUNTS_CFG_KEY, JSON.stringify(ACCOUNTS));
-  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify({...gasConfig,token:''}));
   ensureDBStructure();
   saveDB();
   if (syncToCloud) {
@@ -1836,7 +1842,7 @@ async function refreshSharedBackendConfig(force = false) {
   tickerCloudUnsupported = false;
   tickerLastFetchAt = 0;
   lastNoticeFetchAt = 0;
-  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify({...gasConfig,token:''}));
   const settingField = document.getElementById('cfgGasUrl');
   const tickerField = document.getElementById('tickerGasUrlInput');
   if (settingField && document.activeElement !== settingField) settingField.value = publicUrl;
@@ -1884,11 +1890,11 @@ async function verifyBackendVersion(url, force = false) {
     return {ok:false,error:'URL ต้องเป็น Web App ของ Apps Script ที่ลงท้ายด้วย /exec'};
   }
   if (!force && checkedBackendUrl === target && Date.now() - checkedBackendAt < 120000) {
-    return {ok:true,version:CDD_RELEASE,features:['signedAdminJsonp']};
+    return {ok:true,version:CDD_RELEASE,features:['signedAdminJsonp','reviewerAccounts','sharedLineToken']};
   }
   const result = await callViaJsonp(target, {action:'health'});
-  if (!result?.ok || result.version !== CDD_RELEASE || !result.features?.includes('signedAdminJsonp')) {
-    return {ok:false,error:'Apps Script ที่ URL นี้' + (result?.version ? ' เป็น ' + result.version : ' ยังไม่ตอบกลับข้อมูลเวอร์ชัน') + ' ไม่ใช่ ' + CDD_RELEASE + ' กรุณาใช้ URL /exec ที่ Deploy โค้ดใหม่จริง',detectedVersion:result?.version||'ไม่ทราบ'};
+  if (!result?.ok || result.version !== CDD_RELEASE || !result.features?.includes('signedAdminJsonp') || !result.features?.includes('reviewerAccounts') || !result.features?.includes('sharedLineToken')) {
+    return {ok:false,error:'Apps Script ที่ URL นี้' + (result?.version ? ' เป็น ' + result.version : ' ยังไม่ตอบกลับข้อมูลเวอร์ชัน') + ' ยังไม่ได้ Deploy โค้ด V20.5 กรุณาเลือก New version แล้ว Deploy Code.gs ใหม่',detectedVersion:result?.version||'ไม่ทราบ'};
   }
   checkedBackendUrl = target;
   checkedBackendAt = Date.now();
@@ -1907,7 +1913,7 @@ async function connectCurrentBackend() {
   // Change the target only after proving the new endpoint supports writes.
   gasConfig.url = url;
   document.getElementById('cfgGasUrl').value=url;
-  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify({...gasConfig,token:''}));
   tickerCloudUnsupported=false;
   updateBackendDiagnostic('✅ เชื่อมต่อ Apps Script '+probe.version+' แล้ว • หากต้องการให้ทุกเครื่องใช้ URL นี้ ให้อัปเดต webAppUrl ในไฟล์ cdd-cloud-config.json บน GitHub',true);
   showToast('✅ เชื่อมต่อ Google Apps Script '+probe.version+' สำเร็จ');
@@ -1955,7 +1961,7 @@ async function sendToGoogleSheetDB(payload) {
   // GAS ContentService does not expose CORS response headers to GitHub Pages.
   // Authenticated, HMAC-signed JSONP returns the server result directly, instead
   // of opaque POST + cache polling that could appear to fail after a real write.
-  const confirmedActions=['upsertLineRecipient','deleteLineRecipient','saveScheduleEntry','deleteScheduleEntry','saveTickerConfig','returnReport','ackReturnNotice'];
+  const confirmedActions=['upsertLineRecipient','deleteLineRecipient','saveScheduleEntry','deleteScheduleEntry','saveTickerConfig','returnReport','ackReturnNotice','manualScore','saveAccountsConfig','saveLineToken','saveLineConfig','sendLine','saveTopicsConfig','batchImport','resetAllRecords'];
   if (confirmedActions.includes(payload.action)) {
     const probe=await verifyBackendVersion(targetUrl);
     if(!probe.ok){updateBackendDiagnostic('❌ '+probe.error);return {ok:false,error:probe.error};}
@@ -1979,6 +1985,9 @@ async function sendToGoogleSheetDB(payload) {
       }
       await new Promise(resolve=>setTimeout(resolve,1200));
     }
+    // Never put LINE tokens or account passwords in a GET URL (including JSONP).
+    if(['saveLineToken','saveAccountsConfig'].includes(payload.action))
+      return {ok:false,error:'ไม่สามารถยืนยันการบันทึกจาก Cloud ผ่าน POST ได้ กรุณาตรวจสิทธิ์ Apps Script /exec และลองอีกครั้ง'};
     // Fallback for environments where a cross-origin POST cannot be delivered.
     // Use the SAME requestId so a delayed POST and fallback cannot create two returns.
     try {
@@ -2050,9 +2059,8 @@ async function syncAllConfigToGas() {
   lastLocalConfigSavedAt = Date.now();
   const enrichedHidden = {
     ...hiddenReportsByMonth,
-    _meta_accounts: ACCOUNTS,
+    // Accounts and LINE token are stored independently on Apps Script.
     _meta_gasConfig: {
-      token: gasConfig.token || '',
       target: gasConfig.target || '',
       driveFolderId: gasConfig.driveFolderId || ''
     }
@@ -2061,7 +2069,8 @@ async function syncAllConfigToGas() {
   return await sendToGoogleSheetDB({
     action: 'saveTopicsConfig',
     workgroups: WORKGROUPS,
-    hiddenReportsByMonth: enrichedHidden
+    hiddenReportsByMonth: enrichedHidden,
+    adminAuth:adminApiCredentials()
   });
 }
 
@@ -2092,16 +2101,11 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
       }
 
       if (hidObj._meta_gasConfig && typeof hidObj._meta_gasConfig === 'object') {
-        if (hidObj._meta_gasConfig.token && !gasConfig.token) {
-          gasConfig.token = hidObj._meta_gasConfig.token;
-          document.getElementById('cfgLineToken').value = gasConfig.token;
-          document.getElementById('quickLineTokenInput').value = gasConfig.token;
-        }
         if (hidObj._meta_gasConfig.target && !gasConfig.target) {
           gasConfig.target = hidObj._meta_gasConfig.target;
           document.getElementById('cfgLineTarget').value = gasConfig.target;
         }
-        localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+        localStorage.setItem(GAS_CFG_KEY, JSON.stringify({...gasConfig,token:''}));
       }
 
       if (Array.isArray(res.workgroups) && res.workgroups.length === 4) {
@@ -2133,7 +2137,9 @@ async function pullStateFromGas(showNotification = false, silentBackground = fal
       loginHint.textContent = '🟢 ซิงค์รหัสผ่านและฐานข้อมูลล่าสุดจาก Google Sheets เรียบร้อยแล้ว';
     }
 
-    const hasToken = Boolean(gasConfig.token || res.lineTokenSaved);
+    const hasToken = Boolean(res.lineTokenSaved);
+    const tokenStatus=document.getElementById('lineCloudTokenStatus');
+    if(tokenStatus)tokenStatus.textContent=hasToken ? '🟢 Token บันทึกบน Cloud แล้ว — ทุกเครื่องใช้งานได้โดยไม่ต้องกรอกซ้ำ' : '⚪ ยังไม่มี Token บน Cloud — ให้แอดมินบันทึกครั้งแรก';
     const botBadge = document.getElementById('lineBotConnBadge');
     if (botBadge && hasToken && botBadge.textContent.includes('รอตรวจสอบ')) {
       botBadge.className = 'pill pill-ok';
@@ -2208,9 +2214,16 @@ function startAutoSyncTimer() {
 }
 
 /* ================== 5. SECURITY PIN (02102542) & ADMIN GUARD ================== */
-function isAdmin() {
-  return currentUser && currentUser.role === 'admin';
+function isAdmin() { return Boolean(currentUser && currentUser.role === 'admin'); }
+function isReviewer() { return Boolean(currentUser && currentUser.role === 'reviewer'); }
+function canReviewGroup(groupId) {
+  return Boolean(currentUser && (isAdmin() || (isReviewer() && currentUser.groupId === groupId)));
 }
+function canReviewReport(repId) {
+  const report = getAllReportsFlat(null,true).find(r => r.id === repId);
+  return Boolean(report && canReviewGroup(report.groupId));
+}
+
 
 function requireAdminAndPin(actionDescription, callback) {
   if (!isAdmin()) {
@@ -2252,7 +2265,7 @@ function requestResetData() {
       db = createEmptyDB();
       await clearAllFilesIDB();
       saveDB();
-      await sendToGoogleSheetDB({ action: 'resetAllRecords' });
+      await sendToGoogleSheetDB({ action: 'resetAllRecords', adminAuth:adminApiCredentials() });
       renderAll();
       showToast('🔄 รีเซ็ตข้อมูลการส่งรายงานทั้งหมดเป็นค่าเริ่มต้น (0 งาน) เรียบร้อยแล้ว');
     }
@@ -2271,7 +2284,15 @@ function triggerProtectedExcelPick() {
 }
 
 /* ================== 6. LOGIN & ROLE PERMISSIONS ================== */
-function handleLogin(e) {
+async function verifyReviewerLogin_(username,password) {
+  const coder=new TextEncoder(),body=JSON.stringify({action:'verifyReviewerLogin'}),ts=String(Date.now());
+  const nonce=window.crypto.randomUUID();
+  const key=await crypto.subtle.importKey('raw',coder.encode(password),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const signature=await crypto.subtle.sign('HMAC',key,coder.encode(username+'\n'+ts+'\n'+nonce+'\n'+body));
+  const hex=Array.from(new Uint8Array(signature)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  return await callViaJsonp((gasConfig.url||DEFAULT_GAS_WEB_APP_URL).trim(),{payload:body,authUser:username,authTs:ts,authNonce:nonce,authSig:hex});
+}
+async function handleLogin(e) {
   e.preventDefault();
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value.trim();
@@ -2279,12 +2300,31 @@ function handleLogin(e) {
   const matchedKey = Object.keys(ACCOUNTS).find(k => k.toLowerCase() === u.toLowerCase());
   const acc = matchedKey ? ACCOUNTS[matchedKey] : null;
 
-  if (!acc || String(acc.pass) !== p) {
-    document.getElementById('loginErr').style.display = 'block';
-    return;
+  if (!acc || !p) {document.getElementById('loginErr').style.display='block';return;}
+  if(acc.role==='reviewer') {
+    const submit=document.querySelector('#loginForm button[type="submit"]');
+    if(submit)submit.disabled=true;
+    try {
+      await sharedBackendReady;
+      const result=await verifyReviewerLogin_(matchedKey,p);
+      if(!result?.ok || result.groupId!==acc.groupId) {
+        document.getElementById('loginErr').textContent='เข้าสู่ระบบผู้อนุมัติไม่สำเร็จ: '+(result?.error||'ตรวจสอบรหัสผ่านและการ Deploy Code.gs');
+        document.getElementById('loginErr').style.display='block';return;
+      }
+      currentUser={username:matchedKey,...acc,...result,pass:p};
+    } catch(err) {
+      document.getElementById('loginErr').textContent='เข้าสู่ระบบผู้อนุมัติไม่สำเร็จ: '+String(err.message||err);
+      document.getElementById('loginErr').style.display='block';return;
+    } finally {if(submit)submit.disabled=false;}
+  } else {
+    if(!String(acc.pass||'') || String(acc.pass)!==p) {
+      document.getElementById('loginErr').style.display='block';return;
+    }
+    currentUser={username:matchedKey,...acc};
   }
   document.getElementById('loginErr').style.display = 'none';
-  currentUser = { username: matchedKey, ...acc };
+  if(isReviewer()) selectedApprovalGroup=currentUser.groupId;
+  else selectedApprovalGroup='ALL';
   normalizeUTI07Name_();
   document.getElementById('loginScreen').classList.add('hidden');
   applyRolePermissions();
@@ -2310,7 +2350,7 @@ function handleLogout() {
 
 function applyRolePermissions() {
   const admin = isAdmin();
-  document.getElementById('uRoleTxt').textContent = admin ? 'ผู้ดูแลระบบระดับจังหวัด (Admin)' : 'ระดับอำเภอ (District)';
+  document.getElementById('uRoleTxt').textContent = admin ? 'ผู้ดูแลระบบระดับจังหวัด (Admin)' : isReviewer() ? 'ผู้อนุมัติกลุ่มงาน (Reviewer)' : 'ระดับอำเภอ (District)';
   document.getElementById('uNameTxt').textContent = currentUser.name;
 
   const adminElements = [
@@ -2322,7 +2362,16 @@ function applyRolePermissions() {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('admin-only-hidden', !admin);
   });
+  ['G1','G2','G3','G4'].forEach(groupId => {
+    const el=document.querySelector(`.nav-item[data-page="${groupId}"]`);
+    if(el) el.classList.toggle('admin-only-hidden',isReviewer() && currentUser.groupId!==groupId);
+  });
+  const bulk=document.getElementById('adminBulkActions');
+  if(bulk) bulk.classList.toggle('admin-only-hidden',!(admin||isReviewer()));
+  const addTopic=bulk?.querySelector('button[onclick*="openAddTopicModal"]');
+  if(addTopic) addTopic.classList.toggle('admin-only-hidden',!admin);
 }
+
 
 /* ================== 7. ADMIN PASSWORD MANAGEMENT FOR DISTRICTS ================== */
 function renderPasswordManagerPage() {
@@ -2330,7 +2379,7 @@ function renderPasswordManagerPage() {
   const wrap = document.getElementById('passwordManagerTableWrap');
   if (!wrap) return;
 
-  const orderedKeys = ['Admin', 'UTI01', 'UTI02', 'UTI03', 'UTI04', 'UTI05', 'UTI06', 'UTI07', 'UTI08'];
+  const orderedKeys = ['Admin', 'WG01', 'WG02', 'WG03', 'WG04', 'UTI01', 'UTI02', 'UTI03', 'UTI04', 'UTI05', 'UTI06', 'UTI07', 'UTI08'];
   const inputType = showPasswordsPlain ? 'text' : 'password';
 
   const rows = orderedKeys.map((key, idx) => {
@@ -2341,14 +2390,14 @@ function renderPasswordManagerPage() {
         <td class="center">${idx + 1}</td>
         <td><span class="pill ${isAdm ? 'pill-rej' : 'pill-ok'}">${key}</span></td>
         <td>
-          <input type="text" class="inp" id="accName_${key}" value="${acc.name}" style="padding:7px 10px;font-size:13px">
+          <input type="text" class="inp" id="accName_${key}" value="${escCDD(acc.name)}" style="padding:7px 10px;font-size:13px">
         </td>
         <td class="center">
-          <span class="pill ${isAdm ? 'pill-pend' : 'pill-none'}">${isAdm ? 'แอดมินจังหวัด (Admin)' : 'ระดับอำเภอ'}</span>
+          <span class="pill ${isAdm ? 'pill-pend' : 'pill-none'}">${isAdm ? 'แอดมินจังหวัด (Admin)' : acc.role==='reviewer' ? 'อนุมัติได้เฉพาะ '+acc.groupId : 'ระดับอำเภอ'}</span>
         </td>
         <td>
           <div style="display:flex;gap:6px;align-items:center">
-            <input type="${inputType}" class="inp acc-pass-inp" id="accPass_${key}" value="${acc.pass}" style="padding:7px 10px;font-weight:700;max-width:180px" required>
+            <input type="${inputType}" class="inp acc-pass-inp" id="accPass_${key}" value="${escCDD(acc.pass)}" style="padding:7px 10px;font-weight:700;max-width:180px" required>
             <button type="button" class="btn btn-ghost btn-xs" onclick="toggleSinglePassInput('accPass_${key}')" title="แสดง/ซ่อนรหัสผ่าน">👁️</button>
           </div>
         </td>
@@ -2360,6 +2409,7 @@ function renderPasswordManagerPage() {
   }).join('');
 
   wrap.innerHTML = `
+    <div class="note" style="margin:0 0 12px">บัญชีอนุมัติงานแยกกลุ่ม: WG01 (G1 ประสานฯ), WG02 (G2 ส่งเสริมฯ), WG03 (G3 สารสนเทศฯ), WG04 (G4 ยุทธศาสตร์ฯ) — กรุณาตั้งรหัสผ่านก่อนใช้งานครั้งแรก</div>
     <table>
       <thead>
         <tr>
@@ -2405,11 +2455,16 @@ async function saveSingleAccountPassword(key) {
     return;
   }
 
-  ACCOUNTS[key].pass = newPass;
+  const revised=JSON.parse(JSON.stringify(ACCOUNTS));
+  revised[key]={...revised[key],pass:newPass,name:newName||revised[key].name};
+  const res=await sendToGoogleSheetDB({action:'saveAccountsConfig',accounts:revised,adminAuth:adminApiCredentials()});
+  if(!confirmed(res)){showToast('❌ บันทึกบัญชีไม่สำเร็จ: '+(res?.error||'Cloud ไม่ตอบกลับ'));return;}
+  ACCOUNTS=revised;
+  if(revised[key]?.role==='reviewer')ACCOUNTS[key].pass='';
   if(currentUser?.username===key)currentUser.pass=newPass;
-  if (newName) ACCOUNTS[key].name = newName;
-  saveWorkgroupsAndVisibility(true);
-  showToast(`✅ เปลี่ยนรหัสผ่านของ "${key}" (${ACCOUNTS[key].name}) และซิงค์ลง Cloud เรียบร้อยแล้ว!`);
+  localStorage.setItem(ACCOUNTS_CFG_KEY,JSON.stringify(ACCOUNTS));
+  renderPasswordManagerPage();
+  showToast('✅ บันทึกบัญชี '+key+' ลงฐานข้อมูลกลางแล้ว');
 }
 
 function saveAllPasswordsFromTable() {
@@ -2417,15 +2472,18 @@ function saveAllPasswordsFromTable() {
   requireAdminAndPin(
     'ยืนยันการบันทึกรหัสผ่านของทุกอำเภอลงฐานข้อมูล Cloud กรุณากรอกรหัสความปลอดภัยแอดมินจังหวัด',
     async () => {
-      Object.keys(ACCOUNTS).forEach(key => {
+      const revised=JSON.parse(JSON.stringify(ACCOUNTS));
+      Object.keys(revised).forEach(key => {
         const passEl = document.getElementById('accPass_' + key);
         const nameEl = document.getElementById('accName_' + key);
-        if (passEl && passEl.value.trim()) ACCOUNTS[key].pass = passEl.value.trim();
-        if (nameEl && nameEl.value.trim()) ACCOUNTS[key].name = nameEl.value.trim();
+        if(passEl && passEl.value.trim())revised[key].pass=passEl.value.trim();
+        if(nameEl && nameEl.value.trim())revised[key].name=nameEl.value.trim();
       });
-      saveWorkgroupsAndVisibility(true);
-      renderPasswordManagerPage();
-      showToast('✅ บันทึกรหัสผ่านของทุกอำเภอลงฐานข้อมูลเรียบร้อยแล้ว');
+      const res=await sendToGoogleSheetDB({action:'saveAccountsConfig',accounts:revised,adminAuth:adminApiCredentials()});
+      if(!confirmed(res)){showToast('❌ บันทึกบัญชีไม่สำเร็จ: '+(res?.error||'Cloud ไม่ตอบกลับ'));return;}
+      ACCOUNTS=revised;Object.keys(ACCOUNTS).forEach(id=>{if(ACCOUNTS[id].role==='reviewer') ACCOUNTS[id].pass='';});
+      localStorage.setItem(ACCOUNTS_CFG_KEY,JSON.stringify(ACCOUNTS));
+      renderPasswordManagerPage();showToast('✅ บันทึกรหัสผ่านทั้งหมดลง Cloud แล้ว');
     }
   );
 }
@@ -2435,10 +2493,11 @@ function resetPasswordsToDefault() {
   requireAdminAndPin(
     'ยืนยันการรีเซ็ตรหัสผ่านของทุกอำเภอกลับเป็นค่าเริ่มต้น (Admin=9999, UTI01=1111 ... UTI08=8888)',
     async () => {
-      ACCOUNTS = JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
-      saveWorkgroupsAndVisibility(true);
-      renderPasswordManagerPage();
-      showToast('🔄 คืนค่ารหัสผ่านเริ่มต้นให้ทุกอำเภอเรียบร้อยแล้ว');
+      const revised=JSON.parse(JSON.stringify(DEFAULT_ACCOUNTS));
+      const res=await sendToGoogleSheetDB({action:'saveAccountsConfig',accounts:revised,resetReviewerPasswords:true,adminAuth:adminApiCredentials()});
+      if(!confirmed(res)){showToast('❌ คืนค่าบัญชีไม่สำเร็จ: '+(res?.error||'Cloud ไม่ตอบกลับ'));return;}
+      ACCOUNTS=revised;localStorage.setItem(ACCOUNTS_CFG_KEY,JSON.stringify(ACCOUNTS));
+      renderPasswordManagerPage();showToast('🔄 คืนค่ารหัสผ่านเริ่มต้นแล้ว (WG01–WG04 ต้องตั้งใหม่)');
     }
   );
 }
@@ -2462,6 +2521,7 @@ function selectMonth(m) {
 }
 
 function switchPage(pageId) {
+  if (isReviewer() && ['G1','G2','G3','G4'].includes(pageId) && pageId!==currentUser.groupId) {showToast('⛔ บัญชีนี้เข้าถึงได้เฉพาะกลุ่มงานตนเอง');return;}
   if (['excel', 'line', 'topics', 'passwords', 'schedule'].includes(pageId) && !isAdmin()) {
     showToast('⛔ เมนูนี้สำหรับแอดมินระดับจังหวัดเท่านั้น');
     return;
@@ -2483,7 +2543,7 @@ function switchPage(pageId) {
 
 function getVisibleDistricts() {
   if (!currentUser) return [];
-  if (isAdmin()) return DISTRICTS;
+  if (isAdmin() || isReviewer()) return DISTRICTS;
   return DISTRICTS.filter(d => d.id === currentUser.distId);
 }
 
@@ -2509,7 +2569,7 @@ function updatePendingBadge() {
   let pend = 0;
   const dists = getVisibleDistricts();
   MONTHS.forEach(m => {
-    const activeReports = getAllReportsFlat(m, false);
+    const activeReports = getAllReportsFlat(m, false).filter(r=>!isReviewer()||r.groupId===currentUser.groupId);
     dists.forEach(d => {
       activeReports.forEach(r => {
         if (db[m]?.[d.id]?.[r.id]?.status === 'รอตรวจสอบ') pend++;
@@ -2946,7 +3006,7 @@ function buildFileCellHtml(month, distId, repId, rec) {
   const parts = [];
   if (rec.fileName) {
     const sizeStr = rec.fileSize ? ` (${formatBytes(rec.fileSize)})` : '';
-    if (isAdmin()) {
+    if (canReviewReport(repId)) {
       parts.push(`
         <button class="btn btn-sky btn-xs" onclick="downloadSubmittedFile('${month}','${distId}','${repId}')" title="ดาวน์โหลดไฟล์ ${rec.fileName}">
           ⬇️ ดาวน์โหลดไฟล์ (${rec.fileName}${sizeStr})
@@ -2966,8 +3026,8 @@ function buildFileCellHtml(month, distId, repId, rec) {
 }
 
 async function downloadSubmittedFile(month, distId, repId) {
-  if (!isAdmin()) {
-    showToast('⛔ เฉพาะแอดมินระดับจังหวัด (Admin) เท่านั้นที่สามารถดาวน์โหลดไฟล์งานได้');
+  if (!canReviewReport(repId)) {
+    showToast('⛔ ไม่มีสิทธิ์ดาวน์โหลดไฟล์ของกลุ่มงานนี้');
     return;
   }
   const rec = db[month]?.[distId]?.[repId];
@@ -3077,7 +3137,7 @@ function renderWorkgroupPage(gId) {
         </div>
       ` : '';
 
-      const manualBtns = admin ? `
+      const manualBtns = canReviewGroup(gId) ? `
         <div class="sc-grp" title="ให้คะแนนแมนนวล">
           <button class="sc-btn ${rec.score === 2 ? 'on-2' : ''}" onclick="setManualScore('${currentMonth}','${d.id}','${r.id}',2)">2</button>
           <button class="sc-btn ${rec.score === 1 ? 'on-1' : ''}" onclick="setManualScore('${currentMonth}','${d.id}','${r.id}',1)">1</button>
@@ -3098,9 +3158,9 @@ function renderWorkgroupPage(gId) {
         <td class="center">${fileCellHtml}</td>
         <td>${rec.sender || '-'}</td>
         <td class="center">
-          ${!isHid ? `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${currentMonth}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>` : '<span class="pill pill-none">งดส่งเดือนนี้</span>'}
+          ${!isReviewer() ? (!isHid ? `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${currentMonth}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>` : '<span class="pill pill-none">งดส่งเดือนนี้</span>') : ''}
           ${manualBtns}
-          ${admin && ['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status) ? `<button class="btn btn-danger btn-xs" onclick="openReturnReportModal('${currentMonth}','${d.id}','${r.id}')">↩️ ตีกลับ</button>` : ''}
+          ${canReviewGroup(gId) && ['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status) ? `<button class="btn btn-danger btn-xs" onclick="openReturnReportModal('${currentMonth}','${d.id}','${r.id}')">↩️ ตีกลับ</button>` : ''}
         </td>
       </tr>`;
     });
@@ -3125,6 +3185,7 @@ function renderWorkgroupPage(gId) {
 }
 
 function openSubmitModal(month, distId, repId) {
+  if(isReviewer()) {showToast('⛔ บัญชีผู้อนุมัติไม่สามารถส่งรายงานแทนอำเภอ');return;}
   const dist = DISTRICTS.find(d => d.id === distId);
   const rep = getAllReportsFlat(null, true).find(r => r.id === repId);
   const rec = db[month][distId][repId];
@@ -3186,7 +3247,8 @@ async function syncRecordToGas(actionType, month, distId, repId, filePayload = n
       rejectedAt: rec.rejectedAt || '',
       rejectedBy: rec.rejectedBy || ''
     },
-    filePayload: filePayload
+    filePayload: filePayload,
+    ...(isAdmin()?{adminAuth:adminApiCredentials()}:{})
   };
 
   return await sendToGoogleSheetDB(payload);
@@ -3303,7 +3365,7 @@ function onApprovalMonthChange() {
 }
 
 function renderApprovalGroupTabs() {
-  const tabs = [
+  const tabs = isReviewer() ? WORKGROUPS.filter(g=>g.id===currentUser.groupId).map(g=>({id:g.id,label:g.short})) : [
     { id: 'ALL', label: 'ทั้งหมด (4 กลุ่มงาน)' },
     ...WORKGROUPS.map(g => ({ id: g.id, label: g.short }))
   ];
@@ -3313,6 +3375,7 @@ function renderApprovalGroupTabs() {
 }
 
 function selectApprovalGroup(gId) {
+  if(isReviewer() && gId!==currentUser.groupId)return;
   selectedApprovalGroup = gId;
   renderApprovalGroupTabs();
   populateReportDropdown();
@@ -3323,27 +3386,30 @@ function populateReportDropdown() {
   const rSel = document.getElementById('apFilterReport');
   if (!rSel) return;
   const m = document.getElementById('apFilterMonth')?.value || currentMonth;
-  const reports = getAllReportsFlat(m, false).filter(r => selectedApprovalGroup === 'ALL' || r.groupId === selectedApprovalGroup);
+  const reports = getAllReportsFlat(m, false).filter(r => (selectedApprovalGroup === 'ALL' || r.groupId === selectedApprovalGroup) && (!isReviewer() || r.groupId === currentUser.groupId));
   rSel.innerHTML = `<option value="ALL">-- ทุกหัวข้อที่เปิดส่งในเดือน${m} (${reports.length} งาน) --</option>` +
     reports.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 }
 
-function setManualScore(month, distId, repId, scoreVal) {
-  if (!isAdmin()) {
-    showToast('⛔ เฉพาะแอดมินจังหวัดเท่านั้นที่สามารถให้คะแนนและอนุมัติได้');
-    return;
+async function setManualScore(month, distId, repId, scoreVal) {
+  if (!canReviewReport(repId)) {showToast('⛔ ไม่มีสิทธิ์อนุมัติหัวข้อนี้');return false;}
+  if(isReviewer()&&Number(scoreVal)===0){openReturnReportModal(month,distId,repId);return false;}
+  const rec=db[month]?.[distId]?.[repId];
+  if(!rec) return false;
+  if(isReviewer() && !['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status)) {
+    showToast('⚠️ อนุมัติได้เฉพาะรายงานที่อำเภอส่งแล้ว');return false;
   }
-  const rec = db[month][distId][repId];
-  rec.score = Number(scoreVal);
-  rec.status = scoreVal > 0 ? 'อนุมัติแล้ว' : 'ยังไม่ส่งรายงาน';
-  if (scoreVal > 0 && !rec.submittedAt) {
-    rec.submittedAt = new Date().toLocaleString('th-TH');
-    rec.sender = rec.sender || 'Admin (ให้คะแนนแมนนวล)';
-  }
-  saveDB();
-  syncRecordToGas('manualScore', month, distId, repId);
-  renderAll();
-  showToast(`✅ บันทึกคะแนน ${scoreVal} คะแนน (${rec.status}) ลง Google Sheets เรียบร้อย`);
+  const score=Number(scoreVal),report=getAllReportsFlat(null,true).find(r=>r.id===repId);
+  const dist=DISTRICTS.find(d=>d.id===distId);
+  if(!report||!dist)return false;
+  showToast('⏳ กำลังบันทึกผลการอนุมัติลง Cloud...');
+  const res=await sendToGoogleSheetDB({action:'manualScore',adminAuth:adminApiCredentials(),record:{month,distId,repId,
+    groupId:report.groupId,groupName:report.groupName,repName:report.name,distName:dist.name,score}});
+  if(!confirmed(res)){showToast('❌ ไม่สามารถบันทึกคะแนน: '+(res?.error||'Cloud ไม่ตอบกลับ'));return false;}
+  rec.score=score;rec.status=res.status||(score>0?'อนุมัติแล้ว':'ยังไม่ส่งรายงาน');
+  if(score>0&&!rec.submittedAt)rec.submittedAt=new Date().toLocaleString('th-TH');
+  saveDB();renderAll();showToast('✅ อนุมัติ/บันทึกคะแนนสำเร็จ: '+score+' คะแนน');
+  return true;
 }
 
 function renderApprovalPage() {
@@ -3352,9 +3418,11 @@ function renderApprovalPage() {
   const dFilter = document.getElementById('apFilterDist')?.value || 'ALL';
   const sFilter = document.getElementById('apFilterStatus')?.value || 'ALL';
   const admin = isAdmin();
+  const reviewer = isReviewer();
 
   const reports = getAllReportsFlat(m, false).filter(r =>
     (selectedApprovalGroup === 'ALL' || r.groupId === selectedApprovalGroup) &&
+    (!reviewer || r.groupId === currentUser.groupId) &&
     (rFilter === 'ALL' || r.id === rFilter)
   );
   const dists = getVisibleDistricts().filter(d => dFilter === 'ALL' || d.id === dFilter);
@@ -3364,7 +3432,7 @@ function renderApprovalPage() {
   reports.forEach(r => {
     const cells = dists.map(d => {
       const rec = db[m][d.id][r.id];
-      if (!admin) {
+      if (!admin && !reviewer) {
         return `<td class="center"><span class="pill ${rec.score > 0 ? 'pill-ok' : 'pill-none'}">${rec.score} คะแนน</span></td>`;
       }
       return `<td class="center">
@@ -3400,11 +3468,10 @@ function renderApprovalPage() {
       const pillCls = rec.status === 'อนุมัติแล้ว' ? 'pill-ok' : rec.status === 'รอตรวจสอบ' ? 'pill-pend' : rec.status === 'แก้ไข' ? 'pill-rej' : 'pill-none';
       const fileCellHtml = buildFileCellHtml(m, d.id, r.id, rec);
 
-      const actions = admin ? `
+      const actions = (admin||reviewer) ? `
         <button class="btn btn-ok btn-xs" onclick="setManualScore('${m}','${d.id}','${r.id}',2)">✅ อนุมัติ (+2)</button>
         ${['รอตรวจสอบ','อนุมัติแล้ว','แก้ไข'].includes(rec.status) ? `<button class="btn btn-danger btn-xs" onclick="openReturnReportModal('${m}','${d.id}','${r.id}')">↩️ ตีกลับ/ระบุเหตุผล</button>` : ''}
-        <button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)" title="ส่งเข้าไอดีของ ${d.short}">🤖 ส่ง LINE (${d.short})</button>
-        <button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',true)">📲 แชร์</button>
+        ${admin ? `<button class="btn btn-line btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',false)" title="ส่งเข้าไอดีของ ${d.short}">🤖 ส่ง LINE (${d.short})</button><button class="btn btn-ghost btn-xs" onclick="sendSingleLineAlert('${m}','${d.id}','${r.id}',true)">📲 แชร์</button>` : ''}
       ` : `<button class="btn btn-primary btn-xs" onclick="openSubmitModal('${m}','${d.id}','${r.id}')">📤 ส่งงาน/แนบไฟล์</button>`;
 
       lRows += `<tr>
@@ -3427,24 +3494,22 @@ function renderApprovalPage() {
   `;
 }
 
-function approveAllPendingInFilter() {
-  if (!isAdmin()) return;
-  const m = document.getElementById('apFilterMonth')?.value || currentMonth;
-  let count = 0;
-  const activeReps = getAllReportsFlat(m, false);
-  DISTRICTS.forEach(d => {
-    activeReps.forEach(r => {
-      if (db[m][d.id][r.id].status === 'รอตรวจสอบ') {
-        db[m][d.id][r.id].status = 'อนุมัติแล้ว';
-        db[m][d.id][r.id].score = 2;
-        syncRecordToGas('manualScore', m, d.id, r.id);
-        count++;
-      }
-    });
-  });
-  saveDB();
-  renderAll();
-  showToast(`✅ อนุมัติรายการที่รอตรวจทั้งหมด ${count} งาน และซิงค์ลง Google Sheets เรียบร้อยแล้ว`);
+async function approveAllPendingInFilter() {
+  if(!isAdmin() && !isReviewer())return;
+  const m=document.getElementById('apFilterMonth')?.value||currentMonth;
+  const distFilter=document.getElementById('apFilterDist')?.value||'ALL';
+  const repFilter=document.getElementById('apFilterReport')?.value||'ALL';
+  const activeReps=getAllReportsFlat(m,false).filter(r=>(selectedApprovalGroup==='ALL'||r.groupId===selectedApprovalGroup)&&
+    (repFilter==='ALL'||r.id===repFilter)&&canReviewGroup(r.groupId));
+  let success=0,failed=0;
+  for(const d of DISTRICTS.filter(d=>distFilter==='ALL'||d.id===distFilter)) {
+    for(const r of activeReps) {
+      if(db[m][d.id][r.id].status!=='รอตรวจสอบ')continue;
+      const ok=await setManualScore(m,d.id,r.id,2);
+      if(ok)success++;else failed++;
+    }
+  }
+  showToast(`✅ อนุมัติสำเร็จ ${success} งาน${failed?' • ไม่สำเร็จ '+failed+' งาน':''}`);
 }
 
 /* ================== 14. LINE BOT VERIFICATION & DISTRICT/ID SELECTOR (ADMIN ONLY) ================== */
@@ -3455,32 +3520,27 @@ async function verifyAndSaveLineBotToken() {
   const badge = document.getElementById('lineBotConnBadge');
 
   if (!tokenVal) {
-    diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ กรุณาวางรหัส LINE Channel Access Token ในช่องด้านบนก่อนกดตรวจสอบครับ</span>`;
+    diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ กรุณากรอก LINE Token ใหม่เมื่อต้องการตั้งค่าหรือเปลี่ยน Token</span>`;
     showToast('⚠️ กรุณาวาง LINE Channel Access Token ก่อน');
     return;
   }
 
-  gasConfig.token = tokenVal;
-  document.getElementById('cfgLineToken').value = tokenVal;
-  document.getElementById('quickLineTokenInput').value = tokenVal;
-  saveWorkgroupsAndVisibility(true);
-
-  diagBox.innerHTML = '⏳ กำลังตรวจสอบรหัส Token กับเซิร์ฟเวอร์ LINE Messaging API...';
-  const res = await sendToGoogleSheetDB({
-    action: 'checkLineBot',
-    token: tokenVal,
-    target: gasConfig.target || ''
-  });
+  diagBox.innerHTML = '⏳ กำลังตรวจสอบและบันทึก Token ลง Google Apps Script...';
+  const res = await sendToGoogleSheetDB({action:'saveLineToken',token:tokenVal,target:gasConfig.target||'',adminAuth:adminApiCredentials()});
 
   if (res && res.ok && res.botName) {
     badge.className = 'pill pill-ok';
     badge.textContent = `🟢 บอทพร้อมใช้งาน: ${res.botName}`;
     diagBox.innerHTML = `✅ <b>เชื่อมต่อบอท LINE OA สำเร็จ!</b> ชื่อบอทของคุณคือ: <b style="color:var(--blue-600)">${res.botName}</b> ${res.basicId ? `(${res.basicId})` : ''}<br>📌 ตอนนี้คุณสามารถเลือกอำเภอและกดส่งแจ้งเตือนผ่านบอท LINE ได้ทันที!`;
-    showToast(`✅ เชื่อมต่อบอท "${res.botName}" สำเร็จ!`);
+    document.getElementById('cfgLineToken').value='';
+    document.getElementById('quickLineTokenInput').value='';
+    gasConfig.token='';
+    const status=document.getElementById('lineCloudTokenStatus');if(status)status.textContent='🟢 บันทึก Token บน Cloud แล้ว ใช้ได้ทุกเครื่อง';
+    showToast(`✅ เชื่อมต่อบอท "${res.botName}" สำเร็จ! ทุกเครื่องใช้งาน Token เดียวกัน`);
   } else if (res && res.error && res.error.includes('Unknown action')) {
     badge.className = 'pill pill-pend';
-    badge.textContent = '⚠️ รออัปเดต รหัส.gs เป็น V16';
-    diagBox.innerHTML = `⚠️ <b>บันทึก Token แล้ว แต่โค้ด <code>รหัส.gs</code> ใน Google Apps Script ของคุณยังไม่ได้อัปเดตเป็น V16:</b><br>กรุณานำโค้ด <code>รหัส.gs</code> ด้านบนไปวางทับใน Google Apps Script แล้วกด <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b> เพื่อให้บอทส่งข้อความได้ครับ`;
+    badge.textContent = '⚠️ ต้อง Deploy Code.gs V20.5';
+    diagBox.innerHTML = `⚠️ <b>บันทึก Token แล้ว แต่ Google Apps Script ยังไม่รองรับฟังก์ชัน V20.5:</b><br>กรุณานำโค้ด <code>รหัส.gs</code> ด้านบนไปวางทับใน Google Apps Script แล้วกด <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b> เพื่อให้บอทส่งข้อความได้ครับ`;
   } else {
     badge.className = 'pill pill-rej';
     badge.textContent = '🔴 Token ไม่ถูกต้อง';
@@ -3779,17 +3839,9 @@ async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [
     return;
   }
 
-  const activeToken = (document.getElementById('quickLineTokenInput')?.value || document.getElementById('cfgLineToken')?.value || gasConfig.token || '').trim();
+  // Server uses its persisted LINE_TOKEN from Script Properties.
   const fallbackTarget = (document.getElementById('cfgLineTarget')?.value || gasConfig.target || '').trim();
   const diagBox = document.getElementById('lineBotDiagResult');
-
-  if (!activeToken) {
-    if (diagBox) {
-      diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ ไม่สามารถส่งผ่านบอทได้ เพราะคุณยังไม่ได้ใส่รหัส LINE Channel Access Token ในกล่องด้านบนสุดของหน้านี้ครับ</span>`;
-    }
-    showToast('⚠️ กรุณาวางรหัส LINE Channel Access Token ในช่องตั้งค่าบอทด้านบนก่อน');
-    return;
-  }
 
   const cleanTargets = (targetRecipientObjs || []).filter(r => r && r.lineId);
   const firstTargetId = cleanTargets.length === 1 ? cleanTargets[0].lineId.trim() : (cleanTargets.length === 0 ? fallbackTarget : '');
@@ -3803,8 +3855,8 @@ async function dispatchLineMessageToTargets(messageText, targetRecipientObjs = [
   const res = await sendToGoogleSheetDB({
     action: 'sendLine',
     message: messageText,
-    token: activeToken,
     target: firstTargetId,
+    adminAuth:adminApiCredentials(),
     recipients: cleanTargets,
     forceBroadcast: isBroadcastMode
   });
@@ -4046,7 +4098,8 @@ function handleExcelFileSelected(e) {
       saveDB();
       renderAll();
       if (batchForGas.length > 0) {
-        await sendToGoogleSheetDB({ action: 'batchImport', records: batchForGas });
+        await sendToGoogleSheetDB({ action: 'batchImport',
+          adminAuth: adminApiCredentials(), records: batchForGas });
       }
       showToast(`✅ นำเข้าข้อมูลจากไฟล์ Excel และซิงค์ขึ้น Google Sheets สำเร็จ ${importedCount} รายการ`);
     } catch (err) {
@@ -4062,13 +4115,19 @@ async function saveGasSettings() {
   gasConfig = {
     url: document.getElementById('cfgGasUrl').value.trim() || DEFAULT_GAS_WEB_APP_URL,
     driveFolderId: document.getElementById('cfgDriveFolderId').value.trim(),
-    token: document.getElementById('cfgLineToken').value.trim(),
+    token: '',
     target: document.getElementById('cfgLineTarget').value.trim()
   };
-  document.getElementById('quickLineTokenInput').value = gasConfig.token;
+  const tokenInput=document.getElementById('cfgLineToken').value.trim();
+  if(tokenInput) {
+    const res=await sendToGoogleSheetDB({action:'saveLineToken',token:tokenInput,target:gasConfig.target,adminAuth:adminApiCredentials()});
+    if(!confirmed(res)){showToast('❌ บันทึก LINE Token ไม่สำเร็จ: '+(res?.error||'Cloud ไม่ตอบกลับ'));return;}
+    document.getElementById('cfgLineToken').value='';
+    document.getElementById('quickLineTokenInput').value='';
+  }
   saveWorkgroupsAndVisibility(true);
   await testGasConnection();
-  showToast('ℹ️ จัดเก็บการตั้งค่าในเบราว์เซอร์แล้ว โปรดตรวจสถานะการเชื่อมต่อ Apps Script ก่อนใช้งาน');
+  showToast('✅ บันทึกการตั้งค่าแล้ว — LINE Token จะเก็บบน Cloud และใช้ได้ทุกเครื่อง');
 }
 
 async function testGasConnection() {
@@ -4116,7 +4175,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // V20.3: Never use a stale per-device Apps Script URL as the announcement source.
   // The published URL in this website is the safe fallback if GitHub config is unavailable.
   gasConfig.url = DEFAULT_GAS_WEB_APP_URL;
-  localStorage.setItem(GAS_CFG_KEY, JSON.stringify(gasConfig));
+  localStorage.setItem(GAS_CFG_KEY, JSON.stringify({...gasConfig,token:''}));
   sharedBackendReady = refreshSharedBackendConfig(true);
   sharedBackendReady.then(() => {
     pullStateFromGas(false, true);
