@@ -701,6 +701,7 @@ tbody tr.row-hidden-month{opacity:.58; background:rgba(244,63,94,.04)}
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button type="button" class="btn btn-ghost btn-sm" onclick="toggleQuickTokenVisibility()">👁️ ดู/ซ่อน</button>
               <button type="button" class="btn btn-primary btn-sm" onclick="verifyAndSaveLineBotToken()">🔍 ตรวจสอบบอท & บันทึก Token</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="checkSavedLineBotToken()">☁️ ตรวจสอบ Token ที่บันทึกบน Cloud</button>
               <button type="button" class="btn btn-sky btn-sm" onclick="pullStateFromGas(true)">🔄 ดึงไอดีที่ทักบอทเข้ามา</button>
             </div>
           </div>
@@ -1961,7 +1962,7 @@ async function sendToGoogleSheetDB(payload) {
   // GAS ContentService does not expose CORS response headers to GitHub Pages.
   // Authenticated, HMAC-signed JSONP returns the server result directly, instead
   // of opaque POST + cache polling that could appear to fail after a real write.
-  const confirmedActions=['upsertLineRecipient','deleteLineRecipient','saveScheduleEntry','deleteScheduleEntry','saveTickerConfig','returnReport','ackReturnNotice','manualScore','saveAccountsConfig','saveLineToken','saveLineConfig','sendLine','saveTopicsConfig','batchImport','resetAllRecords'];
+  const confirmedActions=['upsertLineRecipient','deleteLineRecipient','saveScheduleEntry','deleteScheduleEntry','saveTickerConfig','returnReport','ackReturnNotice','manualScore','saveAccountsConfig','saveLineToken','checkStoredLineToken','saveLineConfig','sendLine','saveTopicsConfig','batchImport','resetAllRecords'];
   if (confirmedActions.includes(payload.action)) {
     const probe=await verifyBackendVersion(targetUrl);
     if(!probe.ok){updateBackendDiagnostic('❌ '+probe.error);return {ok:false,error:probe.error};}
@@ -3513,39 +3514,53 @@ async function approveAllPendingInFilter() {
 }
 
 /* ================== 14. LINE BOT VERIFICATION & DISTRICT/ID SELECTOR (ADMIN ONLY) ================== */
+async function checkSavedLineBotToken() {
+  if (!isAdmin()) return;
+  const diagBox=document.getElementById('lineBotDiagResult');
+  const badge=document.getElementById('lineBotConnBadge');
+  diagBox.textContent='⏳ กำลังให้ Apps Script ตรวจสอบ LINE Token ที่เก็บไว้ใน Script Properties...';
+  const res=await sendToGoogleSheetDB({action:'checkStoredLineToken',adminAuth:adminApiCredentials()});
+  if(confirmed(res)) {
+    badge.className='pill pill-ok';
+    badge.textContent='🟢 เชื่อมต่อ LINE Bot สำเร็จ';
+    diagBox.innerHTML='✅ <b>LINE Token บน Cloud ใช้งานได้</b> — ชื่อบอท: <b>'+escCDD(res.botName||'LINE Bot')+'</b>'+
+      (res.basicId?' ('+escCDD(res.basicId)+')':'')+'<br>ระบบทุกเครื่องจะใช้ Token จาก Apps Script ตัวเดียวกัน';
+    const status=document.getElementById('lineCloudTokenStatus');
+    if(status)status.textContent='🟢 LINE Token ที่เก็บบน Cloud ผ่านการตรวจสอบกับ LINE API';
+  } else {
+    badge.className='pill pill-rej';
+    badge.textContent='⚠️ ต้องตรวจสอบ LINE / Cloud';
+    diagBox.textContent='⚠️ '+(res?.error||'Apps Script ไม่สามารถยืนยัน Token บน Cloud ได้')+
+      ' — หากเพิ่งตั้ง Script Properties ให้ตรวจว่าใช้โปรเจกต์ Apps Script เดียวกับ URL /exec ของเว็บไซต์';
+  }
+}
 async function verifyAndSaveLineBotToken() {
   if (!isAdmin()) return;
-  const tokenVal = (document.getElementById('quickLineTokenInput')?.value || document.getElementById('cfgLineToken')?.value || '').trim();
-  const diagBox = document.getElementById('lineBotDiagResult');
-  const badge = document.getElementById('lineBotConnBadge');
-
-  if (!tokenVal) {
-    diagBox.innerHTML = `<span style="color:var(--danger);font-weight:700">❌ กรุณากรอก LINE Token ใหม่เมื่อต้องการตั้งค่าหรือเปลี่ยน Token</span>`;
-    showToast('⚠️ กรุณาวาง LINE Channel Access Token ก่อน');
+  const tokenVal=(document.getElementById('quickLineTokenInput')?.value||document.getElementById('cfgLineToken')?.value||'').trim();
+  const diagBox=document.getElementById('lineBotDiagResult');
+  const badge=document.getElementById('lineBotConnBadge');
+  if(!tokenVal) {
+    diagBox.textContent='ℹ️ หากเก็บ Token ใน Google Apps Script → Project Settings → Script Properties → LINE_TOKEN แล้ว ให้กด “ตรวจสอบ Token ที่บันทึกบน Cloud” โดยไม่ต้องกรอกซ้ำ';
     return;
   }
-
-  diagBox.innerHTML = '⏳ กำลังตรวจสอบและบันทึก Token ลง Google Apps Script...';
-  const res = await sendToGoogleSheetDB({action:'saveLineToken',token:tokenVal,target:gasConfig.target||'',adminAuth:adminApiCredentials()});
-
-  if (res && res.ok && res.botName) {
-    badge.className = 'pill pill-ok';
-    badge.textContent = `🟢 บอทพร้อมใช้งาน: ${res.botName}`;
-    diagBox.innerHTML = `✅ <b>เชื่อมต่อบอท LINE OA สำเร็จ!</b> ชื่อบอทของคุณคือ: <b style="color:var(--blue-600)">${res.botName}</b> ${res.basicId ? `(${res.basicId})` : ''}<br>📌 ตอนนี้คุณสามารถเลือกอำเภอและกดส่งแจ้งเตือนผ่านบอท LINE ได้ทันที!`;
+  diagBox.textContent='⏳ กำลังตรวจสอบและบันทึก Token ลง Google Apps Script...';
+  const res=await sendToGoogleSheetDB({action:'saveLineToken',token:tokenVal,target:gasConfig.target||'',adminAuth:adminApiCredentials()});
+  if(confirmed(res)) {
+    badge.className='pill pill-ok';
+    badge.textContent='🟢 บอทพร้อมใช้งาน: '+(res.botName||'LINE Bot');
+    diagBox.innerHTML='✅ <b>บันทึก Token บน Cloud สำเร็จ</b> — ชื่อบอท: <b>'+escCDD(res.botName||'LINE Bot')+'</b>';
     document.getElementById('cfgLineToken').value='';
     document.getElementById('quickLineTokenInput').value='';
     gasConfig.token='';
-    const status=document.getElementById('lineCloudTokenStatus');if(status)status.textContent='🟢 บันทึก Token บน Cloud แล้ว ใช้ได้ทุกเครื่อง';
-    showToast(`✅ เชื่อมต่อบอท "${res.botName}" สำเร็จ! ทุกเครื่องใช้งาน Token เดียวกัน`);
-  } else if (res && res.error && res.error.includes('Unknown action')) {
-    badge.className = 'pill pill-pend';
-    badge.textContent = '⚠️ ต้อง Deploy Code.gs V20.5';
-    diagBox.innerHTML = `⚠️ <b>บันทึก Token แล้ว แต่ Google Apps Script ยังไม่รองรับฟังก์ชัน V20.5:</b><br>กรุณานำโค้ด <code>รหัส.gs</code> ด้านบนไปวางทับใน Google Apps Script แล้วกด <b>การทำให้ใช้งานได้ > จัดการการทำให้ใช้งานได้ > กดรูปดินสอ > เลือกเวอร์ชันเป็น "เวอร์ชันใหม่ (New version)" > กด Deploy</b> เพื่อให้บอทส่งข้อความได้ครับ`;
+    const status=document.getElementById('lineCloudTokenStatus');
+    if(status)status.textContent='🟢 บันทึก Token บน Cloud แล้ว ใช้ได้ทุกเครื่อง';
+    showToast('✅ LINE Token บันทึกลง Cloud สำเร็จ');
   } else {
-    badge.className = 'pill pill-rej';
-    badge.textContent = '🔴 Token ไม่ถูกต้อง';
-    diagBox.innerHTML = `❌ <b>ไม่สามารถเชื่อมต่อบอทได้:</b> ${(res && res.error) ? res.error : 'กรุณาตรวจสอบรหัส Channel Access Token จากหน้า LINE Developers'}`;
-    showToast('❌ รหัส LINE Channel Access Token ไม่ถูกต้อง');
+    badge.className='pill pill-rej';
+    badge.textContent='⚠️ บันทึก / ตรวจสอบไม่สำเร็จ';
+    const reason=(res&&res.error)||'ไม่ได้รับการยืนยันจาก Apps Script';
+    diagBox.textContent='❌ '+reason+' — ระบบยังไม่เปลี่ยน Token ที่บันทึกอยู่ก่อนหน้า';
+    showToast('⚠️ LINE Token ยังไม่ถูกบันทึก: '+reason.slice(0,110));
   }
 }
 
